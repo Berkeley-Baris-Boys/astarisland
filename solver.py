@@ -137,6 +137,40 @@ def tiling_offsets(size: int, window: int) -> List[int]:
     return offsets
 
 
+def candidate_viewports(
+    width: int,
+    height: int,
+    window: int = MAX_VIEWPORT,
+    stride: int = 5,
+) -> List[Tuple[int, int, int, int]]:
+    """Generate a denser viewport candidate set for adaptive reserve queries."""
+    if width <= window:
+        x_offsets = [0]
+    else:
+        x_offsets = list(range(0, width - window + 1, stride))
+        last_x = width - window
+        if x_offsets[-1] != last_x:
+            x_offsets.append(last_x)
+
+    if height <= window:
+        y_offsets = [0]
+    else:
+        y_offsets = list(range(0, height - window + 1, stride))
+        last_y = height - window
+        if y_offsets[-1] != last_y:
+            y_offsets.append(last_y)
+
+    candidates: List[Tuple[int, int, int, int]] = []
+    for y in y_offsets:
+        for x in x_offsets:
+            w = min(window, width - x)
+            h = min(window, height - y)
+            candidates.append((x, y, w, h))
+
+    # Stable ordering keeps behavior reproducible across runs.
+    return sorted(set(candidates), key=lambda p: (p[1], p[0], p[3], p[2]))
+
+
 def plan_queries(
     width: int,
     height: int,
@@ -243,7 +277,8 @@ def choose_reserve_query(
     initial_states: Sequence[Dict[str, Any]],
     observations: Dict[int, List[List[Optional[int]]]],
     counts: Dict[int, np.ndarray],
-    base_positions: List[Tuple[int, int, int, int]],
+    candidate_positions: List[Tuple[int, int, int, int]],
+    viewport_hits: Dict[int, Dict[Tuple[int, int, int, int], int]],
 ) -> Tuple[int, int, int, int, int]:
     """Choose one additional query after the core scan."""
     seeds = sorted(observations.keys())
@@ -285,16 +320,23 @@ def choose_reserve_query(
     target_mask = masks[target_seed]
 
     best_score = -1.0
-    best_position = base_positions[0]
+    best_position = candidate_positions[0]
 
-    for x, y, w, h in base_positions:
+    for x, y, w, h in candidate_positions:
         region_uncertainty = uncertainty[y : y + h, x : x + w].mean()
         region_unseen = float((~target_mask[y : y + h, x : x + w]).mean())
+        region_samples = float(sample_totals[y : y + h, x : x + w].mean())
+        revisit_count = viewport_hits[target_seed].get((x, y, w, h), 0)
 
         if min_coverage < 1.0:
-            score = 2.0 * region_unseen + region_uncertainty
+            score = 2.5 * region_unseen + 1.0 * region_uncertainty - 0.15 * revisit_count
         else:
-            score = region_uncertainty
+            score = (
+                1.6 * region_uncertainty
+                + 0.4 * region_unseen
+                - 0.25 * np.log1p(region_samples)
+                - 0.25 * revisit_count
+            )
 
         if score > best_score:
             best_score = score
@@ -450,6 +492,13 @@ def run_queries(
     base_positions = sorted(
         {(x, y, w, h) for _, x, y, w, h in query_plan}, key=lambda p: (p[1], p[0])
     )
+    candidate_positions = sorted(
+        set(base_positions) | set(candidate_viewports(width=width, height=height, window=MAX_VIEWPORT, stride=5)),
+        key=lambda p: (p[1], p[0], p[3], p[2]),
+    )
+    viewport_hits: Dict[int, Dict[Tuple[int, int, int, int], int]] = {
+        seed: {} for seed in seeds
+    }
 
     queries_used = 0
 
@@ -526,6 +575,8 @@ def run_queries(
                 "new_cells": new_cells,
             }
         )
+        key = (x, y, w, h)
+        viewport_hits[seed_index][key] = viewport_hits[seed_index].get(key, 0) + 1
 
         # FIX 11: Save after every query so crashes never lose data
         _save_observations(round_id, queries_used, observations, counts,
@@ -546,22 +597,20 @@ def run_queries(
             print(f"Budget exhausted during core queries: {exc}")
             break
 
-    # Spend reserve queries adaptively after initial scan.
-    MAX_RESERVE = 5
-    reserve_used = 0
-    while queries_used < budget and reserve_used < MAX_RESERVE:
+    # Spend all remaining budget adaptively after initial scan.
+    while queries_used < budget:
         seed_index, x, y, w, h = choose_reserve_query(
             initial_states=initial_states,
             observations=observations,
             counts=counts,
-            base_positions=base_positions,
+            candidate_positions=candidate_positions,
+            viewport_hits=viewport_hits,
         )
         try:
             execute_query(seed_index, x, y, w, h)
         except BudgetExhaustedError as exc:
             print(f"Budget exhausted during reserve queries: {exc}")
             break
-        reserve_used += 1
 
     print(f"Saved observations to observations.json ({queries_used} queries)")
 
@@ -665,6 +714,58 @@ def compute_settlement_maps(
     return has_settlement, has_port, near_settlement
 
 
+def normalize_distribution(dist: np.ndarray, floor: float = 1e-9) -> np.ndarray:
+    clipped = np.maximum(dist.astype(np.float64, copy=False), floor)
+    total = float(clipped.sum())
+    if total <= 0.0:
+        return np.full(CLASS_COUNT, 1.0 / CLASS_COUNT, dtype=np.float64)
+    return clipped / total
+
+
+def compute_seed_transition_matrix(
+    initial_grid: np.ndarray,
+    seed_counts: np.ndarray,
+    global_transition: np.ndarray,
+) -> np.ndarray:
+    """Blend global transitions with seed-specific evidence from observed cells."""
+    local_counts = np.full((CLASS_COUNT, CLASS_COUNT), 0.5, dtype=np.float64)
+
+    for init_class in range(CLASS_COUNT):
+        mask = initial_grid == init_class
+        if not np.any(mask):
+            continue
+        local_counts[init_class] += seed_counts[mask][:, :CLASS_COUNT].sum(axis=0)
+
+    local_transition = local_counts / local_counts.sum(axis=1, keepdims=True)
+    support = np.maximum(0.0, local_counts.sum(axis=1) - (0.5 * CLASS_COUNT))
+    blend = np.clip(support / (support + 30.0), 0.0, 0.85)[:, None]
+    return (1.0 - blend) * global_transition + blend * local_transition
+
+
+def compute_neighborhood_evidence(
+    seed_counts: np.ndarray,
+    observed_mask: np.ndarray,
+    sigma: float = 2.0,
+) -> Tuple[np.ndarray, np.ndarray]:
+    """Estimate class probabilities from nearby observed outcomes."""
+    probs = seed_counts[:, :, :CLASS_COUNT].astype(np.float64)
+    totals = probs.sum(axis=2, keepdims=True)
+    np.divide(probs, np.maximum(totals, 1e-9), out=probs, where=totals > 0)
+
+    weight = gaussian_filter(observed_mask.astype(np.float64), sigma=sigma)
+    evidence = np.zeros_like(probs)
+    denom = np.maximum(weight, 1e-9)
+
+    for c in range(CLASS_COUNT):
+        blurred = gaussian_filter(probs[:, :, c], sigma=sigma)
+        evidence[:, :, c] = blurred / denom
+
+    evidence = np.maximum(evidence, 0.0)
+    sums = evidence.sum(axis=2, keepdims=True)
+    np.divide(evidence, np.maximum(sums, 1e-9), out=evidence, where=sums > 0)
+    return evidence, np.clip(weight, 0.0, 1.0)
+
+
 def build_predictions(
     initial_states: Sequence[Dict[str, Any]],
     observation_data: Dict[str, Any],
@@ -689,7 +790,6 @@ def build_predictions(
     for seed_index in range(seeds_count):
         init_grid = np.asarray(initial_states[seed_index]["grid"], dtype=np.int64)
         seed_counts = counts[seed_index]
-        # FIX 12: slice to CLASS_COUNT before summing
         sample_totals = seed_counts[:, :, :CLASS_COUNT].sum(axis=2)
         observed_mask = sample_totals > 0
 
@@ -697,6 +797,16 @@ def build_predictions(
             initial_states[seed_index], width=width, height=height
         )
         forest_adj = compute_forest_adjacency(init_grid)
+        seed_transition = compute_seed_transition_matrix(
+            initial_grid=init_grid,
+            seed_counts=seed_counts,
+            global_transition=global_transition,
+        )
+        neighborhood_evidence, neighborhood_weight = compute_neighborhood_evidence(
+            seed_counts=seed_counts,
+            observed_mask=observed_mask,
+            sigma=2.0,
+        )
 
         coastal = np.zeros((height, width), dtype=bool)
         coastal[:2, :] = True
@@ -711,62 +821,58 @@ def build_predictions(
         for y in range(height):
             for x in range(width):
                 init_class = int(init_grid[y, x])
-                # FIX 8: slice cell_counts to CLASS_COUNT
                 cell_counts = seed_counts[y, x, :CLASS_COUNT].astype(np.float64)
                 n_obs = int(cell_counts.sum())
 
-                if n_obs > 0:
-                    empirical = cell_counts / cell_counts.sum()
-                    mode = int(np.argmax(empirical))
-                    dist = np.full(CLASS_COUNT, 0.10 / (CLASS_COUNT - 1), dtype=np.float64)
-                    dist[mode] = 0.90
-
-                    if n_obs > 1:
-                        blend = min(0.85, 0.30 + 0.10 * (n_obs - 1))
-                        dist = (1.0 - blend) * dist + blend * empirical
-
-                    seed_pred[y, x] = dist
-                    continue
-
-                if init_class == 5:
-                    dist = np.full(CLASS_COUNT, 0.08 / (CLASS_COUNT - 1), dtype=np.float64)
-                    dist[5] = 0.92
-                    seed_pred[y, x] = dist
-                    continue
-
-                # FIX 9: guard against unknown terrain codes >= CLASS_COUNT
-                if init_class < CLASS_COUNT:
-                    dist = global_transition[init_class].copy()
+                if 0 <= init_class < CLASS_COUNT:
+                    context = seed_transition[init_class].copy()
                 else:
-                    dist = global_prior.copy()
+                    context = global_prior.copy()
 
                 if init_class in (1, 2):
-                    dist[1] += 0.30
-                    dist[3] += 0.20
+                    context[1] += 0.22
+                    context[3] += 0.16
                     if init_class == 2 or has_port_map[y, x]:
-                        dist[2] += 0.10
+                        context[2] += 0.08
 
                 if near_settlement[y, x]:
-                    dist[1] += 0.15
-                    dist[3] += 0.10
+                    context[1] += 0.12
+                    context[3] += 0.09
 
                 if coastal[y, x]:
-                    dist[2] += 0.05
+                    context[2] += 0.05
 
                 if init_class == 4:
-                    forest_pref = np.array([0.10, 0.02, 0.01, 0.07, 0.75, 0.05], dtype=np.float64)
-                    dist = 0.55 * dist + 0.45 * forest_pref
+                    forest_pref = np.array([0.09, 0.02, 0.01, 0.08, 0.74, 0.06], dtype=np.float64)
+                    context = 0.60 * context + 0.40 * forest_pref
 
                 if init_class == 0 and forest_adj[y, x]:
-                    dist[4] += 0.15
+                    context[4] += 0.12
 
                 if init_class == 3:
-                    dist[4] += 0.10
-                    dist[0] += 0.10
+                    context[4] += 0.10
+                    context[0] += 0.08
 
-                dist[5] *= 0.35
+                # Mountains are stable but not deterministic.
+                if init_class == 5:
+                    context = 0.70 * context + 0.30 * np.array(
+                        [0.03, 0.01, 0.01, 0.03, 0.05, 0.87], dtype=np.float64
+                    )
+                else:
+                    context[5] *= 0.45
 
-                seed_pred[y, x] = dist
+                w_neigh = float(neighborhood_weight[y, x])
+                if w_neigh > 1e-4:
+                    context = (1.0 - 0.40 * w_neigh) * context + (0.40 * w_neigh) * neighborhood_evidence[y, x]
+
+                context = normalize_distribution(context, floor=1e-8)
+
+                if n_obs > 0:
+                    alpha = max(0.75, 3.5 - 0.8 * n_obs)
+                    posterior = (cell_counts + alpha * context) / (float(n_obs) + alpha)
+                    seed_pred[y, x] = normalize_distribution(posterior, floor=1e-8)
+                else:
+                    seed_pred[y, x] = context
 
         # Hidden-parameter-driven adjustment pass.
         unobserved_mask = ~observed_mask
@@ -808,14 +914,13 @@ def build_predictions(
                 s_has_port = bool(s.get("has_port", False))
 
                 if alive:
-                    seed_pred[sy, sx, 1] += 0.5
+                    alive_evidence = np.array([0.03, 0.76, 0.06, 0.05, 0.05, 0.05], dtype=np.float64)
                     if s_has_port:
-                        seed_pred[sy, sx, 2] += 0.3
+                        alive_evidence = np.array([0.02, 0.48, 0.36, 0.04, 0.05, 0.05], dtype=np.float64)
+                    seed_pred[sy, sx] = normalize_distribution(seed_pred[sy, sx] * alive_evidence, floor=1e-8)
                 else:
-                    seed_pred[sy, sx, 3] += 0.5
-                    seed_pred[sy, sx, 1] -= 0.2
-
-                seed_pred[sy, sx] = np.maximum(seed_pred[sy, sx], 0.0)
+                    dead_evidence = np.array([0.06, 0.06, 0.02, 0.72, 0.10, 0.04], dtype=np.float64)
+                    seed_pred[sy, sx] = normalize_distribution(seed_pred[sy, sx] * dead_evidence, floor=1e-8)
 
         # Spatial smoothing for unobserved cells.
         for c in range(CLASS_COUNT):
