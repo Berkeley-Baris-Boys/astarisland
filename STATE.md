@@ -20,9 +20,7 @@ Build a script that queries the Astar Island simulator within budget, predicts p
 - [ ] Better evaluation workflow across rounds/seeds
 
 ### ⏳ Next Up (priority ordered)
-- [ ] Add offline scoring/analysis script for rapid iteration
-- [ ] Enable or remove hidden-parameter inference path (currently disabled)
-- [ ] Add lightweight tests for tensor validation and payload parsing
+
 
 ---
 
@@ -42,15 +40,6 @@ Auth → Load active round → Plan/Run queries (or resume) → Build prediction
 
 ## 3. Tasks (Atomic / AI-Executable)
 
-Each task should be:
-- small
-- unambiguous
-- testable
-
-### Task List
-- [ ] Add script to compare dry-run outputs between strategy variants
-- [ ] Add configurable weights for key heuristics via CLI/env
-- [ ] Add checks for malformed `observations.json` in resume mode
 
 ---
 
@@ -70,17 +59,12 @@ Each task should be:
 
 ## 5. Known Issues / Bugs
 
-- Hidden-parameter inference code path is present but disabled
-- Accuracy sensitivity to heuristic constants and limited query budget
-- Limited automated testing around strategy changes
 
 ---
 
 ## 6. Experiments / Learnings
 
-### Experiment: Coverage-first + reserve uncertainty queries
-- Improved map observation coverage under fixed budget
-- Re-querying uncertain regions provides useful per-cell empirical counts
+
 
 ---
 
