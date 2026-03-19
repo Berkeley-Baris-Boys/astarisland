@@ -362,7 +362,7 @@ def infer_hidden_params(
 
     try:
         vertexai.init(project=project, location=location)
-        model = GenerativeModel("gemini-2.0-flash-001")
+        model = GenerativeModel("gemini-2.0-flash")
     except Exception as exc:
         print(f"Vertex AI init/model error; skipping hidden-parameter inference: {exc}")
         return {}
