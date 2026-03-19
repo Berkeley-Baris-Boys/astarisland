@@ -574,7 +574,7 @@ def empirical_class_prior(
         class_counts = np.ones(CLASS_COUNT, dtype=np.float64)
         for state in initial_states:
             grid = np.asarray(state["grid"], dtype=np.int64)
-            class_counts += np.bincount(grid.ravel(), minlength=CLASS_COUNT).astype(np.float64)
+            class_counts += np.bincount(grid.ravel(), minlength=CLASS_COUNT).astype(np.float64)[:CLASS_COUNT]
 
     return class_counts / class_counts.sum()
 
