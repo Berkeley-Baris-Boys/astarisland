@@ -19,6 +19,7 @@ from scipy.ndimage import gaussian_filter
 
 BASE_URL = "https://api.ainm.no"
 CLASS_COUNT = 6
+MAX_CLASS = 16
 MAX_VIEWPORT = 15
 TOTAL_BUDGET = 50
 
@@ -298,6 +299,16 @@ def choose_reserve_query(
     return target_seed, x, y, w, h
 
 
+def discover_terrain_classes(observations: Dict[int, List[List[Optional[int]]]]) -> None:
+    all_values = set()
+    for grid in observations.values():
+        for row in grid:
+            for v in row:
+                if v is not None:
+                    all_values.add(v)
+    print(f"Discovered terrain values: {sorted(all_values)}")
+
+
 def infer_hidden_params(
     observations: Dict[int, List[List[Optional[int]]]],
     initial_states: Sequence[Dict[str, Any]],
@@ -410,7 +421,7 @@ def run_queries(
     width = len(observations[seeds[0]][0]) if height else 0
 
     counts: Dict[int, np.ndarray] = {
-        seed: np.zeros((height, width, CLASS_COUNT), dtype=np.int32) for seed in seeds
+        seed: np.zeros((height, width, MAX_CLASS), dtype=np.int32) for seed in seeds
     }
     settlements: Dict[int, List[Dict[str, Any]]] = {seed: [] for seed in seeds}
     query_log: List[Dict[str, Any]] = []
@@ -445,7 +456,7 @@ def run_queries(
             if not isinstance(row, list):
                 raise SolverError("simulate response grid row is not a list")
             for dx, value in enumerate(row):
-                if not isinstance(value, int) or value < 0 or value >= CLASS_COUNT:
+                if not isinstance(value, int) or value < 0:
                     raise SolverError(f"Unexpected terrain value at ({dx}, {dy}): {value}")
 
                 yy = y + dy
@@ -521,6 +532,8 @@ def run_queries(
     serializable_counts = {str(seed): counts[seed].tolist() for seed in seeds}
     serializable_observations = {str(seed): observations[seed] for seed in seeds}
     serializable_settlements = {str(seed): settlements[seed] for seed in seeds}
+
+    discover_terrain_classes(observations)
 
     observations_path = Path("observations.json")
     observations_payload = {
