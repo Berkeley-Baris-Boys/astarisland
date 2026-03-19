@@ -27,6 +27,10 @@ class SolverError(RuntimeError):
     """Raised for recoverable solver failures."""
 
 
+class BudgetExhaustedError(SolverError):
+    """Raised when query budget is exhausted — stop querying, proceed to predict."""
+
+
 def request_json(
     session: requests.Session,
     method: str,
@@ -59,7 +63,11 @@ def request_json(
 
         if status >= 400:
             if status == 429:
-                raise SolverError(f"Rate limited (429) on {method} {path}: {response.text}")
+                text = response.text or ""
+                # Budget exhausted is expected — signal caller to stop querying
+                if "budget" in text.lower() or "exhausted" in text.lower():
+                    raise BudgetExhaustedError(f"Query budget exhausted: {text}")
+                raise SolverError(f"Rate limited (429) on {method} {path}: {text}")
             raise SolverError(f"HTTP {status} on {method} {path}: {response.text}")
 
         try:
@@ -532,7 +540,11 @@ def run_queries(
     for seed_index, x, y, w, h in query_plan:
         if queries_used >= budget:
             break
-        execute_query(seed_index, x, y, w, h)
+        try:
+            execute_query(seed_index, x, y, w, h)
+        except BudgetExhaustedError as exc:
+            print(f"Budget exhausted during core queries: {exc}")
+            break
 
     # Spend reserve queries adaptively after initial scan.
     MAX_RESERVE = 5
@@ -544,10 +556,29 @@ def run_queries(
             counts=counts,
             base_positions=base_positions,
         )
-        execute_query(seed_index, x, y, w, h)
+        try:
+            execute_query(seed_index, x, y, w, h)
+        except BudgetExhaustedError as exc:
+            print(f"Budget exhausted during reserve queries: {exc}")
+            break
         reserve_used += 1
 
     print(f"Saved observations to observations.json ({queries_used} queries)")
+
+    # Run Gemini inference on full observations now that all queries are done
+    print("Inferring hidden simulator parameters via Gemini...")
+    hidden_params = infer_hidden_params(
+        observations=observations,
+        initial_states=initial_states,
+        project=gcp_project,
+    )
+    if hidden_params:
+        print(f"Inferred hidden params: {hidden_params}")
+        # Save again with hidden params included
+        _save_observations(round_id, queries_used, observations, counts,
+                           settlements, hidden_params, query_log, seeds)
+    else:
+        print("Gemini inference unavailable, continuing without hidden params")
 
     return {
         "latest": observations,
