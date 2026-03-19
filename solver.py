@@ -200,7 +200,7 @@ def compute_transition_matrix(
             mask = init_grid == init_class
             if not np.any(mask):
                 continue
-            transition_counts[init_class] += seed_counts[mask].sum(axis=0)
+            transition_counts[init_class] += seed_counts[mask][:, :CLASS_COUNT].sum(axis=0)
 
     row_sums = transition_counts.sum(axis=1, keepdims=True)
     return transition_counts / row_sums
@@ -215,7 +215,7 @@ def seed_transition_entropy(initial_grid: np.ndarray, counts: np.ndarray) -> flo
         if not np.any(mask):
             continue
 
-        class_counts = counts[mask].sum(axis=0).astype(np.float64)
+        class_counts = counts[mask][:, :CLASS_COUNT].sum(axis=0).astype(np.float64)
         total = float(class_counts.sum())
         if total <= 0:
             continue
@@ -566,7 +566,7 @@ def empirical_class_prior(
     observed_total = 0.0
 
     for arr in counts.values():
-        c = arr.sum(axis=(0, 1)).astype(np.float64)
+        c = arr.sum(axis=(0, 1)).astype(np.float64)[:CLASS_COUNT]
         class_counts += c
         observed_total += float(c.sum())
 
@@ -679,7 +679,7 @@ def build_predictions(
         for y in range(height):
             for x in range(width):
                 init_class = int(init_grid[y, x])
-                cell_counts = seed_counts[y, x].astype(np.float64)
+                cell_counts = seed_counts[y, x, :CLASS_COUNT].astype(np.float64)
                 n_obs = int(cell_counts.sum())
 
                 if n_obs > 0:
