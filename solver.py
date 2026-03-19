@@ -772,6 +772,7 @@ def build_predictions(
     width: int,
     height: int,
     seeds_count: int,
+    save_outputs: bool = True,
 ) -> Dict[int, np.ndarray]:
     """Build per-seed probability tensors (H x W x 6)."""
     counts: Dict[int, np.ndarray] = observation_data["counts"]
@@ -937,8 +938,9 @@ def build_predictions(
 
         predictions[seed_index] = seed_pred
 
-        output_path = Path(f"predictions_seed_{seed_index}.npy")
-        np.save(output_path, seed_pred)
+        if save_outputs:
+            output_path = Path(f"predictions_seed_{seed_index}.npy")
+            np.save(output_path, seed_pred)
 
         total_cells = width * height
         observed_cells = int(observed_mask.sum())
@@ -963,6 +965,138 @@ def build_predictions(
         )
 
     return predictions
+
+
+def _kl_divergence(p: np.ndarray, q: np.ndarray) -> float:
+    return float(np.sum(p * (np.log(p + 1e-12) - np.log(q + 1e-12))))
+
+
+def run_offline_self_check(
+    initial_states: Sequence[Dict[str, Any]],
+    observation_data: Dict[str, Any],
+    width: int,
+    height: int,
+    seeds_count: int,
+    holdout_fraction: float = 0.15,
+    random_seed: int = 2026,
+) -> Dict[str, Any]:
+    """Estimate model quality offline by predicting held-out observed cells."""
+    holdout_fraction = float(np.clip(holdout_fraction, 0.05, 0.50))
+    counts: Dict[int, np.ndarray] = observation_data["counts"]
+    rng = np.random.default_rng(random_seed)
+
+    masked_counts: Dict[int, np.ndarray] = {
+        seed: arr.copy() for seed, arr in counts.items()
+    }
+    holdout_cells: Dict[int, np.ndarray] = {}
+
+    for seed_index in range(seeds_count):
+        sample_totals = counts[seed_index][:, :, :CLASS_COUNT].sum(axis=2)
+        observed_cells = np.argwhere(sample_totals > 0)
+        if observed_cells.size == 0:
+            holdout_cells[seed_index] = np.zeros((0, 2), dtype=np.int64)
+            continue
+
+        n_holdout = int(round(len(observed_cells) * holdout_fraction))
+        n_holdout = min(len(observed_cells), max(1, n_holdout))
+        choice = rng.choice(len(observed_cells), size=n_holdout, replace=False)
+        selected = observed_cells[choice]
+        holdout_cells[seed_index] = selected
+
+        for y, x in selected.tolist():
+            masked_counts[seed_index][y, x, :] = 0
+
+    masked_observation_data = dict(observation_data)
+    masked_observation_data["counts"] = masked_counts
+
+    holdout_predictions = build_predictions(
+        initial_states=initial_states,
+        observation_data=masked_observation_data,
+        width=width,
+        height=height,
+        seeds_count=seeds_count,
+        save_outputs=False,
+    )
+
+    seed_reports: Dict[int, Dict[str, float]] = {}
+    all_plain_kl: List[float] = []
+    all_weighted_kl: List[float] = []
+
+    for seed_index in range(seeds_count):
+        pred = holdout_predictions[seed_index]
+        selected = holdout_cells.get(seed_index, np.zeros((0, 2), dtype=np.int64))
+
+        if len(selected) == 0:
+            seed_reports[seed_index] = {
+                "holdout_cells": 0.0,
+                "mean_kl": float("nan"),
+                "mean_entropy_weighted_kl": float("nan"),
+            }
+            continue
+
+        plain_kl_values: List[float] = []
+        weighted_kl_values: List[float] = []
+
+        for y, x in selected.tolist():
+            target_counts = counts[seed_index][y, x, :CLASS_COUNT].astype(np.float64)
+            target_total = float(target_counts.sum())
+            if target_total <= 0.0:
+                continue
+            p = target_counts / target_total
+            q = normalize_distribution(pred[y, x], floor=1e-9)
+            kl = _kl_divergence(p, q)
+
+            entropy = float(-(p * np.log(p + 1e-12)).sum() / np.log(CLASS_COUNT))
+            # Proxy weighting: higher-entropy targets are less deterministic.
+            weight = 0.5 + entropy
+            weighted_kl = weight * kl
+
+            plain_kl_values.append(kl)
+            weighted_kl_values.append(weighted_kl)
+
+        if plain_kl_values:
+            mean_kl = float(np.mean(plain_kl_values))
+            mean_weighted_kl = float(np.mean(weighted_kl_values))
+            all_plain_kl.extend(plain_kl_values)
+            all_weighted_kl.extend(weighted_kl_values)
+        else:
+            mean_kl = float("nan")
+            mean_weighted_kl = float("nan")
+
+        seed_reports[seed_index] = {
+            "holdout_cells": float(len(plain_kl_values)),
+            "mean_kl": mean_kl,
+            "mean_entropy_weighted_kl": mean_weighted_kl,
+        }
+
+    overall = {
+        "mean_kl": float(np.mean(all_plain_kl)) if all_plain_kl else float("nan"),
+        "mean_entropy_weighted_kl": float(np.mean(all_weighted_kl)) if all_weighted_kl else float("nan"),
+        "holdout_fraction": holdout_fraction,
+        "seeds_evaluated": float(sum(1 for v in seed_reports.values() if v["holdout_cells"] > 0)),
+    }
+
+    return {"overall": overall, "by_seed": seed_reports}
+
+
+def print_self_check_report(report: Dict[str, Any]) -> None:
+    print("\nOffline self-check (no submit attempts used)")
+    overall = report.get("overall", {})
+    print(
+        "Overall: "
+        f"holdout_fraction={overall.get('holdout_fraction', float('nan')):.2f}, "
+        f"mean_kl={overall.get('mean_kl', float('nan')):.6f}, "
+        f"mean_entropy_weighted_kl={overall.get('mean_entropy_weighted_kl', float('nan')):.6f}"
+    )
+
+    by_seed = report.get("by_seed", {})
+    for seed_index in sorted(by_seed.keys()):
+        row = by_seed[seed_index]
+        print(
+            f"  seed {seed_index}: holdout_cells={int(row.get('holdout_cells', 0.0))}, "
+            f"mean_kl={row.get('mean_kl', float('nan')):.6f}, "
+            f"mean_entropy_weighted_kl={row.get('mean_entropy_weighted_kl', float('nan')):.6f}"
+        )
 
 
 def validate_prediction_tensor(pred: np.ndarray, seed_index: int) -> None:
@@ -1106,7 +1240,31 @@ def main() -> None:
         default="ai-nm26osl-1722",
         help="GCP project ID for Vertex AI",
     )
+    parser.add_argument(
+        "--self-check",
+        action="store_true",
+        help="Run offline holdout validation before optional submit",
+    )
+    parser.add_argument(
+        "--self-check-fraction",
+        type=float,
+        default=0.15,
+        help="Fraction of observed cells to hold out for offline self-check (0.05-0.50)",
+    )
+    parser.add_argument(
+        "--self-check-seed",
+        type=int,
+        default=2026,
+        help="Random seed used by offline self-check holdout sampling",
+    )
+    parser.add_argument(
+        "--check-only",
+        action="store_true",
+        help="Build predictions and run self-check, but skip submit attempts",
+    )
     args = parser.parse_args()
+    if args.check_only:
+        args.self_check = True
 
     token = args.token or os.getenv("ASTAR_ISLAND_TOKEN")
     if not token:
@@ -1172,6 +1330,18 @@ def main() -> None:
                     budget=TOTAL_BUDGET,
                 )
 
+        if args.self_check:
+            report = run_offline_self_check(
+                initial_states=initial_states,
+                observation_data=observation_data,
+                width=width,
+                height=height,
+                seeds_count=seeds_count,
+                holdout_fraction=args.self_check_fraction,
+                random_seed=args.self_check_seed,
+            )
+            print_self_check_report(report)
+
         predictions = build_predictions(
             initial_states=initial_states,
             observation_data=observation_data,
@@ -1180,12 +1350,18 @@ def main() -> None:
             seeds_count=seeds_count,
         )
 
-        statuses = submit_all(
-            session=session,
-            round_id=round_id,
-            predictions=predictions,
-            dry_run=args.dry_run,
-        )
+        if args.check_only:
+            statuses = {
+                seed_index: "CHECK ONLY: not submitted"
+                for seed_index in range(seeds_count)
+            }
+        else:
+            statuses = submit_all(
+                session=session,
+                round_id=round_id,
+                predictions=predictions,
+                dry_run=args.dry_run,
+            )
 
         print_summary(
             width=width,
