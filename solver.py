@@ -362,7 +362,7 @@ def infer_hidden_params(
 
     try:
         vertexai.init(project=project, location=location)
-        model = GenerativeModel("gemini-2.0-flash")
+        model = GenerativeModel("gemini-2.0-flash-002")
     except Exception as exc:
         print(f"Vertex AI init/model error; skipping hidden-parameter inference: {exc}")
         return {}
@@ -629,6 +629,14 @@ def run_queries(
     else:
         print("Gemini inference unavailable, continuing without hidden params")
 
+    all_codes = set()
+    for grid in observations.values():
+        for row in grid:
+            for v in row:
+                if v is not None:
+                    all_codes.add(v)
+    print(f"Discovered terrain codes: {sorted(all_codes)}")
+
     return {
         "latest": observations,
         "counts": counts,
@@ -825,7 +833,14 @@ def build_predictions(
                 cell_counts = seed_counts[y, x, :CLASS_COUNT].astype(np.float64)
                 n_obs = int(cell_counts.sum())
 
-                if 0 <= init_class < CLASS_COUNT:
+                if init_class == 11:
+                    # Water/Ocean — static, never changes, predict as Empty (0)
+                    # Water has no output class so use Empty with high confidence
+                    context = np.array([0.88, 0.02, 0.04, 0.02, 0.02, 0.02], dtype=np.float64)
+                elif init_class == 10:
+                    # Beach/Shore — transitional, can become settlement, port, or stay empty
+                    context = np.array([0.35, 0.15, 0.12, 0.05, 0.18, 0.05], dtype=np.float64)
+                elif 0 <= init_class < CLASS_COUNT:
                     context = seed_transition[init_class].copy()
                 else:
                     context = global_prior.copy()
@@ -869,7 +884,7 @@ def build_predictions(
                 context = normalize_distribution(context, floor=1e-8)
 
                 if n_obs > 0:
-                    alpha = max(0.75, 3.5 - 0.8 * n_obs)
+                    alpha = max(0.30, 1.2 / max(n_obs, 1))
                     posterior = (cell_counts + alpha * context) / (float(n_obs) + alpha)
                     seed_pred[y, x] = normalize_distribution(posterior, floor=1e-8)
                 else:
