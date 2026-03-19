@@ -19,7 +19,6 @@ from scipy.ndimage import gaussian_filter
 
 BASE_URL = "https://api.ainm.no"
 CLASS_COUNT = 6
-MAX_CLASS = 16
 MAX_VIEWPORT = 15
 TOTAL_BUDGET = 50
 
@@ -200,6 +199,7 @@ def compute_transition_matrix(
             mask = init_grid == init_class
             if not np.any(mask):
                 continue
+            # FIX 3: slice to CLASS_COUNT columns
             transition_counts[init_class] += seed_counts[mask][:, :CLASS_COUNT].sum(axis=0)
 
     row_sums = transition_counts.sum(axis=1, keepdims=True)
@@ -215,6 +215,7 @@ def seed_transition_entropy(initial_grid: np.ndarray, counts: np.ndarray) -> flo
         if not np.any(mask):
             continue
 
+        # FIX 4: slice to CLASS_COUNT columns
         class_counts = counts[mask][:, :CLASS_COUNT].sum(axis=0).astype(np.float64)
         total = float(class_counts.sum())
         if total <= 0:
@@ -236,13 +237,7 @@ def choose_reserve_query(
     counts: Dict[int, np.ndarray],
     base_positions: List[Tuple[int, int, int, int]],
 ) -> Tuple[int, int, int, int, int]:
-    """Choose one additional query after the core scan.
-
-    Priority:
-    1) Seeds with lowest direct coverage
-    2) Otherwise seeds with highest transition entropy
-    3) Within target seed, viewport with highest uncertainty score
-    """
+    """Choose one additional query after the core scan."""
     seeds = sorted(observations.keys())
     height = len(next(iter(observations.values())))
     width = len(next(iter(observations.values()))[0])
@@ -271,10 +266,12 @@ def choose_reserve_query(
     row_entropies = row_entropies / np.log(CLASS_COUNT)
 
     init_grid_target = np.asarray(initial_states[target_seed]["grid"], dtype=np.int64)
-    sample_totals = counts[target_seed].sum(axis=2).astype(np.float64)
-    uncertainty = row_entropies[init_grid_target]
+    # FIX 5: slice to CLASS_COUNT on last axis
+    sample_totals = counts[target_seed][:, :, :CLASS_COUNT].sum(axis=2).astype(np.float64)
 
-    # Prefer less-sampled cells.
+    # Map init codes >= CLASS_COUNT to 0 for entropy lookup
+    safe_init_grid = np.where(init_grid_target < CLASS_COUNT, init_grid_target, 0)
+    uncertainty = row_entropies[safe_init_grid]
     uncertainty = uncertainty / (1.0 + sample_totals)
 
     target_mask = masks[target_seed]
@@ -297,43 +294,6 @@ def choose_reserve_query(
 
     x, y, w, h = best_position
     return target_seed, x, y, w, h
-
-
-def discover_terrain_classes(observations: Dict[int, List[List[Optional[int]]]]) -> None:
-    all_values = set()
-    for grid in observations.values():
-        for row in grid:
-            for v in row:
-                if v is not None:
-                    all_values.add(v)
-    print(f"Discovered terrain values: {sorted(all_values)}")
-
-
-def _save_observations(
-    round_id: str,
-    queries_used: int,
-    observations: Dict[int, List[List[Optional[int]]]],
-    counts: Dict[int, np.ndarray],
-    settlements: Dict[int, List[Dict[str, Any]]],
-    hidden_params: Dict[str, float],
-    query_log: List[Dict[str, Any]],
-    seeds: List[int],
-) -> None:
-    serializable_counts = {str(seed): counts[seed].tolist() for seed in seeds}
-    serializable_observations = {str(seed): observations[seed] for seed in seeds}
-    serializable_settlements = {str(seed): settlements[seed] for seed in seeds}
-    observations_path = Path("observations.json")
-    observations_payload = {
-        "round_id": round_id,
-        "queries_used": queries_used,
-        "latest": serializable_observations,
-        "counts": serializable_counts,
-        "settlements": serializable_settlements,
-        "hidden_params": hidden_params,
-        "queries": query_log,
-    }
-    observations_path.write_text(json.dumps(observations_payload, indent=2), encoding="utf-8")
-    print(f"[saved] observations.json ({queries_used} queries)")
 
 
 def infer_hidden_params(
@@ -430,6 +390,28 @@ Values are 0.0 (low) to 1.0 (high)."""
         return {}
 
 
+# FIX 10: Save helper — called after every query so crashes never lose data
+def _save_observations(
+    round_id: str,
+    queries_used: int,
+    observations: Dict[int, List[List[Optional[int]]]],
+    counts: Dict[int, np.ndarray],
+    settlements: Dict[int, List[Dict[str, Any]]],
+    hidden_params: Dict[str, float],
+    query_log: List[Dict[str, Any]],
+    seeds: List[int],
+) -> None:
+    Path("observations.json").write_text(json.dumps({
+        "round_id": round_id,
+        "queries_used": queries_used,
+        "latest": {str(seed): observations[seed] for seed in seeds},
+        "counts": {str(seed): counts[seed].tolist() for seed in seeds},
+        "settlements": {str(seed): settlements[seed] for seed in seeds},
+        "hidden_params": hidden_params,
+        "queries": query_log,
+    }, indent=2), encoding="utf-8")
+
+
 def run_queries(
     session: requests.Session,
     round_id: str,
@@ -447,6 +429,8 @@ def run_queries(
     height = len(observations[seeds[0]])
     width = len(observations[seeds[0]][0]) if height else 0
 
+    # FIX 1: Use MAX_CLASS=16 so terrain codes > 5 don't crash array indexing
+    MAX_CLASS = 16
     counts: Dict[int, np.ndarray] = {
         seed: np.zeros((height, width, MAX_CLASS), dtype=np.int32) for seed in seeds
     }
@@ -483,6 +467,7 @@ def run_queries(
             if not isinstance(row, list):
                 raise SolverError("simulate response grid row is not a list")
             for dx, value in enumerate(row):
+                # FIX 2: only reject negative values, not values >= CLASS_COUNT
                 if not isinstance(value, int) or value < 0:
                     raise SolverError(f"Unexpected terrain value at ({dx}, {dy}): {value}")
 
@@ -494,7 +479,9 @@ def run_queries(
                 if observations[seed_index][yy][xx] is None:
                     new_cells += 1
                 observations[seed_index][yy][xx] = value
-                counts[seed_index][yy, xx, value] += 1
+                # Safe: counts has MAX_CLASS=16 columns
+                if value < MAX_CLASS:
+                    counts[seed_index][yy, xx, value] += 1
 
         settlements_snapshot = result.get("settlements", [])
         if isinstance(settlements_snapshot, list):
@@ -532,20 +519,12 @@ def run_queries(
             }
         )
 
+        # FIX 11: Save after every query so crashes never lose data
+        _save_observations(round_id, queries_used, observations, counts,
+                           settlements, hidden_params, query_log, seeds)
+
         if queries_used < budget:
             time.sleep(0.05)
-
-        # Save observations after every query so crashes never lose data
-        _save_observations(
-            round_id=round_id,
-            queries_used=queries_used,
-            observations=observations,
-            counts=counts,
-            settlements=settlements,
-            hidden_params=hidden_params,
-            query_log=query_log,
-            seeds=seeds,
-        )
 
         return new_cells
 
@@ -568,17 +547,7 @@ def run_queries(
         execute_query(seed_index, x, y, w, h)
         reserve_used += 1
 
-    discover_terrain_classes(observations)
-    _save_observations(
-        round_id=round_id,
-        queries_used=queries_used,
-        observations=observations,
-        counts=counts,
-        settlements=settlements,
-        hidden_params=hidden_params,
-        query_log=query_log,
-        seeds=seeds,
-    )
+    print(f"Saved observations to observations.json ({queries_used} queries)")
 
     return {
         "latest": observations,
@@ -598,6 +567,7 @@ def empirical_class_prior(
     observed_total = 0.0
 
     for arr in counts.values():
+        # FIX 6: slice to CLASS_COUNT before accumulating
         c = arr.sum(axis=(0, 1)).astype(np.float64)[:CLASS_COUNT]
         class_counts += c
         observed_total += float(c.sum())
@@ -606,6 +576,7 @@ def empirical_class_prior(
         class_counts = np.ones(CLASS_COUNT, dtype=np.float64)
         for state in initial_states:
             grid = np.asarray(state["grid"], dtype=np.int64)
+            # FIX 7: slice bincount result to CLASS_COUNT
             class_counts += np.bincount(grid.ravel(), minlength=CLASS_COUNT).astype(np.float64)[:CLASS_COUNT]
 
     return class_counts / class_counts.sum()
@@ -624,7 +595,6 @@ def compute_forest_adjacency(initial_grid: np.ndarray) -> np.ndarray:
         x1 = min(width, x + 2)
         forest_adj[y0:y1, x0:x1] = True
 
-    # Adjacency should describe neighbors, not necessarily the forest tile itself.
     forest_adj[forest] = False
     return forest_adj
 
@@ -680,42 +650,16 @@ def build_predictions(
     winter_severity = float(np.clip(float(hidden_params.get("winter_severity", 0.0)), 0.0, 1.0))
     trade_activity = float(np.clip(float(hidden_params.get("trade_activity", 0.0)), 0.0, 1.0))
 
-    # Build global empirical prior from observations (safe, clipped to CLASS_COUNT)
+    global_transition = compute_transition_matrix(initial_states, counts)
     global_prior = empirical_class_prior(counts, initial_states)
-
-    # Build global transition matrix from observations if we have any
-    total_observed = sum(arr.sum() for arr in counts.values())
-    if total_observed > 0:
-        global_transition = compute_transition_matrix(initial_states, counts)
-    else:
-        global_transition = None
-
-    def base_dist_for_code(code: int) -> np.ndarray:
-        """Return a prior distribution over 6 output classes for any terrain code."""
-        p = np.full(CLASS_COUNT, 0.02, dtype=np.float64)
-        if code == 5:      # Mountain — static
-            p[5] = 0.90
-        elif code == 4:    # Forest — mostly stays
-            p[4] = 0.70; p[0] = 0.15; p[3] = 0.10
-        elif code == 1:    # Settlement — may survive or become ruin
-            p[1] = 0.50; p[3] = 0.30; p[0] = 0.10
-        elif code == 2:    # Port
-            p[2] = 0.45; p[1] = 0.25; p[3] = 0.20
-        elif code == 3:    # Ruin — reclaimed or stays
-            p[3] = 0.40; p[4] = 0.25; p[0] = 0.25
-        elif code == 0:    # Empty
-            p[0] = 0.50; p[4] = 0.30; p[3] = 0.10
-        else:              # Unknown code — treat as empty
-            p[0] = 0.50; p[4] = 0.30; p[3] = 0.10
-        p = np.maximum(p, 0.01)
-        return p / p.sum()
 
     predictions: Dict[int, np.ndarray] = {}
 
     for seed_index in range(seeds_count):
         init_grid = np.asarray(initial_states[seed_index]["grid"], dtype=np.int64)
         seed_counts = counts[seed_index]
-        sample_totals = seed_counts.sum(axis=2)
+        # FIX 12: slice to CLASS_COUNT before summing
+        sample_totals = seed_counts[:, :, :CLASS_COUNT].sum(axis=2)
         observed_mask = sample_totals > 0
 
         _, has_port_map, near_settlement = compute_settlement_maps(
@@ -728,39 +672,47 @@ def build_predictions(
         coastal[-2:, :] = True
         coastal[:, :2] = True
         coastal[:, -2:] = True
+        coastal |= init_grid == 2
 
         seed_pred = np.zeros((height, width, CLASS_COUNT), dtype=np.float64)
+        seed_settlement_snapshots = settlements_by_seed.get(seed_index, [])
 
         for y in range(height):
             for x in range(width):
-                init_code = int(init_grid[y, x])
+                init_class = int(init_grid[y, x])
+                # FIX 8: slice cell_counts to CLASS_COUNT
                 cell_counts = seed_counts[y, x, :CLASS_COUNT].astype(np.float64)
                 n_obs = int(cell_counts.sum())
 
                 if n_obs > 0:
-                    # Directly observed — use empirical distribution
                     empirical = cell_counts / cell_counts.sum()
                     mode = int(np.argmax(empirical))
                     dist = np.full(CLASS_COUNT, 0.10 / (CLASS_COUNT - 1), dtype=np.float64)
                     dist[mode] = 0.90
+
                     if n_obs > 1:
                         blend = min(0.85, 0.30 + 0.10 * (n_obs - 1))
                         dist = (1.0 - blend) * dist + blend * empirical
+
                     seed_pred[y, x] = dist
                     continue
 
-                # Unobserved — use terrain-aware prior
-                dist = base_dist_for_code(init_code)
+                if init_class == 5:
+                    dist = np.full(CLASS_COUNT, 0.08 / (CLASS_COUNT - 1), dtype=np.float64)
+                    dist[5] = 0.92
+                    seed_pred[y, x] = dist
+                    continue
 
-                # Blend with learned transition matrix if available
-                if global_transition is not None and init_code < CLASS_COUNT:
-                    dist = 0.5 * dist + 0.5 * global_transition[init_code]
+                # FIX 9: guard against unknown terrain codes >= CLASS_COUNT
+                if init_class < CLASS_COUNT:
+                    dist = global_transition[init_class].copy()
+                else:
+                    dist = global_prior.copy()
 
-                # Settlement proximity boosts
-                if init_code in (1, 2):
+                if init_class in (1, 2):
                     dist[1] += 0.30
                     dist[3] += 0.20
-                    if init_code == 2 or has_port_map[y, x]:
+                    if init_class == 2 or has_port_map[y, x]:
                         dist[2] += 0.10
 
                 if near_settlement[y, x]:
@@ -770,22 +722,22 @@ def build_predictions(
                 if coastal[y, x]:
                     dist[2] += 0.05
 
-                # Forest spread
-                if init_code == 0 and forest_adj[y, x]:
+                if init_class == 4:
+                    forest_pref = np.array([0.10, 0.02, 0.01, 0.07, 0.75, 0.05], dtype=np.float64)
+                    dist = 0.55 * dist + 0.45 * forest_pref
+
+                if init_class == 0 and forest_adj[y, x]:
                     dist[4] += 0.15
 
-                # Ruin reclamation
-                if init_code == 3:
+                if init_class == 3:
                     dist[4] += 0.10
                     dist[0] += 0.10
 
-                # Mountains never appear on non-mountain cells
-                if init_code != 5:
-                    dist[5] *= 0.10
+                dist[5] *= 0.35
 
                 seed_pred[y, x] = dist
 
-        # Hidden-parameter-driven adjustment for unobserved cells
+        # Hidden-parameter-driven adjustment pass.
         unobserved_mask = ~observed_mask
         if faction_aggression > 0.0:
             conflict_mask = near_settlement & unobserved_mask
@@ -806,8 +758,7 @@ def build_predictions(
 
         seed_pred = np.maximum(seed_pred, 0.0)
 
-        # Incorporate observed settlement alive/dead outcomes
-        seed_settlement_snapshots = settlements_by_seed.get(seed_index, [])
+        # Incorporate observed settlement outcomes from simulation snapshots.
         for snapshot in seed_settlement_snapshots:
             settlements_snapshot = snapshot.get("settlements", [])
             if not isinstance(settlements_snapshot, list):
@@ -821,8 +772,10 @@ def build_predictions(
                     continue
                 if not (0 <= sx < width and 0 <= sy < height):
                     continue
+
                 alive = bool(s.get("alive", True))
                 s_has_port = bool(s.get("has_port", False))
+
                 if alive:
                     seed_pred[sy, sx, 1] += 0.5
                     if s_has_port:
@@ -830,9 +783,10 @@ def build_predictions(
                 else:
                     seed_pred[sy, sx, 3] += 0.5
                     seed_pred[sy, sx, 1] -= 0.2
+
                 seed_pred[sy, sx] = np.maximum(seed_pred[sy, sx], 0.0)
 
-        # Spatial smoothing for unobserved cells
+        # Spatial smoothing for unobserved cells.
         for c in range(CLASS_COUNT):
             blurred = gaussian_filter(seed_pred[:, :, c], sigma=1.5)
             seed_pred[:, :, c] = np.where(
@@ -841,7 +795,7 @@ def build_predictions(
                 0.65 * seed_pred[:, :, c] + 0.35 * blurred,
             )
 
-        # Mandatory floor and renormalization
+        # Mandatory floor and renormalization.
         seed_pred = np.maximum(seed_pred, 0.01)
         seed_pred = seed_pred / seed_pred.sum(axis=2, keepdims=True)
 
@@ -852,17 +806,20 @@ def build_predictions(
 
         total_cells = width * height
         observed_cells = int(observed_mask.sum())
-        coverage = 100.0 * observed_cells / float(total_cells)
-        alive_count = sum(
-            1 for snap in seed_settlement_snapshots
-            for s in snap.get("settlements", [])
-            if isinstance(s, dict) and bool(s.get("alive", True))
-        )
-        dead_count = sum(
-            1 for snap in seed_settlement_snapshots
-            for s in snap.get("settlements", [])
-            if isinstance(s, dict) and not bool(s.get("alive", True))
-        )
+        coverage = 100.0 * observed_cells / float(total_cells) if total_cells else 0.0
+        alive_count = 0
+        dead_count = 0
+        for snapshot in seed_settlement_snapshots:
+            settlements_snapshot = snapshot.get("settlements", [])
+            if not isinstance(settlements_snapshot, list):
+                continue
+            for s in settlements_snapshot:
+                if not isinstance(s, dict):
+                    continue
+                if bool(s.get("alive", True)):
+                    alive_count += 1
+                else:
+                    dead_count += 1
         print(
             f"Seed {seed_index}: {coverage:.2f}% observed, "
             f"{len(seed_settlement_snapshots)} settlement snapshots, "
@@ -870,6 +827,7 @@ def build_predictions(
         )
 
     return predictions
+
 
 def validate_prediction_tensor(pred: np.ndarray, seed_index: int) -> None:
     if pred.ndim != 3 or pred.shape[2] != CLASS_COUNT:
@@ -889,14 +847,7 @@ def validate_prediction_tensor(pred: np.ndarray, seed_index: int) -> None:
 
 def summarize_submit_response(response: Any) -> str:
     if isinstance(response, dict):
-        keys = [
-            "status",
-            "message",
-            "score",
-            "seed_score",
-            "total_score",
-            "rank",
-        ]
+        keys = ["status", "message", "score", "seed_score", "total_score", "rank"]
         parts = [f"{k}={response[k]}" for k in keys if k in response]
         if parts:
             return ", ".join(parts)
@@ -1032,8 +983,6 @@ def main() -> None:
         if args.submit_only:
             predictions = load_predictions_from_disk(seeds_count)
             statuses = submit_all(session, round_id, predictions, dry_run=args.dry_run)
-
-            # submit-only mode cannot infer query coverage from API calls this run.
             empty_observations = initialize_observations(width, height, seeds_count)
             print_summary(
                 width=width,
