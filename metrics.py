@@ -266,7 +266,6 @@ class MetricsLogger:
         self,
         round_id: str,
         predictions: dict[int, np.ndarray],
-        initial_states: list[dict],
         store,
     ) -> None:
         entry = self._data.get(round_id, {})
@@ -275,9 +274,9 @@ class MetricsLogger:
             argmax = pred.argmax(axis=2)
             class_counts = {CLASS_NAMES[c]: int((argmax == c).sum()) for c in range(N_CLASSES)}
             avg_conf = float(pred.max(axis=2).mean())
-            avg_entropy = float(np.mean([-np.sum(pred[y, x] * np.log(pred[y, x] + 1e-12))
-                                         for y in range(store.height)
-                                         for x in range(store.width)]))
+            safe_pred = np.maximum(pred.astype(np.float64), PROB_FLOOR)
+            safe_pred = safe_pred / safe_pred.sum(axis=2, keepdims=True)
+            avg_entropy = float(np.mean(-np.sum(safe_pred * np.log(safe_pred), axis=2)))
             pred_summary[str(seed)] = {
                 "class_counts": class_counts,
                 "avg_confidence": round(avg_conf, 4),

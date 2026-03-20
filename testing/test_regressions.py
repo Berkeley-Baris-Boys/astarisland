@@ -15,6 +15,8 @@ PROJECT_ROOT = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(PROJECT_ROOT))
 
 from api import APIError
+from api import AstarAPI
+import main as main_module
 from main import run_query_phase, load_active_round
 from metrics import MetricsLogger, fetch_and_log_analysis
 from predictor import build_predictions
@@ -61,6 +63,24 @@ class _CaptureLogger:
 
     def log_ground_truth(self, round_id, ground_truth, predictions):
         self.logged = (round_id, ground_truth, predictions)
+
+
+class _HistoryOnlyLogger:
+    def __init__(self) -> None:
+        self.called = False
+
+    def print_cross_round_summary(self) -> None:
+        self.called = True
+
+
+class _FakeResponse:
+    def __init__(self, status_code: int, text: str = "", content: bytes = b"") -> None:
+        self.status_code = status_code
+        self.text = text
+        self.content = content
+
+    def json(self):
+        raise ValueError("not json")
 
 
 class RegressionTests(unittest.TestCase):
@@ -161,6 +181,30 @@ class RegressionTests(unittest.TestCase):
                     dynamics=SimpleNamespace(),
                     verbose=False,
                 )
+
+    def test_show_history_does_not_require_token(self):
+        logger = _HistoryOnlyLogger()
+        with patch.dict(os.environ, {}, clear=True):
+            with patch.object(sys, "argv", ["main.py", "--show-history"]):
+                with patch("main.MetricsLogger", return_value=logger):
+                    with patch("main.AstarAPI") as mock_api:
+                        main_module.main()
+        self.assertTrue(logger.called)
+        mock_api.assert_not_called()
+
+    def test_api_request_handles_empty_success_response(self):
+        api = AstarAPI(token="dummy-token", base_url="https://example.invalid")
+        with patch.object(api._session, "request", return_value=_FakeResponse(204)):
+            result = api._request("GET", "/empty")
+        self.assertEqual(result, {})
+
+    def test_api_request_raises_specific_error_after_final_429(self):
+        api = AstarAPI(token="dummy-token", base_url="https://example.invalid")
+        resp = _FakeResponse(429, text="too many requests", content=b"too many requests")
+        with patch.object(api._session, "request", return_value=resp):
+            with self.assertRaises(APIError) as ctx:
+                api._request("GET", "/rate", max_retries=1)
+        self.assertIn("HTTP 429", str(ctx.exception))
 
 
 if __name__ == "__main__":

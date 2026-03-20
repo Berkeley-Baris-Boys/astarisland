@@ -254,16 +254,17 @@ def main() -> None:
     parser.add_argument("--show-history",   action="store_true", help="Print cross-round summary")
     args = parser.parse_args()
 
-    token = args.token or os.getenv("ASTAR_TOKEN") or os.getenv("ASTAR_ISLAND_TOKEN")
-    if not token:
-        parser.error("Set ASTAR_TOKEN env var or pass --token.")
-
-    api    = AstarAPI(token)
     logger = MetricsLogger()
 
     if args.show_history:
         logger.print_cross_round_summary()
         return
+
+    token = args.token or os.getenv("ASTAR_TOKEN") or os.getenv("ASTAR_ISLAND_TOKEN")
+    if not token:
+        parser.error("Set ASTAR_TOKEN env var or pass --token.")
+
+    api = AstarAPI(token)
 
     # Load round
     try:
@@ -328,7 +329,7 @@ def main() -> None:
     print("\nBuilding predictions...")
     predictions = build_predictions(initial_states, store, dynamics, verbose=True)
     save_predictions(predictions)
-    logger.log_predictions(round_id, predictions, initial_states, store)
+    logger.log_predictions(round_id, predictions, store)
 
     # Self-check
     if args.self_check or args.check_only:

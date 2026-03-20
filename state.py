@@ -392,18 +392,16 @@ class ObservationStore:
     # ── Coverage & statistics ─────────────────────────────────────────────────
 
     def coverage(self, seed: int) -> float:
-        total = self.width * self.height
-        seen = sum(1 for row in self.latest[seed] for v in row if v is not None)
+        samples = self.counts[seed].sum(axis=2)
+        total = samples.size
+        if total == 0:
+            return 0.0
+        seen = int((samples > 0).sum())
         return seen / total
 
     def observed_mask(self, seed: int) -> np.ndarray:
         """Boolean H×W mask: True where cell has been observed at least once."""
-        mask = np.zeros((self.height, self.width), dtype=bool)
-        for y, row in enumerate(self.latest[seed]):
-            for x, v in enumerate(row):
-                if v is not None:
-                    mask[y, x] = True
-        return mask
+        return self.counts[seed].sum(axis=2) > 0
 
     def n_samples(self, seed: int) -> np.ndarray:
         """H×W int array of how many times each cell has been sampled."""

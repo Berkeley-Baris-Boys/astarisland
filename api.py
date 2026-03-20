@@ -59,6 +59,8 @@ class AstarAPI:
                 if "budget" in text.lower() or "exhausted" in text.lower() or "50/50" in text:
                     raise BudgetExhausted(f"Query budget exhausted: {text}")
                 # Rate-limited — back off exponentially
+                if attempt + 1 >= max_retries:
+                    raise APIError(f"HTTP 429 on {method} {path}: {text[:400]}")
                 wait = 0.5 * (2 ** attempt)
                 print(f"  Rate-limited (429), waiting {wait:.1f}s...")
                 time.sleep(wait)
@@ -74,10 +76,15 @@ class AstarAPI:
             if resp.status_code >= 400:
                 raise APIError(f"HTTP {resp.status_code} on {method} {path}: {resp.text[:400]}")
 
+            if not resp.content or not (resp.text or "").strip():
+                return {}
             try:
                 return resp.json()
             except ValueError as exc:
-                raise APIError(f"JSON parse error on {method} {path}: {exc}") from exc
+                raise APIError(
+                    f"JSON parse error on {method} {path}: {exc}; "
+                    f"response={resp.text[:200]!r}"
+                ) from exc
 
         raise APIError(f"All {max_retries} attempts failed for {method} {path}")
 
