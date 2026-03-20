@@ -39,8 +39,12 @@ ROLLOUT_MAX_WEIGHT = 0.26
 EMPIRICAL_FINAL_SCALE = np.array([1.03, 0.97, 0.45, 0.40, 1.08, 0.85], dtype=np.float64)
 EMPIRICAL_SETTLEMENT_SMOOTH_ALPHA = 0.60
 EMPIRICAL_SETTLEMENT_SMOOTH_SIGMA = 1.4
+EMPIRICAL_RUIN_SMOOTH_ALPHA = 0.55
+EMPIRICAL_RUIN_SMOOTH_SIGMA = 1.6
 EMPIRICAL_FOREST_SMOOTH_ALPHA = 0.15
 EMPIRICAL_FOREST_SMOOTH_SIGMA = 0.8
+EMPIRICAL_GLOBAL_SMOOTH_ALPHA = 0.08
+EMPIRICAL_GLOBAL_SMOOTH_SIGMA = 1.2
 
 try:
     from testing.simulator import estimate_params_from_observations, monte_carlo
@@ -467,8 +471,16 @@ def _build_empirical_constrained_predictions(
             init_grid,
             settlement_alpha=EMPIRICAL_SETTLEMENT_SMOOTH_ALPHA,
             settlement_sigma=EMPIRICAL_SETTLEMENT_SMOOTH_SIGMA,
+            ruin_alpha=EMPIRICAL_RUIN_SMOOTH_ALPHA,
+            ruin_sigma=EMPIRICAL_RUIN_SMOOTH_SIGMA,
             forest_alpha=EMPIRICAL_FOREST_SMOOTH_ALPHA,
             forest_sigma=EMPIRICAL_FOREST_SMOOTH_SIGMA,
+        )
+        pred = _apply_global_probability_smoothing(
+            pred,
+            init_grid,
+            alpha=EMPIRICAL_GLOBAL_SMOOTH_ALPHA,
+            sigma=EMPIRICAL_GLOBAL_SMOOTH_SIGMA,
         )
         _force_static_cells(pred, init_grid)
         pred = np.maximum(pred, PROB_FLOOR)
@@ -879,6 +891,8 @@ def _apply_semantic_class_smoothing(
     *,
     settlement_alpha: float,
     settlement_sigma: float,
+    ruin_alpha: float,
+    ruin_sigma: float,
     forest_alpha: float,
     forest_sigma: float,
 ) -> np.ndarray:
@@ -892,6 +906,7 @@ def _apply_semantic_class_smoothing(
         out[:, :, 2],
         np.maximum(settlement_total, 1e-9),
     )
+    ruin = out[:, :, 3]
     forest = out[:, :, 4]
 
     if settlement_alpha > 0.0:
@@ -916,9 +931,49 @@ def _apply_semantic_class_smoothing(
             forest_alpha * forest_blur
         )
 
+    if ruin_alpha > 0.0:
+        ruin_blur = _masked_gaussian_blur(
+            ruin,
+            dynamic_mask,
+            ruin_sigma,
+        )
+        ruin = (
+            (1.0 - ruin_alpha) * ruin +
+            ruin_alpha * ruin_blur
+        )
+
     out[:, :, 2] = settlement_total * port_ratio
     out[:, :, 1] = np.maximum(settlement_total - out[:, :, 2], PROB_FLOOR)
+    out[:, :, 3] = np.maximum(ruin, PROB_FLOOR)
     out[:, :, 4] = np.maximum(forest, PROB_FLOOR)
+    out = np.maximum(out, PROB_FLOOR)
+    out /= out.sum(axis=2, keepdims=True)
+    return out
+
+
+def _apply_global_probability_smoothing(
+    pred: np.ndarray,
+    init_grid: np.ndarray,
+    *,
+    alpha: float,
+    sigma: float,
+) -> np.ndarray:
+    if alpha <= 0.0:
+        return pred
+
+    dynamic_mask = ~np.isin(init_grid, [OCEAN_CODE, MOUNTAIN_CODE])
+    if not dynamic_mask.any():
+        return pred
+
+    out = pred.astype(np.float64, copy=True)
+    blurred = np.zeros_like(out)
+    for c in range(N_CLASSES):
+        blurred[:, :, c] = _masked_gaussian_blur(
+            out[:, :, c],
+            dynamic_mask,
+            sigma,
+        )
+    out = (1.0 - alpha) * out + alpha * blurred
     out = np.maximum(out, PROB_FLOOR)
     out /= out.sum(axis=2, keepdims=True)
     return out
