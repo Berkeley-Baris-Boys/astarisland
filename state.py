@@ -18,7 +18,7 @@ import numpy as np
 from config import (
     CODE_TO_CLASS, N_CLASSES, TOTAL_BUDGET, MAX_VIEWPORT,
     OBSERVATIONS_FILE, OCEAN_CODE, MOUNTAIN_CODE,
-    SETTLEMENT_CODE, PORT_CODE, FOREST_CODE, PLAINS_CODE,
+    SETTLEMENT_CODE, PORT_CODE, RUIN_CODE, FOREST_CODE, PLAINS_CODE,
 )
 
 
@@ -446,6 +446,10 @@ class ObservationStore:
         Pick the viewport with the highest average empirical cell entropy for
         re-sampling.  Penalise already-visited viewports to encourage coverage
         of the full variance landscape.
+
+        Single-sample cells that were observed as Settlement, Port, or Ruin
+        receive a priority bonus — those are the cells with the highest true
+        uncertainty and the most to gain from a second independent observation.
         """
         obs_mask = self.observed_mask(seed)
         cnt = self.counts[seed]   # H×W×6
@@ -458,6 +462,26 @@ class ObservationStore:
             entropy_map = -np.sum(np.where(p > 0, p * np.log(p + 1e-12), 0), axis=2)
         # Unobserved cells get baseline entropy
         entropy_map[~obs_mask] = np.log(N_CLASSES)
+
+        # Resample bonus: single-observation cells that showed a dynamic class
+        # (Settlement/Port/Ruin) carry the most unresolved uncertainty, so boost
+        # their apparent entropy to attract reserve queries.
+        _RESAMPLE_BONUS = {
+            SETTLEMENT_CODE: 0.50,
+            PORT_CODE:       0.60,
+            RUIN_CODE:       0.45,
+        }
+        n_obs = cnt.sum(axis=2)  # H×W
+        single_mask = (n_obs == 1)
+        if single_mask.any():
+            richness = np.zeros((self.height, self.width), dtype=np.float32)
+            for y, row in enumerate(self.latest[seed]):
+                for x, val in enumerate(row):
+                    if val is not None and single_mask[y, x]:
+                        bonus = _RESAMPLE_BONUS.get(int(val), 0.0)
+                        if bonus > 0.0:
+                            richness[y, x] = bonus
+            entropy_map = entropy_map + richness
 
         best_score, best_vp = -1.0, viewports[0]
         for vp in viewports:
