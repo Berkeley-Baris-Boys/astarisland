@@ -3,12 +3,10 @@ Prediction builder.
 
 Primary strategy:
 
-1. Build both an empirical-constrained predictor and a hybrid rollout-backed
-   predictor.
-2. Compare them with a smoothed holdout score that treats sparse cell
-   observations as noisy samples from an underlying distribution.
-3. Return the better-calibrated predictor for the current round.
-4. Fall back to heuristics if the stronger paths fail.
+1. Build an empirical-constrained predictor from current-round observations.
+2. Smooth the settlement and forest fields to better match the spatially
+   coherent ground-truth probability maps.
+3. Fall back to hybrid rollout or heuristics if the empirical path fails.
 """
 from __future__ import annotations
 
@@ -39,8 +37,10 @@ ROLLOUT_MC_RUNS = 80
 ROLLOUT_BASE_SEED = 20260320
 ROLLOUT_MAX_WEIGHT = 0.26
 EMPIRICAL_FINAL_SCALE = np.array([1.03, 0.97, 0.45, 0.40, 1.08, 0.85], dtype=np.float64)
-MODEL_SELECTION_TAU = 2.0
-MODEL_SELECTION_SEEDS = (2026, 2027, 2028)
+EMPIRICAL_SETTLEMENT_SMOOTH_ALPHA = 0.60
+EMPIRICAL_SETTLEMENT_SMOOTH_SIGMA = 1.4
+EMPIRICAL_FOREST_SMOOTH_ALPHA = 0.15
+EMPIRICAL_FOREST_SMOOTH_SIGMA = 0.8
 
 try:
     from testing.simulator import estimate_params_from_observations, monte_carlo
@@ -65,13 +65,12 @@ def build_predictions(
     """
     Build per-seed HxWx6 probability tensors.
 
-    Build both main predictor families when available and select between them
-    using a smoothed holdout score. This avoids raw sample-fit metrics pushing
-    the model toward overly sharp rollout predictions.
+    Preferred path is the empirical constrained predictor with semantic
+    settlement/forest smoothing. Hybrid rollout and heuristics remain as
+    fallbacks when that path fails.
     """
-    empirical_predictions: dict[int, np.ndarray] | None = None
     try:
-        empirical_predictions = _build_empirical_constrained_predictions(
+        return _build_empirical_constrained_predictions(
             initial_states, store, dynamics, verbose=verbose
         )
     except Exception as exc:
@@ -81,114 +80,18 @@ def build_predictions(
                 f"falling back to hybrid: {exc}"
             )
 
-    hybrid_predictions: dict[int, np.ndarray] | None = None
     if estimate_params_from_observations is not None and monte_carlo is not None:
         try:
-            hybrid_predictions = _build_hybrid_predictions(
+            return _build_hybrid_predictions(
                 initial_states, store, dynamics, verbose=verbose
             )
         except Exception as exc:
             if verbose:
                 print(f"Hybrid predictor failed, falling back to heuristics: {exc}")
 
-    if empirical_predictions is not None and hybrid_predictions is not None:
-        return _select_prediction_candidate(
-            store,
-            {
-                "empirical": empirical_predictions,
-                "hybrid": hybrid_predictions,
-            },
-            verbose=verbose,
-        )
-
-    if empirical_predictions is not None:
-        return empirical_predictions
-
-    if hybrid_predictions is not None:
-        return hybrid_predictions
-
     return _build_heuristic_predictions(
         initial_states, store, dynamics, verbose=verbose
     )
-
-
-def _select_prediction_candidate(
-    store: ObservationStore,
-    candidates: dict[str, dict[int, np.ndarray]],
-    *,
-    verbose: bool = True,
-) -> dict[int, np.ndarray]:
-    scores = {
-        name: _smoothed_holdout_score(
-            store,
-            preds,
-            tau=MODEL_SELECTION_TAU,
-            random_seeds=MODEL_SELECTION_SEEDS,
-        )
-        for name, preds in candidates.items()
-    }
-    best_name = max(scores, key=scores.get)
-    if verbose:
-        parts = ", ".join(
-            f"{name}={scores[name]:.1f}" for name in sorted(scores.keys())
-        )
-        print(
-            "Model selection (smoothed holdout): "
-            f"{parts}; chose {best_name}"
-        )
-    return candidates[best_name]
-
-
-def _smoothed_holdout_score(
-    store: ObservationStore,
-    predictions: dict[int, np.ndarray],
-    *,
-    tau: float,
-    random_seeds: tuple[int, ...],
-    holdout_fraction: float = 0.15,
-) -> float:
-    global_counts = np.zeros(N_CLASSES, dtype=np.float64)
-    for seed in range(store.seeds_count):
-        global_counts += store.counts[seed].sum(axis=(0, 1))
-    if global_counts.sum() <= 0:
-        global_counts += 1.0
-    global_prior = safe_normalize(global_counts)
-
-    approx_scores: list[float] = []
-    for rs in random_seeds:
-        rng = np.random.default_rng(rs)
-        kls: list[float] = []
-        for seed in range(store.seeds_count):
-            counts = store.counts[seed]
-            n_samp = counts.sum(axis=2)
-            obs_indices = np.argwhere(n_samp > 0)
-            if len(obs_indices) == 0:
-                continue
-            n_hold = max(1, int(round(len(obs_indices) * holdout_fraction)))
-            sel = obs_indices[rng.choice(len(obs_indices), n_hold, replace=False)]
-            for y, x in sel.tolist():
-                empirical = counts[y, x].astype(np.float64)
-                total = float(empirical.sum())
-                if total <= 0:
-                    continue
-                p = (empirical + tau * global_prior) / (total + tau)
-                q = np.maximum(predictions[seed][y, x].astype(np.float64), PROB_FLOOR)
-                q /= q.sum()
-                kls.append(
-                    float(
-                        np.sum(
-                            p * (
-                                np.log(np.maximum(p, 1e-9)) -
-                                np.log(np.maximum(q, 1e-9))
-                            )
-                        )
-                    )
-                )
-        if kls:
-            mean_kl = float(np.mean(kls))
-            approx_scores.append(float(100.0 * math.exp(-3.0 * mean_kl)))
-
-    return float(np.mean(approx_scores)) if approx_scores else float("-inf")
 
 
 def _build_hybrid_predictions(
@@ -558,6 +461,14 @@ def _build_empirical_constrained_predictions(
         pred = _apply_final_class_calibration(
             pred,
             scale=EMPIRICAL_FINAL_SCALE,
+        )
+        pred = _apply_semantic_class_smoothing(
+            pred,
+            init_grid,
+            settlement_alpha=EMPIRICAL_SETTLEMENT_SMOOTH_ALPHA,
+            settlement_sigma=EMPIRICAL_SETTLEMENT_SMOOTH_SIGMA,
+            forest_alpha=EMPIRICAL_FOREST_SMOOTH_ALPHA,
+            forest_sigma=EMPIRICAL_FOREST_SMOOTH_SIGMA,
         )
         _force_static_cells(pred, init_grid)
         pred = np.maximum(pred, PROB_FLOOR)
@@ -945,6 +856,72 @@ def _spatial_smooth(
             pred[:, :, c],
         )
     return pred
+
+
+def _masked_gaussian_blur(
+    field: np.ndarray,
+    mask: np.ndarray,
+    sigma: float,
+) -> np.ndarray:
+    try:
+        from scipy.ndimage import gaussian_filter
+    except ImportError:
+        return field
+
+    weight = gaussian_filter(mask.astype(np.float64), sigma=sigma)
+    numer = gaussian_filter((field * mask).astype(np.float64), sigma=sigma)
+    return np.divide(numer, np.maximum(weight, 1e-9))
+
+
+def _apply_semantic_class_smoothing(
+    pred: np.ndarray,
+    init_grid: np.ndarray,
+    *,
+    settlement_alpha: float,
+    settlement_sigma: float,
+    forest_alpha: float,
+    forest_sigma: float,
+) -> np.ndarray:
+    dynamic_mask = ~np.isin(init_grid, [OCEAN_CODE, MOUNTAIN_CODE])
+    if not dynamic_mask.any():
+        return pred
+
+    out = pred.astype(np.float64, copy=True)
+    settlement_total = out[:, :, 1] + out[:, :, 2]
+    port_ratio = np.divide(
+        out[:, :, 2],
+        np.maximum(settlement_total, 1e-9),
+    )
+    forest = out[:, :, 4]
+
+    if settlement_alpha > 0.0:
+        settle_blur = _masked_gaussian_blur(
+            settlement_total,
+            dynamic_mask,
+            settlement_sigma,
+        )
+        settlement_total = (
+            (1.0 - settlement_alpha) * settlement_total +
+            settlement_alpha * settle_blur
+        )
+
+    if forest_alpha > 0.0:
+        forest_blur = _masked_gaussian_blur(
+            forest,
+            dynamic_mask,
+            forest_sigma,
+        )
+        forest = (
+            (1.0 - forest_alpha) * forest +
+            forest_alpha * forest_blur
+        )
+
+    out[:, :, 2] = settlement_total * port_ratio
+    out[:, :, 1] = np.maximum(settlement_total - out[:, :, 2], PROB_FLOOR)
+    out[:, :, 4] = np.maximum(forest, PROB_FLOOR)
+    out = np.maximum(out, PROB_FLOOR)
+    out /= out.sum(axis=2, keepdims=True)
+    return out
 
 
 def _apply_final_class_calibration(
