@@ -6,8 +6,9 @@ Primary strategy:
 1. Build an empirical-constrained predictor from current-round observations.
 2. Smooth the settlement and ruin fields to better match the spatially
    coherent ground-truth probability maps.
-3. On fully observed rounds, blend in a smoothed empirical class field.
-4. Re-anchor observed rare-class cells so smoothing does not erase them.
+3. On fully observed rounds, calibrate noisy single-sample cells against the
+   repeated cells, then denoise the calibrated empirical field.
+4. Re-anchor observed rare-class cells on partial-coverage rounds only.
 5. Fall back to hybrid rollout or heuristics if the empirical path fails.
 """
 from __future__ import annotations
@@ -24,6 +25,7 @@ from config import (
     MOUNTAIN_CODE,
     SETTLEMENT_CODE,
     PORT_CODE,
+    RUIN_CODE,
 )
 from state import (
     ObservationStore,
@@ -47,11 +49,23 @@ EMPIRICAL_FOREST_SMOOTH_ALPHA = 0.15
 EMPIRICAL_FOREST_SMOOTH_SIGMA = 0.8
 EMPIRICAL_GLOBAL_SMOOTH_ALPHA = 0.08
 EMPIRICAL_GLOBAL_SMOOTH_SIGMA = 1.2
-EMPIRICAL_FULL_COVERAGE_FIELD_SIGMA = 2.2
-EMPIRICAL_FULL_COVERAGE_FIELD_ALPHA_SINGLE = 0.44
-EMPIRICAL_FULL_COVERAGE_FIELD_ALPHA_DOUBLE = 0.24
-EMPIRICAL_FULL_COVERAGE_FIELD_ALPHA_MULTI = 0.12
-EMPIRICAL_FULL_COVERAGE_FIELD_CONF_BIAS = 0.05
+EMPIRICAL_FULL_COVERAGE_FIELD_SIGMA = 10.0
+EMPIRICAL_FULL_COVERAGE_FIELD_ALPHA_SINGLE = 0.70
+EMPIRICAL_FULL_COVERAGE_FIELD_ALPHA_DOUBLE = 0.40
+EMPIRICAL_FULL_COVERAGE_FIELD_ALPHA_MULTI = 0.25
+EMPIRICAL_FULL_COVERAGE_FIELD_CONF_BIAS = 0.02
+EMPIRICAL_FULL_COVERAGE_TEMPLATE_ALPHA_SINGLE = 0.24
+EMPIRICAL_FULL_COVERAGE_TEMPLATE_ALPHA_DOUBLE = 0.06
+EMPIRICAL_FULL_COVERAGE_TEMPLATE_ALPHA_MULTI = 0.00
+EMPIRICAL_FULL_COVERAGE_ITER_SIGMA = 5.0
+EMPIRICAL_FULL_COVERAGE_ITER_FOREST_SIGMA = 3.0
+EMPIRICAL_FULL_COVERAGE_ITER_TAU = 1.4
+EMPIRICAL_FULL_COVERAGE_ITER_STEPS = 5
+EMPIRICAL_FULL_COVERAGE_ITER_SETTLE_BOOST = 1.15
+EMPIRICAL_FULL_COVERAGE_ITER_RUIN_BOOST = 1.10
+EMPIRICAL_FULL_COVERAGE_BLEND_SINGLE = 0.60
+EMPIRICAL_FULL_COVERAGE_BLEND_DOUBLE = 0.20
+EMPIRICAL_FULL_COVERAGE_BLEND_MULTI = 0.20
 EMPIRICAL_OBS_SETTLEMENT_ANCHOR_BASE = 0.10
 EMPIRICAL_OBS_SETTLEMENT_ANCHOR_BONUS = 0.20
 EMPIRICAL_OBS_PORT_RUIN_ANCHOR_BASE = 0.20
@@ -371,6 +385,9 @@ def _build_empirical_constrained_predictions(
         bool((store.counts[s].sum(axis=2) > 0).all())
         for s in range(store.seeds_count)
     )
+    full_coverage_model = None
+    if fully_observed_round:
+        full_coverage_model = _build_full_coverage_calibration_model(store, contexts)
 
     for seed in range(store.seeds_count):
         context = contexts[seed]
@@ -498,24 +515,38 @@ def _build_empirical_constrained_predictions(
             sigma=EMPIRICAL_GLOBAL_SMOOTH_SIGMA,
         )
         if fully_observed_round:
-            pred = _blend_smoothed_empirical_field(
-                pred,
+            wide_pred = _build_full_coverage_denoised_prediction(
                 counts,
                 init_grid,
+                context["coast"],
+                context["near_settle"],
                 sigma=EMPIRICAL_FULL_COVERAGE_FIELD_SIGMA,
                 alpha_single=EMPIRICAL_FULL_COVERAGE_FIELD_ALPHA_SINGLE,
                 alpha_double=EMPIRICAL_FULL_COVERAGE_FIELD_ALPHA_DOUBLE,
                 alpha_multi=EMPIRICAL_FULL_COVERAGE_FIELD_ALPHA_MULTI,
                 conf_bias=EMPIRICAL_FULL_COVERAGE_FIELD_CONF_BIAS,
+                template_model=full_coverage_model,
+                template_alpha_single=EMPIRICAL_FULL_COVERAGE_TEMPLATE_ALPHA_SINGLE,
+                template_alpha_double=EMPIRICAL_FULL_COVERAGE_TEMPLATE_ALPHA_DOUBLE,
+                template_alpha_multi=EMPIRICAL_FULL_COVERAGE_TEMPLATE_ALPHA_MULTI,
             )
-            pred = _reanchor_observed_dynamic_cells(
-                pred,
+            iterative_pred = _build_full_coverage_iterative_prediction(
                 counts,
                 init_grid,
-                settlement_base=EMPIRICAL_OBS_SETTLEMENT_ANCHOR_BASE,
-                settlement_bonus=EMPIRICAL_OBS_SETTLEMENT_ANCHOR_BONUS,
-                port_ruin_base=EMPIRICAL_OBS_PORT_RUIN_ANCHOR_BASE,
-                port_ruin_bonus=EMPIRICAL_OBS_PORT_RUIN_ANCHOR_BONUS,
+                sigma=EMPIRICAL_FULL_COVERAGE_ITER_SIGMA,
+                forest_sigma=EMPIRICAL_FULL_COVERAGE_ITER_FOREST_SIGMA,
+                tau=EMPIRICAL_FULL_COVERAGE_ITER_TAU,
+                steps=EMPIRICAL_FULL_COVERAGE_ITER_STEPS,
+                settlement_boost=EMPIRICAL_FULL_COVERAGE_ITER_SETTLE_BOOST,
+                ruin_boost=EMPIRICAL_FULL_COVERAGE_ITER_RUIN_BOOST,
+            )
+            pred = _blend_full_coverage_predictions(
+                wide_pred,
+                iterative_pred,
+                counts,
+                alpha_single=EMPIRICAL_FULL_COVERAGE_BLEND_SINGLE,
+                alpha_double=EMPIRICAL_FULL_COVERAGE_BLEND_DOUBLE,
+                alpha_multi=EMPIRICAL_FULL_COVERAGE_BLEND_MULTI,
             )
         _force_static_cells(pred, init_grid)
         pred = np.maximum(pred, PROB_FLOOR)
@@ -1067,36 +1098,179 @@ def _reanchor_observed_dynamic_cells(
     return out
 
 
-def _blend_smoothed_empirical_field(
-    pred: np.ndarray,
+def _build_full_coverage_calibration_model(
+    store: ObservationStore,
+    contexts: dict[int, dict[str, np.ndarray]],
+) -> dict[str, object]:
+    """
+    Learn how repeated cells denoise sparse observations in the current round.
+
+    The 50-query strategy gives every cell at least one sample, then spends the
+    spare budget on a handful of repeated windows. Those repeated cells are the
+    best supervision available for how a noisy 1x/2x empirical observation
+    should be corrected before spatial smoothing.
+    """
+    def _accumulate(
+        table: dict[tuple[int, ...], dict[str, object]],
+        key: tuple[int, ...],
+        dist: np.ndarray,
+        weight: float,
+    ) -> None:
+        entry = table.setdefault(key, {
+            "sum": np.zeros(N_CLASSES, dtype=np.float64),
+            "weight": 0.0,
+            "cells": 0,
+        })
+        entry["sum"] += weight * dist
+        entry["weight"] += weight
+        entry["cells"] += 1
+
+    full: dict[tuple[int, ...], dict[str, object]] = {}
+    mid: dict[tuple[int, ...], dict[str, object]] = {}
+    coarse: dict[tuple[int, ...], dict[str, object]] = {}
+    global_sum = np.zeros(N_CLASSES, dtype=np.float64)
+    global_weight = 0.0
+
+    for seed in range(store.seeds_count):
+        counts = store.counts[seed].astype(np.float64)
+        totals = counts.sum(axis=2)
+        empirical = np.divide(
+            counts,
+            totals[:, :, None],
+            out=np.zeros_like(counts, dtype=np.float64),
+            where=totals[:, :, None] > 0,
+        )
+        init_grid = contexts[seed]["grid"]
+        coast = contexts[seed]["coast"]
+        near_settle = contexts[seed]["near_settle"]
+        dynamic_mask = ~np.isin(init_grid, [OCEAN_CODE, MOUNTAIN_CODE])
+        majority = empirical.argmax(axis=2)
+
+        ys, xs = np.nonzero((totals >= 2.0) & dynamic_mask)
+        for y, x in zip(ys.tolist(), xs.tolist()):
+            target = empirical[y, x]
+            maj = int(majority[y, x])
+            init_code = int(init_grid[y, x])
+            weight = max(float(totals[y, x]) - 1.0, 1.0)
+            _accumulate(
+                full,
+                (init_code, maj, int(bool(coast[y, x])), int(bool(near_settle[y, x]))),
+                target,
+                weight,
+            )
+            _accumulate(mid, (init_code, maj), target, weight)
+            _accumulate(coarse, (maj,), target, weight)
+            global_sum += weight * target
+            global_weight += weight
+
+    def _finalize(table: dict[tuple[int, ...], dict[str, object]]) -> dict[tuple[int, ...], dict[str, object]]:
+        out: dict[tuple[int, ...], dict[str, object]] = {}
+        for key, entry in table.items():
+            weight = float(entry["weight"])
+            if weight <= 0.0:
+                continue
+            out[key] = {
+                "dist": safe_normalize(entry["sum"] / weight),
+                "cells": int(entry["cells"]),
+                "weight": weight,
+            }
+        return out
+
+    global_prior = safe_normalize(global_sum / max(global_weight, 1e-9))
+    return {
+        "full": _finalize(full),
+        "mid": _finalize(mid),
+        "coarse": _finalize(coarse),
+        "global": global_prior,
+    }
+
+
+def _lookup_full_coverage_template(
+    template_model: dict[str, object] | None,
+    *,
+    init_code: int,
+    majority_class: int,
+    is_coastal: bool,
+    near_settlement: bool,
+) -> tuple[np.ndarray | None, float]:
+    if template_model is None:
+        return None, 0.0
+    if majority_class not in (SETTLEMENT_CODE, PORT_CODE, RUIN_CODE):
+        return None, 0.0
+
+    full = template_model["full"]
+    mid = template_model["mid"]
+    coarse = template_model["coarse"]
+    global_prior = template_model["global"]
+
+    key_full = (init_code, majority_class, int(is_coastal), int(near_settlement))
+    entry = full.get(key_full)
+    if entry is not None and entry["cells"] >= 12:
+        strength = min(1.0, 0.55 + entry["cells"] / 60.0)
+        return entry["dist"], strength
+
+    key_mid = (init_code, majority_class)
+    entry = mid.get(key_mid)
+    if entry is not None and entry["cells"] >= 18:
+        strength = min(0.9, 0.40 + entry["cells"] / 110.0)
+        return entry["dist"], strength
+
+    key_coarse = (majority_class,)
+    entry = coarse.get(key_coarse)
+    if entry is not None and entry["cells"] >= 28:
+        strength = min(0.75, 0.30 + entry["cells"] / 180.0)
+        return entry["dist"], strength
+
+    return global_prior, 0.18
+
+
+def _build_full_coverage_denoised_prediction(
     counts: np.ndarray,
     init_grid: np.ndarray,
+    coast: np.ndarray,
+    near_settlement: np.ndarray,
     *,
     sigma: float,
     alpha_single: float,
     alpha_double: float,
     alpha_multi: float,
     conf_bias: float,
+    template_model: dict[str, object] | None,
+    template_alpha_single: float,
+    template_alpha_double: float,
+    template_alpha_multi: float,
 ) -> np.ndarray:
     """
-    Convert the observed empirical map into a smooth class field and blend it.
+    Build a denoised probability field directly from full-round observations.
 
     On full-coverage rounds, every cell has at least one direct observation.
-    The raw per-cell empirical distributions are noisy, but after confidence-
-    weighted spatial smoothing they form a strong non-parametric prior that
-    better matches coherent GT blobs.
+    The raw per-cell empirical distributions are noisy, so this path first
+    calibrates them against the repeated cells from the same round and then
+    mixes the result with a wide confidence-weighted spatial field. Cells with
+    only one sample get the strongest denoising; cells with repeated samples
+    stay closer to their own empirical counts.
     """
     if max(alpha_single, alpha_double, alpha_multi) <= 0.0:
-        return pred
+        return np.divide(
+            counts,
+            np.maximum(counts.sum(axis=2, keepdims=True), 1e-9),
+            out=np.zeros_like(counts, dtype=np.float64),
+            where=counts.sum(axis=2, keepdims=True) > 0,
+        )
 
     totals = counts.sum(axis=2)
     obs_mask = totals > 0
     if not obs_mask.any():
-        return pred
+        return np.zeros_like(counts, dtype=np.float64)
 
     dynamic_mask = obs_mask & ~np.isin(init_grid, [OCEAN_CODE, MOUNTAIN_CODE])
     if not dynamic_mask.any():
-        return pred
+        return np.divide(
+            counts,
+            np.maximum(totals[:, :, None], 1e-9),
+            out=np.zeros_like(counts, dtype=np.float64),
+            where=totals[:, :, None] > 0,
+        )
 
     empirical = np.divide(
         counts,
@@ -1104,17 +1278,44 @@ def _blend_smoothed_empirical_field(
         out=np.zeros_like(counts, dtype=np.float64),
         where=totals[:, :, None] > 0,
     )
-    top2 = np.partition(empirical, -2, axis=2)[:, :, -2]
-    margin = np.clip(empirical.max(axis=2) - top2, 0.0, 1.0)
+    majority = empirical.argmax(axis=2)
+    template_alpha = np.where(
+        totals <= 1,
+        template_alpha_single,
+        np.where(totals == 2, template_alpha_double, template_alpha_multi),
+    ).astype(np.float64, copy=False)
+
+    calibrated = empirical.astype(np.float64, copy=True)
+    ys, xs = np.nonzero(dynamic_mask)
+    for y, x in zip(ys.tolist(), xs.tolist()):
+        template, strength = _lookup_full_coverage_template(
+            template_model,
+            init_code=int(init_grid[y, x]),
+            majority_class=int(majority[y, x]),
+            is_coastal=bool(coast[y, x]),
+            near_settlement=bool(near_settlement[y, x]),
+        )
+        if template is None or strength <= 0.0:
+            continue
+        alpha = float(template_alpha[y, x]) * float(strength)
+        calibrated[y, x] = (
+            (1.0 - alpha) * calibrated[y, x] +
+            alpha * template
+        )
+
+    calibrated = np.maximum(calibrated, PROB_FLOOR)
+    calibrated /= calibrated.sum(axis=2, keepdims=True)
+    top2 = np.partition(calibrated, -2, axis=2)[:, :, -2]
+    margin = np.clip(calibrated.max(axis=2) - top2, 0.0, 1.0)
     support = np.clip(totals / 2.0, 0.0, 1.0)
     confidence = np.clip(conf_bias + 0.7 * margin + 0.3 * support, 0.0, 1.0)
     weights = confidence * dynamic_mask
     denom = _masked_gaussian_blur(weights, dynamic_mask, sigma)
 
-    field = np.zeros_like(pred, dtype=np.float64)
+    field = np.zeros_like(calibrated, dtype=np.float64)
     for c in range(N_CLASSES):
         numer = _masked_gaussian_blur(
-            empirical[:, :, c] * weights,
+            calibrated[:, :, c] * weights,
             dynamic_mask,
             sigma,
         )
@@ -1129,9 +1330,91 @@ def _blend_smoothed_empirical_field(
         np.where(totals == 2, alpha_double, alpha_multi),
     ).astype(np.float64, copy=False)
 
+    out = (1.0 - alpha[:, :, None]) * calibrated + alpha[:, :, None] * field
+    out = np.maximum(out, PROB_FLOOR)
+    out /= out.sum(axis=2, keepdims=True)
+    return out
+
+
+def _build_full_coverage_iterative_prediction(
+    counts: np.ndarray,
+    init_grid: np.ndarray,
+    *,
+    sigma: float,
+    forest_sigma: float,
+    tau: float,
+    steps: int,
+    settlement_boost: float,
+    ruin_boost: float,
+) -> np.ndarray:
+    """
+    Iteratively denoise the full-coverage empirical field with a smoother prior.
+
+    This path is deliberately less global than the wide denoiser above. It
+    works better when the single-sample map is noisy but still carries useful
+    local structure, which is common on fully covered rounds with only a small
+    repeat budget.
+    """
+    totals = counts.sum(axis=2)
+    empirical = np.divide(
+        counts,
+        totals[:, :, None],
+        out=np.zeros_like(counts, dtype=np.float64),
+        where=totals[:, :, None] > 0,
+    )
+    pred = np.maximum(empirical, PROB_FLOOR)
+    pred /= pred.sum(axis=2, keepdims=True)
+    dynamic_mask = ~np.isin(init_grid, [OCEAN_CODE, MOUNTAIN_CODE])
+    if not dynamic_mask.any():
+        return pred
+
+    steps = max(int(steps), 1)
+    sigma = max(float(sigma), 0.5)
+    forest_sigma = max(float(forest_sigma), 0.5)
+    tau = max(float(tau), 0.0)
+
+    for _ in range(steps):
+        prior = np.zeros_like(pred, dtype=np.float64)
+        class_sigmas = [sigma, sigma, sigma, sigma, forest_sigma, 1.0]
+        for cls in range(N_CLASSES):
+            prior[:, :, cls] = _masked_gaussian_blur(
+                pred[:, :, cls],
+                dynamic_mask,
+                class_sigmas[cls],
+            )
+        prior[:, :, SETTLEMENT_CODE] *= settlement_boost
+        prior[:, :, PORT_CODE] *= settlement_boost
+        prior[:, :, RUIN_CODE] *= ruin_boost
+        prior = np.maximum(prior, PROB_FLOOR)
+        prior /= prior.sum(axis=2, keepdims=True)
+        pred = counts.astype(np.float64) + tau * prior
+        pred = np.maximum(pred, PROB_FLOOR)
+        pred /= pred.sum(axis=2, keepdims=True)
+        _force_static_cells(pred, init_grid)
+
+    pred = np.maximum(pred, PROB_FLOOR)
+    pred /= pred.sum(axis=2, keepdims=True)
+    return pred
+
+
+def _blend_full_coverage_predictions(
+    wide_pred: np.ndarray,
+    iterative_pred: np.ndarray,
+    counts: np.ndarray,
+    *,
+    alpha_single: float,
+    alpha_double: float,
+    alpha_multi: float,
+) -> np.ndarray:
+    totals = counts.sum(axis=2)
+    alpha = np.where(
+        totals <= 1,
+        alpha_single,
+        np.where(totals == 2, alpha_double, alpha_multi),
+    ).astype(np.float64, copy=False)
     out = (
-        (1.0 - alpha[:, :, None]) * pred.astype(np.float64, copy=False) +
-        alpha[:, :, None] * field
+        alpha[:, :, None] * iterative_pred.astype(np.float64) +
+        (1.0 - alpha[:, :, None]) * wide_pred.astype(np.float64)
     )
     out = np.maximum(out, PROB_FLOOR)
     out /= out.sum(axis=2, keepdims=True)
