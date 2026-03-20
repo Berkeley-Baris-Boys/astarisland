@@ -25,14 +25,16 @@ Usage:
 from __future__ import annotations
 
 import argparse
+import json
 import os
+import shutil
 import sys
 from pathlib import Path
 
 import numpy as np
 
 from api import AstarAPI, APIError, BudgetExhausted
-from config import TOTAL_BUDGET, N_CLASSES, OBSERVATIONS_FILE, PRED_TEMPLATE
+from config import TOTAL_BUDGET, N_CLASSES, OBSERVATIONS_FILE, INITIAL_STATES_FILE, PRED_TEMPLATE
 from state import ObservationStore, plan_core_queries, all_viewports
 from world_dynamics import estimate_world_dynamics
 from predictor import build_predictions, validate_prediction
@@ -173,6 +175,44 @@ def save_predictions(predictions: dict[int, np.ndarray]) -> None:
         np.save(path, pred)
 
 
+def save_initial_states(initial_states: list[dict]) -> None:
+    """Persist initial_states to disk so they survive to next round."""
+    Path(INITIAL_STATES_FILE).write_text(
+        json.dumps(initial_states, indent=2), encoding="utf-8"
+    )
+
+
+def load_initial_states() -> list[dict] | None:
+    p = Path(INITIAL_STATES_FILE)
+    if not p.exists():
+        return None
+    return json.loads(p.read_text(encoding="utf-8"))
+
+
+def archive_round(round_id: str, seeds_count: int) -> None:
+    """
+    Copy observations, initial_states, and predictions into
+    data_prev_rounds/<round_id[:8]>/ for later backtesting.
+    """
+    label = round_id[:8]
+    dest = Path("data_prev_rounds") / label
+    dest.mkdir(parents=True, exist_ok=True)
+
+    files_to_copy = [OBSERVATIONS_FILE, INITIAL_STATES_FILE]
+    for seed in range(seeds_count):
+        files_to_copy.append(PRED_TEMPLATE.format(seed=seed))
+
+    copied = []
+    for fname in files_to_copy:
+        src = Path(fname)
+        if src.exists():
+            shutil.copy2(src, dest / src.name)
+            copied.append(src.name)
+
+    if copied:
+        print(f"  Archived to data_prev_rounds/{label}/: {', '.join(copied)}")
+
+
 def load_predictions(seeds_count: int) -> dict[int, np.ndarray]:
     preds: dict[int, np.ndarray] = {}
     for seed in range(seeds_count):
@@ -216,6 +256,9 @@ def main() -> None:
         raise SystemExit(f"Failed to load round: {exc}") from exc
 
     logger.log_round_start(round_id, round_id, W, H, seeds_count, round_weight)
+
+    # Save initial_states immediately — they're only available from the API at round start
+    save_initial_states(initial_states)
 
     # Post-round analysis mode
     if args.fetch_analysis:
@@ -284,6 +327,10 @@ def main() -> None:
     statuses = submit_predictions(api, round_id, predictions, dry_run=args.dry_run)
     logger.log_submission(round_id, statuses)
     logger.log_transition_priors(round_id, store, initial_states)
+
+    # Archive everything for future backtesting
+    print("\nArchiving round data...")
+    archive_round(round_id, seeds_count)
 
     # Summary
     print(f"\n── Done ──────────────────────────────────────────")
