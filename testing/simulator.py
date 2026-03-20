@@ -647,6 +647,7 @@ def estimate_params_from_observations(
     initial_states: List[Dict],
     settlement_snapshots: Dict[int, List],    # seed → list of snapshot dicts
     base_params: Optional[SimParams] = None,
+    verbose: bool = True,
 ) -> SimParams:
     """
     Estimate hidden parameters from observed cell outcomes and settlement stats.
@@ -702,9 +703,12 @@ def estimate_params_from_observations(
                 if s.get("alive", True):
                     alive_count += 1
                     # Clamp to [0, 1] in case of minor API drift
-                    if "food"       in s: all_food.append(float(np.clip(s["food"],   0, 1)))
-                    if "population" in s: all_pop.append(float(np.clip(s["population"], 0, 1)))
-                    if "wealth"     in s: all_wealth.append(float(np.clip(s["wealth"], 0, 1)))
+                    if s.get("food") is not None:
+                        all_food.append(float(np.clip(s["food"], 0, 1)))
+                    if s.get("population") is not None:
+                        all_pop.append(float(np.clip(s["population"], 0, 1)))
+                    if s.get("wealth") is not None:
+                        all_wealth.append(float(np.clip(s["wealth"], 0, 1)))
                 else:
                     dead_count += 1
 
@@ -790,25 +794,24 @@ def estimate_params_from_observations(
             starvation_collapse_prob=min(p.starvation_collapse_prob + 0.10, 0.90),
         )
 
-    print(
-        f"Param estimates — terrain: ruin_rate={ruin_rate:.2f} port_rate={port_rate:.2f} "
-        f"expansion_density={expansion_density:.2f}"
-    )
-    print(
-        f"  settlement stats (0–1 scale): food={mean_food:.2f} pop={mean_pop:.2f} "
-        f"wealth={mean_wealth:.2f} survival={survival_rate:.2f} "
-        f"(alive={alive_count} dead={dead_count})"
-    )
-    print(
-        f"  → harshness={harshness:.2f} prosperity={prosperity:.2f}"
-    )
-    print(
-        f"  inferred: winter_severity={p.winter_severity:.2f} "
-        f"base_winter_cost={p.base_winter_cost:.1f} "
-        f"expansion_prob={p.expansion_prob:.2f} "
-        f"port_formation_prob={p.port_formation_prob:.2f} "
-        f"starvation_collapse_prob={p.starvation_collapse_prob:.2f}"
-    )
+    if verbose:
+        print(
+            f"Param estimates — terrain: ruin_rate={ruin_rate:.2f} "
+            f"port_rate={port_rate:.2f} expansion_density={expansion_density:.2f}"
+        )
+        print(
+            f"  settlement stats (0–1 scale): food={mean_food:.2f} "
+            f"pop={mean_pop:.2f} wealth={mean_wealth:.2f} "
+            f"survival={survival_rate:.2f} (alive={alive_count} dead={dead_count})"
+        )
+        print(f"  → harshness={harshness:.2f} prosperity={prosperity:.2f}")
+        print(
+            f"  inferred: winter_severity={p.winter_severity:.2f} "
+            f"base_winter_cost={p.base_winter_cost:.1f} "
+            f"expansion_prob={p.expansion_prob:.2f} "
+            f"port_formation_prob={p.port_formation_prob:.2f} "
+            f"starvation_collapse_prob={p.starvation_collapse_prob:.2f}"
+        )
 
     return p
 
