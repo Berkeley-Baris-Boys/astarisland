@@ -26,10 +26,17 @@ from config import (
 )
 from metrics import MetricsLogger, fetch_and_log_analysis, holdout_self_check
 from predictor import build_predictions, validate_prediction
-from state import ObservationStore, all_viewports, plan_core_queries, candidate_viewports
+from state import ObservationStore, plan_core_queries, candidate_viewports
 from world_dynamics import estimate_world_dynamics
 
 MAX_CONSECUTIVE_RESERVE_API_ERRORS = 8
+DEFAULT_RESERVE_STRIDE = 5
+DEFAULT_RESERVE_UNSEEN_WEIGHT = 2.1
+DEFAULT_RESERVE_SINGLE_WEIGHT = 0.8
+DEFAULT_RESERVE_DOUBLE_WEIGHT = 0.35
+DEFAULT_RESERVE_SCARCITY_WEIGHT = 0.55
+DEFAULT_RESERVE_UNRESOLVED_WEIGHT = 0.65
+DEFAULT_RESERVE_REVISIT_PENALTY = 0.22
 
 
 @dataclass(frozen=True)
@@ -128,7 +135,7 @@ def run_query_phase(
     )
     # Use denser reserve candidates than coarse 15x15 tiling to spend
     # leftover budget on locally high-information regions.
-    viewports = candidate_viewports(store.width, store.height, stride=5)
+    viewports = candidate_viewports(store.width, store.height, stride=DEFAULT_RESERVE_STRIDE)
     viewport_hits: dict[int, dict[tuple[int, int, int, int], int]] = {
         seed: {} for seed in range(store.seeds_count)
     }
@@ -162,9 +169,25 @@ def run_query_phase(
         if min(coverages.values()) < 0.99:
             seed = min(coverages, key=coverages.get)
         else:
-            seed = max(range(store.seeds_count), key=lambda s: _mean_entropy(store.counts[s]))
+            # Prefer seed with most unresolved low-sample cells, with entropy tie-break.
+            def _seed_priority(s: int) -> tuple[float, float]:
+                n_obs = store.counts[s].sum(axis=2)
+                unresolved = float((n_obs <= 2).mean())
+                return (unresolved, _mean_entropy(store.counts[s]))
 
-        vx, vy, vw, vh = store.best_reserve_viewport(seed, viewports, viewport_hits[seed])
+            seed = max(range(store.seeds_count), key=_seed_priority)
+
+        vx, vy, vw, vh = store.best_reserve_viewport(
+            seed,
+            viewports,
+            viewport_hits[seed],
+            unseen_weight=DEFAULT_RESERVE_UNSEEN_WEIGHT,
+            single_weight=DEFAULT_RESERVE_SINGLE_WEIGHT,
+            double_weight=DEFAULT_RESERVE_DOUBLE_WEIGHT,
+            scarcity_weight=DEFAULT_RESERVE_SCARCITY_WEIGHT,
+            dynamic_weight=DEFAULT_RESERVE_UNRESOLVED_WEIGHT,
+            revisit_penalty_weight=DEFAULT_RESERVE_REVISIT_PENALTY,
+        )
         try:
             execute(seed, vx, vy, vw, vh)
             reserve_api_errors = 0

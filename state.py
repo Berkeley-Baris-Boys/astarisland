@@ -299,6 +299,31 @@ def candidate_viewports(
     return all_viewports(width, height, stride=stride)
 
 
+def reserve_policy_params() -> dict[str, float]:
+    """
+    Reserve-query scoring weights (env-overridable for sweeps/tuning).
+    """
+    import os
+
+    def _env_float(name: str, default: float) -> float:
+        raw = os.getenv(name)
+        if raw is None:
+            return float(default)
+        try:
+            return float(raw)
+        except (TypeError, ValueError):
+            return float(default)
+
+    return {
+        "w_entropy": _env_float("ASTAR_RESERVE_W_ENTROPY", 1.0),
+        "w_unseen": _env_float("ASTAR_RESERVE_W_UNSEEN", 2.1),
+        "w_single": _env_float("ASTAR_RESERVE_W_SINGLE", 0.8),
+        "w_double": _env_float("ASTAR_RESERVE_W_DOUBLE", 0.35),
+        "w_scarcity": _env_float("ASTAR_RESERVE_W_SCARCITY", 0.55),
+        "w_revisit": _env_float("ASTAR_RESERVE_W_REVISIT", 0.22),
+    }
+
+
 # ── Observation store ─────────────────────────────────────────────────────────
 
 @dataclass
@@ -481,6 +506,13 @@ class ObservationStore:
         seed: int,
         viewports: list[tuple[int, int, int, int]],
         visited: dict[tuple, int],
+        *,
+        unseen_weight: float = 2.1,
+        single_weight: float = 0.8,
+        double_weight: float = 0.35,
+        scarcity_weight: float = 0.55,
+        revisit_penalty_weight: float = 0.22,
+        dynamic_weight: float = 1.35,
     ) -> tuple[int, int, int, int]:
         """
         Pick the viewport with the highest average empirical cell entropy for
@@ -514,11 +546,14 @@ class ObservationStore:
         n_obs = cnt.sum(axis=2)  # H×W
         single_mask = (n_obs == 1)
         double_mask = (n_obs == 2)
+        dynamic_mass = cnt[:, :, SETTLEMENT_CODE] + cnt[:, :, PORT_CODE] + cnt[:, :, RUIN_CODE]
+        unresolved_dynamic = dynamic_mass / np.maximum(n_obs.astype(np.float32), 1.0)
         # Cells with fewer independent observations remain noisy even if already
         # observed. This complements entropy so reserve queries are spent where
         # another sample is likely to reduce variance the most.
         scarcity = 1.0 / np.maximum(n_obs.astype(np.float32), 1.0)
         scarcity[~obs_mask] = 1.0
+        unresolved_dynamic[~obs_mask] = 0.0
         if single_mask.any():
             richness = np.zeros((self.height, self.width), dtype=np.float32)
             for y, row in enumerate(self.latest[seed]):
@@ -537,14 +572,16 @@ class ObservationStore:
             single_frac = float(single_mask[vy:vy + vh, vx:vx + vw].mean())
             double_frac = float(double_mask[vy:vy + vh, vx:vx + vw].mean())
             scarcity_mean = float(scarcity[vy:vy + vh, vx:vx + vw].mean())
+            dynamic_mean = float(unresolved_dynamic[vy:vy + vh, vx:vx + vw].mean())
             revisit_count = visited.get(vp, 0)
-            penalty = 0.22 * np.log1p(revisit_count)
+            penalty = revisit_penalty_weight * np.log1p(revisit_count)
             score = (
                 float(region.mean())
-                + 2.1 * unseen_frac
-                + 0.8 * single_frac
-                + 0.35 * double_frac
-                + 0.55 * scarcity_mean
+                + unseen_weight * unseen_frac
+                + single_weight * single_frac
+                + double_weight * double_frac
+                + scarcity_weight * scarcity_mean
+                + dynamic_weight * dynamic_mean
                 - penalty
             )
             if score > best_score:
