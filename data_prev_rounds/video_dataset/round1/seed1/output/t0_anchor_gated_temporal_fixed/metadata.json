@@ -1,0 +1,90 @@
+{
+  "video": "videos/round1/seed1/Screen Recording 2026-03-20 at 10.22.05.mov",
+  "round_id": 1,
+  "seed_id": 1,
+  "ig_seed_offset": -1,
+  "ig_seed_id": null,
+  "raw_frames_decoded": 82,
+  "sampled_frame_indices": 82,
+  "failed_read_count": 0,
+  "failed_read_indices": [],
+  "bootstrap_frame_indices": [
+    0,
+    12
+  ],
+  "frames_decoded": 50,
+  "grid_h": 40,
+  "grid_w": 40,
+  "interval_ms": 200,
+  "trim_leading_static": true,
+  "min_change_frac": 0.002,
+  "target_steps": 50,
+  "roi": {
+    "x": 45,
+    "y": 338,
+    "w": 866,
+    "h": 866
+  },
+  "subcell_offset": {
+    "x": -0.15,
+    "y": 0.0
+  },
+  "color_matrix": [
+    [
+      1.0,
+      0.0,
+      0.0
+    ],
+    [
+      0.0,
+      1.0,
+      0.0
+    ],
+    [
+      0.0,
+      0.0,
+      1.0
+    ]
+  ],
+  "color_bias": [
+    0.0,
+    0.0,
+    0.0
+  ],
+  "palette_mode": "exact",
+  "classifier": "nearest_prototype",
+  "preset": "t0_anchor_gated_temporal",
+  "patch_stat": "median",
+  "trim_frac": 0.15,
+  "use_color_affine": false,
+  "t0_anchor_mode": "force",
+  "use_ig_calibration": true,
+  "ig_path": "data_prev_rounds/round1/ig_r1_seed0.npy",
+  "canonicalize_empty_plains": true,
+  "temporal_window": 3,
+  "temporal_conf_gated": true,
+  "temporal_conf_threshold": 0.7,
+  "suppress_flicker": true,
+  "temporal_stats": {
+    "n_overridden": 276.0,
+    "n_low_conf": 70562.0,
+    "n_from_t0": 13.0
+  },
+  "prototype_scales_mean": [
+    39.20276742872851,
+    27.000281561083614,
+    24.48616487974492
+  ],
+  "palette_classes": [
+    0,
+    1,
+    2,
+    3,
+    4,
+    5,
+    10,
+    11
+  ],
+  "palette_json": "testing/palette_template.json",
+  "mean_confidence": 0.6249873042106628
+}

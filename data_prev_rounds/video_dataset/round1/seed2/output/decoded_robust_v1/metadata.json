@@ -1,0 +1,61 @@
+{
+  "video": "videos/round1/seed2/Screen Recording 2026-03-20 at 11.28.18.mov",
+  "round_id": 1,
+  "seed_id": 2,
+  "raw_frames_decoded": 150,
+  "frames_decoded": 50,
+  "grid_h": 40,
+  "grid_w": 40,
+  "interval_ms": 200,
+  "trim_leading_static": true,
+  "min_change_frac": 0.002,
+  "target_steps": 50,
+  "roi": {
+    "x": 65,
+    "y": 358,
+    "w": 866,
+    "h": 866
+  },
+  "subcell_offset": {
+    "x": 0.15,
+    "y": 0.0
+  },
+  "color_matrix": [
+    [
+      1.0760703381653443,
+      0.0821704153228505,
+      -0.08892410315886634
+    ],
+    [
+      -0.0227723083527504,
+      0.8759470017804803,
+      0.0364415965077909
+    ],
+    [
+      -0.01982438974141084,
+      0.044623653506501486,
+      1.1787180856659527
+    ]
+  ],
+  "color_bias": [
+    3.426643986643906,
+    9.421755547385223,
+    -0.08213080956695969
+  ],
+  "palette_mode": "exact",
+  "canonicalize_empty_plains": true,
+  "temporal_window": 3,
+  "suppress_flicker": true,
+  "palette_classes": [
+    0,
+    1,
+    2,
+    3,
+    4,
+    5,
+    10,
+    11
+  ],
+  "palette_json": "testing/palette_template.json",
+  "mean_confidence": 0.7009893655776978
+}

@@ -86,6 +86,20 @@ def safe_normalize(v: np.ndarray, floor: float = PROB_FLOOR) -> np.ndarray:
     return v / s if s > 0 else np.full(N_CLASSES, 1.0 / N_CLASSES)
 
 
+def safe_normalize_last_axis(
+    arr: np.ndarray,
+    floor: float = PROB_FLOOR,
+) -> np.ndarray:
+    out = np.maximum(arr.astype(np.float64, copy=False), floor)
+    sums = out.sum(axis=-1, keepdims=True)
+    return np.divide(
+        out,
+        sums,
+        out=np.full_like(out, 1.0 / N_CLASSES),
+        where=sums > 0,
+    )
+
+
 def build_predictions(
     initial_states: list[dict],
     store: ObservationStore,
@@ -755,7 +769,7 @@ def _calibrate_rollouts(
     calibrated: dict[int, np.ndarray] = {}
     for seed, rollout in rollout_predictions.items():
         adjusted = rollout.astype(np.float64, copy=True) * class_scale.reshape(1, 1, -1)
-        adjusted = adjusted / adjusted.sum(axis=2, keepdims=True)
+        adjusted = safe_normalize_last_axis(adjusted)
         calibrated[seed] = adjusted
 
     return calibrated, trust, class_scale
@@ -1059,9 +1073,7 @@ def _apply_settlement_intensity_prior(
         settlement_total - out[:, :, PORT_CODE],
         PROB_FLOOR,
     )
-    out = np.maximum(out, PROB_FLOOR)
-    out /= out.sum(axis=2, keepdims=True)
-    return out
+    return safe_normalize_last_axis(out)
 
 
 def _apply_semantic_class_smoothing(
@@ -1125,9 +1137,7 @@ def _apply_semantic_class_smoothing(
     out[:, :, 1] = np.maximum(settlement_total - out[:, :, 2], PROB_FLOOR)
     out[:, :, 3] = np.maximum(ruin, PROB_FLOOR)
     out[:, :, 4] = np.maximum(forest, PROB_FLOOR)
-    out = np.maximum(out, PROB_FLOOR)
-    out /= out.sum(axis=2, keepdims=True)
-    return out
+    return safe_normalize_last_axis(out)
 
 
 def _apply_global_probability_smoothing(
@@ -1153,9 +1163,7 @@ def _apply_global_probability_smoothing(
             sigma,
         )
     out = (1.0 - alpha) * out + alpha * blurred
-    out = np.maximum(out, PROB_FLOOR)
-    out /= out.sum(axis=2, keepdims=True)
-    return out
+    return safe_normalize_last_axis(out)
 
 
 def _reanchor_observed_dynamic_cells(
@@ -1206,9 +1214,7 @@ def _reanchor_observed_dynamic_cells(
         (1.0 - anchor[mask3, None]) * out[mask3] +
         anchor[mask3, None] * empirical[mask3]
     )
-    out = np.maximum(out, PROB_FLOOR)
-    out /= out.sum(axis=2, keepdims=True)
-    return out
+    return safe_normalize_last_axis(out)
 
 
 def _build_full_coverage_calibration_model(
@@ -1416,8 +1422,7 @@ def _build_full_coverage_denoised_prediction(
             alpha * template
         )
 
-    calibrated = np.maximum(calibrated, PROB_FLOOR)
-    calibrated /= calibrated.sum(axis=2, keepdims=True)
+    calibrated = safe_normalize_last_axis(calibrated)
     top2 = np.partition(calibrated, -2, axis=2)[:, :, -2]
     margin = np.clip(calibrated.max(axis=2) - top2, 0.0, 1.0)
     support = np.clip(totals / 2.0, 0.0, 1.0)
@@ -1434,8 +1439,7 @@ def _build_full_coverage_denoised_prediction(
         )
         field[:, :, c] = np.divide(numer, np.maximum(denom, 1e-9))
 
-    field = np.maximum(field, PROB_FLOOR)
-    field /= field.sum(axis=2, keepdims=True)
+    field = safe_normalize_last_axis(field)
 
     alpha = np.where(
         totals <= 1,
@@ -1444,9 +1448,7 @@ def _build_full_coverage_denoised_prediction(
     ).astype(np.float64, copy=False)
 
     out = (1.0 - alpha[:, :, None]) * calibrated + alpha[:, :, None] * field
-    out = np.maximum(out, PROB_FLOOR)
-    out /= out.sum(axis=2, keepdims=True)
-    return out
+    return safe_normalize_last_axis(out)
 
 
 def _build_full_coverage_iterative_prediction(
@@ -1475,8 +1477,7 @@ def _build_full_coverage_iterative_prediction(
         out=np.zeros_like(counts, dtype=np.float64),
         where=totals[:, :, None] > 0,
     )
-    pred = np.maximum(empirical, PROB_FLOOR)
-    pred /= pred.sum(axis=2, keepdims=True)
+    pred = safe_normalize_last_axis(empirical)
     dynamic_mask = ~np.isin(init_grid, [OCEAN_CODE, MOUNTAIN_CODE])
     if not dynamic_mask.any():
         return pred
@@ -1498,16 +1499,12 @@ def _build_full_coverage_iterative_prediction(
         prior[:, :, SETTLEMENT_CODE] *= settlement_boost
         prior[:, :, PORT_CODE] *= settlement_boost
         prior[:, :, RUIN_CODE] *= ruin_boost
-        prior = np.maximum(prior, PROB_FLOOR)
-        prior /= prior.sum(axis=2, keepdims=True)
+        prior = safe_normalize_last_axis(prior)
         pred = counts.astype(np.float64) + tau * prior
-        pred = np.maximum(pred, PROB_FLOOR)
-        pred /= pred.sum(axis=2, keepdims=True)
+        pred = safe_normalize_last_axis(pred)
         _force_static_cells(pred, init_grid)
 
-    pred = np.maximum(pred, PROB_FLOOR)
-    pred /= pred.sum(axis=2, keepdims=True)
-    return pred
+    return safe_normalize_last_axis(pred)
 
 
 def _blend_full_coverage_predictions(
@@ -1529,9 +1526,7 @@ def _blend_full_coverage_predictions(
         alpha[:, :, None] * iterative_pred.astype(np.float64) +
         (1.0 - alpha[:, :, None]) * wide_pred.astype(np.float64)
     )
-    out = np.maximum(out, PROB_FLOOR)
-    out /= out.sum(axis=2, keepdims=True)
-    return out
+    return safe_normalize_last_axis(out)
 
 
 def _apply_final_class_calibration(
@@ -1541,9 +1536,7 @@ def _apply_final_class_calibration(
 ) -> np.ndarray:
     out = pred.astype(np.float64, copy=True)
     out *= scale.reshape(1, 1, -1)
-    out = np.maximum(out, PROB_FLOOR)
-    out /= out.sum(axis=2, keepdims=True)
-    return out
+    return safe_normalize_last_axis(out)
 
 
 def validate_prediction(pred: np.ndarray, seed: int) -> None:

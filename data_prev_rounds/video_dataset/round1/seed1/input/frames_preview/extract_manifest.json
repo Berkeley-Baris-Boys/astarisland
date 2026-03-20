@@ -1,0 +1,8 @@
+{
+  "video": "/Users/jorgenbergh/Documents/astarisland/videos/round1/seed1/Screen Recording 2026-03-20 at 10.22.05.mov",
+  "round_id": 1,
+  "seed_id": 1,
+  "command": "extract",
+  "interval_ms": 500,
+  "frames_extracted": 33
+}
