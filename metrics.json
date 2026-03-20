@@ -185,5 +185,158 @@
       "4": "accepted"
     },
     "submitted_at": "2026-03-20T14:21:22Z"
+  },
+  "c5cdf100-a876-4fb7-b5d8-757162c97989": {
+    "round_id": "c5cdf100-a876-4fb7-b5d8-757162c97989",
+    "round_number": "c5cdf100-a876-4fb7-b5d8-757162c97989",
+    "width": 40,
+    "height": 40,
+    "seeds_count": 5,
+    "round_weight": 1.4775,
+    "started_at": "2026-03-20T17:33:20Z",
+    "queries_used": 50,
+    "coverage_by_seed": {
+      "0": 1.0,
+      "1": 1.0,
+      "2": 1.0,
+      "3": 1.0,
+      "4": 1.0
+    },
+    "samples_by_seed": {
+      "0": 2025,
+      "1": 2025,
+      "2": 3150,
+      "3": 2025,
+      "4": 2025
+    },
+    "avg_coverage": 1.0,
+    "estimated_params": {
+      "survival_rate": 0.3728,
+      "ruin_rate": 0.0088,
+      "expansion_rate": 0.017,
+      "forest_growth": 0.0304,
+      "avg_food": 0.6674,
+      "avg_port_wealth": 0.001
+    },
+    "prediction_summary": {
+      "0": {
+        "class_counts": {
+          "Empty": 1397,
+          "Settlement": 0,
+          "Port": 0,
+          "Ruin": 0,
+          "Forest": 171,
+          "Mountain": 32
+        },
+        "avg_confidence": 0.741,
+        "avg_entropy": 0.6716
+      },
+      "1": {
+        "class_counts": {
+          "Empty": 1446,
+          "Settlement": 0,
+          "Port": 0,
+          "Ruin": 0,
+          "Forest": 137,
+          "Mountain": 17
+        },
+        "avg_confidence": 0.7567,
+        "avg_entropy": 0.6393
+      },
+      "2": {
+        "class_counts": {
+          "Empty": 1428,
+          "Settlement": 3,
+          "Port": 0,
+          "Ruin": 0,
+          "Forest": 138,
+          "Mountain": 31
+        },
+        "avg_confidence": 0.7525,
+        "avg_entropy": 0.6726
+      },
+      "3": {
+        "class_counts": {
+          "Empty": 1452,
+          "Settlement": 0,
+          "Port": 0,
+          "Ruin": 0,
+          "Forest": 122,
+          "Mountain": 26
+        },
+        "avg_confidence": 0.7502,
+        "avg_entropy": 0.6384
+      },
+      "4": {
+        "class_counts": {
+          "Empty": 1472,
+          "Settlement": 0,
+          "Port": 0,
+          "Ruin": 0,
+          "Forest": 95,
+          "Mountain": 33
+        },
+        "avg_confidence": 0.7647,
+        "avg_entropy": 0.6199
+      }
+    },
+    "submission_statuses": {
+      "0": "accepted",
+      "1": "accepted",
+      "2": "accepted",
+      "3": "accepted",
+      "4": "accepted"
+    },
+    "submitted_at": "2026-03-20T17:34:45Z",
+    "transition_priors": {
+      "10": [
+        1.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0
+      ],
+      "11": [
+        0.9454,
+        0.0166,
+        0.0004,
+        0.0043,
+        0.0332,
+        0.0
+      ],
+      "4": [
+        0.0585,
+        0.0165,
+        0.0006,
+        0.0035,
+        0.9209,
+        0.0
+      ],
+      "1": [
+        0.6284,
+        0.055,
+        0.0,
+        0.0046,
+        0.3119,
+        0.0
+      ],
+      "2": [
+        0.4,
+        0.0,
+        0.0,
+        0.1,
+        0.5,
+        0.0
+      ],
+      "5": [
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        1.0
+      ]
+    }
   }
 }

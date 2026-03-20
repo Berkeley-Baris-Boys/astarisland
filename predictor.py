@@ -40,7 +40,7 @@ from world_dynamics import WorldDynamics, dynamics_adjusted_prior
 ROLLOUT_MC_RUNS = 80
 ROLLOUT_BASE_SEED = 20260320
 ROLLOUT_MAX_WEIGHT = 0.26
-EMPIRICAL_FINAL_SCALE = np.array([1.03, 0.97, 0.45, 0.40, 1.08, 0.85], dtype=np.float64)
+EMPIRICAL_FINAL_SCALE = np.array([1.03, 0.97, 0.65, 0.45, 1.08, 0.85], dtype=np.float64)
 EMPIRICAL_SETTLEMENT_SMOOTH_ALPHA = 0.60
 EMPIRICAL_SETTLEMENT_SMOOTH_SIGMA = 1.4
 EMPIRICAL_RUIN_SMOOTH_ALPHA = 0.55
@@ -49,10 +49,10 @@ EMPIRICAL_FOREST_SMOOTH_ALPHA = 0.15
 EMPIRICAL_FOREST_SMOOTH_SIGMA = 0.8
 EMPIRICAL_GLOBAL_SMOOTH_ALPHA = 0.08
 EMPIRICAL_GLOBAL_SMOOTH_SIGMA = 1.2
-EMPIRICAL_FULL_COVERAGE_FIELD_SIGMA = 10.0
-EMPIRICAL_FULL_COVERAGE_FIELD_ALPHA_SINGLE = 0.70
-EMPIRICAL_FULL_COVERAGE_FIELD_ALPHA_DOUBLE = 0.40
-EMPIRICAL_FULL_COVERAGE_FIELD_ALPHA_MULTI = 0.25
+EMPIRICAL_FULL_COVERAGE_FIELD_SIGMA = 3.5
+EMPIRICAL_FULL_COVERAGE_FIELD_ALPHA_SINGLE = 0.50
+EMPIRICAL_FULL_COVERAGE_FIELD_ALPHA_DOUBLE = 0.35
+EMPIRICAL_FULL_COVERAGE_FIELD_ALPHA_MULTI = 0.20
 EMPIRICAL_FULL_COVERAGE_FIELD_CONF_BIAS = 0.02
 EMPIRICAL_FULL_COVERAGE_TEMPLATE_ALPHA_SINGLE = 0.24
 EMPIRICAL_FULL_COVERAGE_TEMPLATE_ALPHA_DOUBLE = 0.06
@@ -61,8 +61,8 @@ EMPIRICAL_FULL_COVERAGE_ITER_SIGMA = 3.0
 EMPIRICAL_FULL_COVERAGE_ITER_FOREST_SIGMA = 3.0
 EMPIRICAL_FULL_COVERAGE_ITER_TAU = 3.0
 EMPIRICAL_FULL_COVERAGE_ITER_STEPS = 5
-EMPIRICAL_FULL_COVERAGE_ITER_SETTLE_BOOST = 1.15
-EMPIRICAL_FULL_COVERAGE_ITER_RUIN_BOOST = 1.10
+EMPIRICAL_FULL_COVERAGE_ITER_SETTLE_BOOST = 1.25
+EMPIRICAL_FULL_COVERAGE_ITER_RUIN_BOOST = 1.15
 EMPIRICAL_FULL_COVERAGE_BLEND_SINGLE = 0.60
 EMPIRICAL_FULL_COVERAGE_BLEND_DOUBLE = 0.20
 EMPIRICAL_FULL_COVERAGE_BLEND_MULTI = 0.20
@@ -70,12 +70,84 @@ EMPIRICAL_OBS_SETTLEMENT_ANCHOR_BASE = 0.10
 EMPIRICAL_OBS_SETTLEMENT_ANCHOR_BONUS = 0.20
 EMPIRICAL_OBS_PORT_RUIN_ANCHOR_BASE = 0.20
 EMPIRICAL_OBS_PORT_RUIN_ANCHOR_BONUS = 0.22
+SETTLEMENT_INTENSITY_BLEND_ALPHA = 0.22
+SETTLEMENT_INTENSITY_SIGMA = 2.2
 
 try:
     from testing.simulator import estimate_params_from_observations, monte_carlo
 except Exception:
     estimate_params_from_observations = None
     monte_carlo = None
+
+
+def _apply_hard_constraints(
+    predictions: dict[int, np.ndarray],
+    initial_states: list[dict],
+    store,
+) -> None:
+    """
+    Enforce physically impossible predictions to zero and re-normalise.
+    - Mountains: one-hot to class 5.
+    - Ports: impossible on non-coastal or mountain cells.
+    """
+    for seed, pred in predictions.items():
+        ig = np.asarray(initial_states[seed]["grid"], dtype=np.int32)
+        mountain_mask = ig == MOUNTAIN_CODE
+        ocean_mask = ig == OCEAN_CODE
+        coast = coastal_mask(ig)  # 4-connectivity, consistent with rest of codebase
+
+        # Hard mountain one-hot
+        pred[mountain_mask] = 0.0
+        pred[mountain_mask, MOUNTAIN_CODE] = 1.0
+
+        # Hard port impossibility
+        port_impossible = ~coast | mountain_mask | ocean_mask
+        pred[port_impossible, PORT_CODE] = 0.0
+
+        # Re-normalise
+        totals = pred.sum(axis=2, keepdims=True)
+        zero_rows = totals[:, :, 0] <= 0
+        pred[zero_rows] = 1.0 / N_CLASSES
+        totals = pred.sum(axis=2, keepdims=True)
+        pred /= totals
+
+
+def _apply_settlement_intensity_prior(
+    pred: np.ndarray,
+    has_settle: np.ndarray,
+    init_grid: np.ndarray,
+    alpha: float,
+    sigma: float,
+) -> np.ndarray:
+    """
+    Blend a distance-decay settlement prior into the settlement mass.
+    Helps produce blob-like spatial distributions rather than isolated spikes.
+    """
+    from scipy.ndimage import gaussian_filter
+
+    dynamic_mask = ~np.isin(init_grid, [OCEAN_CODE, MOUNTAIN_CODE])
+    settle_centers = has_settle.astype(np.float64)
+    if settle_centers.sum() == 0:
+        return pred
+
+    intensity = gaussian_filter(settle_centers, sigma=sigma)
+    mx = intensity.max()
+    if mx <= 0:
+        return pred
+    intensity /= mx
+
+    out = pred.astype(np.float64, copy=True)
+    current_settle_mass = out[:, :, SETTLEMENT_CODE].sum()
+    if current_settle_mass <= 0:
+        return pred
+
+    prior = intensity * current_settle_mass / max(intensity[dynamic_mask].sum(), 1e-9)
+    blended = (1.0 - alpha) * out[:, :, SETTLEMENT_CODE] + alpha * prior
+    blended = np.maximum(blended, 0.0)
+    out[:, :, SETTLEMENT_CODE] = np.where(dynamic_mask, blended, out[:, :, SETTLEMENT_CODE])
+    out = np.maximum(out, PROB_FLOOR)
+    out /= out.sum(axis=2, keepdims=True)
+    return out
 
 
 def safe_normalize(v: np.ndarray, floor: float = PROB_FLOOR) -> np.ndarray:
@@ -98,8 +170,9 @@ def build_predictions(
     settlement/forest smoothing. Hybrid rollout and heuristics remain as
     fallbacks when that path fails.
     """
+    predictions = None
     try:
-        return _build_empirical_constrained_predictions(
+        predictions = _build_empirical_constrained_predictions(
             initial_states, store, dynamics, verbose=verbose
         )
     except Exception as exc:
@@ -109,18 +182,22 @@ def build_predictions(
                 f"falling back to hybrid: {exc}"
             )
 
-    if estimate_params_from_observations is not None and monte_carlo is not None:
+    if predictions is None and estimate_params_from_observations is not None and monte_carlo is not None:
         try:
-            return _build_hybrid_predictions(
+            predictions = _build_hybrid_predictions(
                 initial_states, store, dynamics, verbose=verbose
             )
         except Exception as exc:
             if verbose:
                 print(f"Hybrid predictor failed, falling back to heuristics: {exc}")
 
-    return _build_heuristic_predictions(
-        initial_states, store, dynamics, verbose=verbose
-    )
+    if predictions is None:
+        predictions = _build_heuristic_predictions(
+            initial_states, store, dynamics, verbose=verbose
+        )
+
+    _apply_hard_constraints(predictions, initial_states, store)
+    return predictions
 
 
 def _build_hybrid_predictions(
@@ -548,6 +625,22 @@ def _build_empirical_constrained_predictions(
                 alpha_double=EMPIRICAL_FULL_COVERAGE_BLEND_DOUBLE,
                 alpha_multi=EMPIRICAL_FULL_COVERAGE_BLEND_MULTI,
             )
+            pred = _reanchor_observed_dynamic_cells(
+                pred,
+                counts,
+                init_grid,
+                settlement_base=EMPIRICAL_OBS_SETTLEMENT_ANCHOR_BASE,
+                settlement_bonus=EMPIRICAL_OBS_SETTLEMENT_ANCHOR_BONUS,
+                port_ruin_base=EMPIRICAL_OBS_PORT_RUIN_ANCHOR_BASE,
+                port_ruin_bonus=EMPIRICAL_OBS_PORT_RUIN_ANCHOR_BONUS,
+            )
+        pred = _apply_settlement_intensity_prior(
+            pred,
+            context["has_settle"],
+            init_grid,
+            alpha=SETTLEMENT_INTENSITY_BLEND_ALPHA,
+            sigma=SETTLEMENT_INTENSITY_SIGMA,
+        )
         _force_static_cells(pred, init_grid)
         pred = np.maximum(pred, PROB_FLOOR)
         pred = pred / pred.sum(axis=2, keepdims=True)
