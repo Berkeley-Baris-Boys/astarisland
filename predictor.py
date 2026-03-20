@@ -61,7 +61,7 @@ EMPIRICAL_FULL_COVERAGE_ITER_SIGMA = 5.0
 EMPIRICAL_FULL_COVERAGE_ITER_FOREST_SIGMA = 3.0
 EMPIRICAL_FULL_COVERAGE_ITER_TAU = 1.4
 EMPIRICAL_FULL_COVERAGE_ITER_STEPS = 5
-EMPIRICAL_FULL_COVERAGE_ITER_SETTLE_BOOST = 1.15
+EMPIRICAL_FULL_COVERAGE_ITER_SETTLE_BOOST = 1.0
 EMPIRICAL_FULL_COVERAGE_ITER_RUIN_BOOST = 1.10
 EMPIRICAL_FULL_COVERAGE_BLEND_SINGLE = 0.60
 EMPIRICAL_FULL_COVERAGE_BLEND_DOUBLE = 0.20
@@ -70,6 +70,8 @@ EMPIRICAL_OBS_SETTLEMENT_ANCHOR_BASE = 0.10
 EMPIRICAL_OBS_SETTLEMENT_ANCHOR_BONUS = 0.20
 EMPIRICAL_OBS_PORT_RUIN_ANCHOR_BASE = 0.20
 EMPIRICAL_OBS_PORT_RUIN_ANCHOR_BONUS = 0.22
+SETTLEMENT_INTENSITY_BLEND_ALPHA = 0.22
+SETTLEMENT_INTENSITY_SIGMA = 2.2
 
 try:
     from testing.simulator import estimate_params_from_observations, monte_carlo
@@ -275,6 +277,7 @@ def _build_hybrid_predictions(
 
         pred = np.maximum(pred, PROB_FLOOR)
         pred = pred / pred.sum(axis=2, keepdims=True)
+        _enforce_hard_constraints(pred, init_grid)
         predictions[seed] = pred.astype(np.float32)
 
         if verbose:
@@ -353,6 +356,7 @@ def _build_heuristic_predictions(
         pred = _spatial_smooth(pred, obs_mask, ig)
         pred = np.maximum(pred, PROB_FLOOR)
         pred = pred / pred.sum(axis=2, keepdims=True)
+        _enforce_hard_constraints(pred, ig)
 
         predictions[seed] = pred.astype(np.float32)
 
@@ -548,9 +552,17 @@ def _build_empirical_constrained_predictions(
                 alpha_double=EMPIRICAL_FULL_COVERAGE_BLEND_DOUBLE,
                 alpha_multi=EMPIRICAL_FULL_COVERAGE_BLEND_MULTI,
             )
+        pred = _apply_settlement_intensity_prior(
+            pred,
+            init_grid,
+            settlement_centers=context["has_settle"],
+            alpha=SETTLEMENT_INTENSITY_BLEND_ALPHA,
+            sigma=SETTLEMENT_INTENSITY_SIGMA,
+        )
         _force_static_cells(pred, init_grid)
         pred = np.maximum(pred, PROB_FLOOR)
         pred = pred / pred.sum(axis=2, keepdims=True)
+        _enforce_hard_constraints(pred, init_grid)
         predictions[seed] = pred.astype(np.float32)
 
         if verbose:
@@ -863,6 +875,49 @@ def _force_static_cells(pred: np.ndarray, init_grid: np.ndarray) -> None:
         pred[mountain_mask] = _mountain_distribution()
 
 
+def _enforce_hard_constraints(pred: np.ndarray, init_grid: np.ndarray) -> None:
+    """
+    Enforce exact terrain feasibility constraints.
+
+    - Known mountain cells are one-hot Mountain.
+    - All other cells have Mountain probability exactly 0 and are re-normalized
+      over classes 0..4.
+    - Port probability is exactly 0 on non-coastal cells and mountain cells.
+    """
+    mountain_mask = init_grid == MOUNTAIN_CODE
+    non_mountain_mask = ~mountain_mask
+
+    if mountain_mask.any():
+        pred[mountain_mask] = 0.0
+        pred[mountain_mask, MOUNTAIN_CODE] = 1.0
+
+    if non_mountain_mask.any():
+        pred[non_mountain_mask, MOUNTAIN_CODE] = 0.0
+        non_mountain_probs = pred[non_mountain_mask, :MOUNTAIN_CODE]
+        denom = non_mountain_probs.sum(axis=1, keepdims=True)
+        valid = (denom[:, 0] > 0.0)
+        if np.any(valid):
+            non_mountain_probs[valid] /= denom[valid]
+        if np.any(~valid):
+            non_mountain_probs[~valid] = 0.0
+            non_mountain_probs[~valid, 0] = 1.0
+        pred[non_mountain_mask, :MOUNTAIN_CODE] = non_mountain_probs
+
+    coast = coastal_mask(init_grid)
+    port_impossible_mask = (~coast) | mountain_mask
+    if port_impossible_mask.any():
+        affected = pred[port_impossible_mask]
+        affected[:, PORT_CODE] = 0.0
+        denom = affected.sum(axis=1, keepdims=True)
+        valid = denom[:, 0] > 0.0
+        if np.any(valid):
+            affected[valid] /= denom[valid]
+        if np.any(~valid):
+            affected[~valid] = 0.0
+            affected[~valid, 0] = 1.0
+        pred[port_impossible_mask] = affected
+
+
 def _apply_settlement_signals(
     pred: np.ndarray,
     snaps: list[dict],
@@ -949,6 +1004,64 @@ def _masked_gaussian_blur(
     weight = gaussian_filter(mask.astype(np.float64), sigma=sigma)
     numer = gaussian_filter((field * mask).astype(np.float64), sigma=sigma)
     return np.divide(numer, np.maximum(weight, 1e-9))
+
+
+def _apply_settlement_intensity_prior(
+    pred: np.ndarray,
+    init_grid: np.ndarray,
+    *,
+    settlement_centers: np.ndarray,
+    alpha: float,
+    sigma: float,
+) -> np.ndarray:
+    """
+    Blend settlement mass with a smooth distance-decay field from seed centers.
+
+    The generated field is normalized and re-scaled to the current total
+    settlement mass so this only changes spatial shape, not global magnitude.
+    """
+    if alpha <= 0.0:
+        return pred
+
+    dynamic_mask = ~np.isin(init_grid, [OCEAN_CODE, MOUNTAIN_CODE])
+    if not dynamic_mask.any():
+        return pred
+
+    centers = settlement_centers.astype(np.float64, copy=False) * dynamic_mask
+    if centers.sum() <= 0.0:
+        return pred
+
+    out = pred.astype(np.float64, copy=True)
+    settlement_total = out[:, :, SETTLEMENT_CODE] + out[:, :, PORT_CODE]
+    port_ratio = np.divide(
+        out[:, :, PORT_CODE],
+        np.maximum(settlement_total, 1e-9),
+    )
+
+    intensity = _masked_gaussian_blur(centers, dynamic_mask, max(float(sigma), 0.6))
+    intensity = np.maximum(intensity, 0.0) * dynamic_mask
+    sum_intensity = float(intensity.sum())
+    if sum_intensity <= 0.0:
+        return out
+
+    total_settlement_mass = float(settlement_total[dynamic_mask].sum())
+    target = intensity * (total_settlement_mass / max(sum_intensity, 1e-9))
+    target = np.clip(target, 0.0, 1.0)
+
+    settlement_total = (
+        (1.0 - float(alpha)) * settlement_total +
+        float(alpha) * target
+    )
+    settlement_total = np.clip(settlement_total, 0.0, 1.0)
+
+    out[:, :, PORT_CODE] = settlement_total * port_ratio
+    out[:, :, SETTLEMENT_CODE] = np.maximum(
+        settlement_total - out[:, :, PORT_CODE],
+        PROB_FLOOR,
+    )
+    out = np.maximum(out, PROB_FLOOR)
+    out /= out.sum(axis=2, keepdims=True)
+    return out
 
 
 def _apply_semantic_class_smoothing(
