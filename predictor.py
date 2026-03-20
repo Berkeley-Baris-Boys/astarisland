@@ -61,7 +61,7 @@ EMPIRICAL_FULL_COVERAGE_ITER_SIGMA = 3.0
 EMPIRICAL_FULL_COVERAGE_ITER_FOREST_SIGMA = 3.0
 EMPIRICAL_FULL_COVERAGE_ITER_TAU = 3.0
 EMPIRICAL_FULL_COVERAGE_ITER_STEPS = 5
-EMPIRICAL_FULL_COVERAGE_ITER_SETTLE_BOOST = 1.25
+EMPIRICAL_FULL_COVERAGE_ITER_SETTLE_BOOST = 1.00
 EMPIRICAL_FULL_COVERAGE_ITER_RUIN_BOOST = 1.15
 EMPIRICAL_FULL_COVERAGE_BLEND_SINGLE = 0.60
 EMPIRICAL_FULL_COVERAGE_BLEND_DOUBLE = 0.20
@@ -72,6 +72,14 @@ EMPIRICAL_OBS_PORT_RUIN_ANCHOR_BASE = 0.20
 EMPIRICAL_OBS_PORT_RUIN_ANCHOR_BONUS = 0.22
 SETTLEMENT_INTENSITY_BLEND_ALPHA = 0.22
 SETTLEMENT_INTENSITY_SIGMA = 2.2
+
+# On full-coverage rounds, preserve a minimum amount of dynamic-class mass
+# from the empirical observations to avoid pathological collapse to Empty.
+FULL_COVERAGE_DYNAMIC_MASS_FLOORS = {
+    SETTLEMENT_CODE: 0.70,
+    PORT_CODE: 0.55,
+    RUIN_CODE: 0.55,
+}
 
 try:
     from testing.simulator import estimate_params_from_observations, monte_carlo
@@ -148,6 +156,47 @@ def _apply_settlement_intensity_prior(
     blended = (1.0 - alpha) * out[:, :, SETTLEMENT_CODE] + alpha * prior
     blended = np.maximum(blended, 0.0)
     out[:, :, SETTLEMENT_CODE] = np.where(dynamic_mask, blended, out[:, :, SETTLEMENT_CODE])
+    out = np.maximum(out, PROB_FLOOR)
+    out /= out.sum(axis=2, keepdims=True)
+    return out
+
+
+def _apply_full_coverage_dynamic_mass_floor(
+    pred: np.ndarray,
+    counts: np.ndarray,
+    init_grid: np.ndarray,
+) -> np.ndarray:
+    """
+    Keep a minimum share of observed dynamic-class mass on fully covered rounds.
+
+    With 1x observations per cell plus heavy denoising, settlement/port/ruin can
+    collapse toward Empty even when empirical evidence is substantial. We enforce
+    a conservative floor relative to empirical global class frequencies.
+    """
+    dynamic_mask = ~np.isin(init_grid, [OCEAN_CODE, MOUNTAIN_CODE])
+    if not dynamic_mask.any():
+        return pred
+
+    out = pred.astype(np.float64, copy=True)
+    empirical_totals = counts[dynamic_mask].sum(axis=0).astype(np.float64)
+    predicted_totals = out[dynamic_mask].sum(axis=0).astype(np.float64)
+
+    total_emp = float(empirical_totals.sum())
+    total_pred = float(predicted_totals.sum())
+    if total_emp <= 0 or total_pred <= 0:
+        return out
+
+    empirical_share = empirical_totals / total_emp
+    predicted_share = predicted_totals / total_pred
+
+    for cls, floor_frac in FULL_COVERAGE_DYNAMIC_MASS_FLOORS.items():
+        target = floor_frac * float(empirical_share[cls])
+        current = float(predicted_share[cls])
+        if current + 1e-12 >= target:
+            continue
+        scale = target / max(current, 1e-9)
+        out[:, :, cls] *= scale
+
     out = np.maximum(out, PROB_FLOOR)
     out /= out.sum(axis=2, keepdims=True)
     return out
@@ -614,6 +663,11 @@ def _build_empirical_constrained_predictions(
                 settlement_bonus=EMPIRICAL_OBS_SETTLEMENT_ANCHOR_BONUS,
                 port_ruin_base=EMPIRICAL_OBS_PORT_RUIN_ANCHOR_BASE,
                 port_ruin_bonus=EMPIRICAL_OBS_PORT_RUIN_ANCHOR_BONUS,
+            )
+            pred = _apply_full_coverage_dynamic_mass_floor(
+                pred,
+                counts,
+                init_grid,
             )
         pred = _apply_settlement_intensity_prior(
             pred,
