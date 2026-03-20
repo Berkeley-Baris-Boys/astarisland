@@ -123,7 +123,10 @@ def _apply_settlement_intensity_prior(
     Blend a distance-decay settlement prior into the settlement mass.
     Helps produce blob-like spatial distributions rather than isolated spikes.
     """
-    from scipy.ndimage import gaussian_filter
+    try:
+        from scipy.ndimage import gaussian_filter
+    except ImportError:
+        return pred
 
     dynamic_mask = ~np.isin(init_grid, [OCEAN_CODE, MOUNTAIN_CODE])
     settle_centers = has_settle.astype(np.float64)

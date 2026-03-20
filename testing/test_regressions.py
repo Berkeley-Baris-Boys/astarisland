@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 import sys
+import os
 import tempfile
 import unittest
 from pathlib import Path
@@ -116,14 +117,19 @@ class RegressionTests(unittest.TestCase):
     def test_fetch_analysis_continues_with_partial_seed_data(self):
         logger = _CaptureLogger()
         predictions = {1: np.full((1, 1, 6), 1 / 6, dtype=np.float32)}
-
-        gt = fetch_and_log_analysis(
-            _PartialAnalysisAPI(),
-            round_id="round-x",
-            seeds_count=2,
-            predictions=predictions,
-            logger=logger,
-        )
+        with tempfile.TemporaryDirectory() as td:
+            old_cwd = os.getcwd()
+            try:
+                os.chdir(td)
+                gt = fetch_and_log_analysis(
+                    _PartialAnalysisAPI(),
+                    round_id="round-x",
+                    seeds_count=2,
+                    predictions=predictions,
+                    logger=logger,
+                )
+            finally:
+                os.chdir(old_cwd)
 
         self.assertIsNotNone(gt)
         assert gt is not None
