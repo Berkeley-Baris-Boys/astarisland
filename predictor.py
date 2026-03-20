@@ -75,7 +75,7 @@ SETTLEMENT_INTENSITY_SIGMA = 2.2
 
 try:
     from testing.simulator import estimate_params_from_observations, monte_carlo
-except Exception:
+except ImportError:
     estimate_params_from_observations = None
     monte_carlo = None
 
@@ -170,31 +170,9 @@ def build_predictions(
     settlement/forest smoothing. Hybrid rollout and heuristics remain as
     fallbacks when that path fails.
     """
-    predictions = None
-    try:
-        predictions = _build_empirical_constrained_predictions(
-            initial_states, store, dynamics, verbose=verbose
-        )
-    except Exception as exc:
-        if verbose:
-            print(
-                "Empirical constrained predictor failed, "
-                f"falling back to hybrid: {exc}"
-            )
-
-    if predictions is None and estimate_params_from_observations is not None and monte_carlo is not None:
-        try:
-            predictions = _build_hybrid_predictions(
-                initial_states, store, dynamics, verbose=verbose
-            )
-        except Exception as exc:
-            if verbose:
-                print(f"Hybrid predictor failed, falling back to heuristics: {exc}")
-
-    if predictions is None:
-        predictions = _build_heuristic_predictions(
-            initial_states, store, dynamics, verbose=verbose
-        )
+    predictions = _build_empirical_constrained_predictions(
+        initial_states, store, dynamics, verbose=verbose
+    )
 
     _apply_hard_constraints(predictions, initial_states, store)
     return predictions

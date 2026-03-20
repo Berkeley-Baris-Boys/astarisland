@@ -112,8 +112,8 @@ def estimate_world_dynamics(
 
     # ── Settlement stats (pooled across all seeds) ────────────────────────────
     alive_list: list[bool] = []
-    food_list:  list[float] = []
-    pop_list:   list[float] = []
+    survivor_food_list: list[float] = []
+    survivor_pop_list: list[float] = []
     port_wealth_list: list[float] = []
     port_alive: list[bool] = []
 
@@ -128,10 +128,10 @@ def estimate_world_dynamics(
         for settle in last_obs.values():
             alive = bool(settle.get("alive", True))
             alive_list.append(alive)
-            if settle.get("food") is not None:
-                food_list.append(float(settle["food"]))
-            if settle.get("population") is not None:
-                pop_list.append(float(settle["population"]))
+            if alive and settle.get("food") is not None:
+                survivor_food_list.append(float(settle["food"]))
+            if alive and settle.get("population") is not None:
+                survivor_pop_list.append(float(settle["population"]))
             if settle.get("has_port", False):
                 port_alive.append(alive)
                 if settle.get("wealth") is not None and alive:
@@ -142,10 +142,10 @@ def estimate_world_dynamics(
     if alive_list:
         dyn.settlement_survival_rate = float(np.mean(alive_list))
 
-    if food_list:
-        dyn.avg_food_survivors = float(np.mean([f for f, a in zip(food_list, alive_list) if a]))
-    if pop_list:
-        dyn.avg_pop_survivors = float(np.mean([p for p, a in zip(pop_list, alive_list) if a]))
+    if survivor_food_list:
+        dyn.avg_food_survivors = float(np.mean(survivor_food_list))
+    if survivor_pop_list:
+        dyn.avg_pop_survivors = float(np.mean(survivor_pop_list))
     if port_wealth_list:
         dyn.avg_port_wealth = float(np.mean(port_wealth_list))
     if port_alive:

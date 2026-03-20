@@ -216,9 +216,6 @@ def main() -> None:
         print(f"Save dir: {save_dir}")
     print()
 
-    init_grid = np.array(init_states[0]["grid"], dtype=np.int64)
-    static_mask = (init_grid == 10) | (init_grid == 5)
-
     print("Computing ground truth...")
     ground_truth: dict[int, np.ndarray] = {}
     for seed in range(seeds_count):
@@ -288,6 +285,8 @@ def main() -> None:
     for seed in range(seeds_count):
         gt = ground_truth[seed]
         pred = predictions[seed]
+        init_grid = np.array(init_states[seed]["grid"], dtype=np.int64)
+        static_mask = (init_grid == MOUNTAIN) | (init_grid == OCEAN)
         wkl = _weighted_kl(gt, pred, static_mask)
         sc = _score(wkl)
         scores.append(sc)
