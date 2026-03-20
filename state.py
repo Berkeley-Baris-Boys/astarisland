@@ -250,14 +250,53 @@ def plan_core_queries(
     return plan
 
 
-def all_viewports(width: int, height: int) -> list[tuple[int, int, int, int]]:
-    """All valid 15×15 viewport positions (for reserve query selection)."""
-    xs = tiling_offsets(width, MAX_VIEWPORT)
-    ys = tiling_offsets(height, MAX_VIEWPORT)
-    return [
+def all_viewports(
+    width: int,
+    height: int,
+    *,
+    stride: int = 5,
+) -> list[tuple[int, int, int, int]]:
+    """
+    Candidate viewport positions for reserve query selection.
+
+    Uses a denser stride than the core coverage tiling so reserve queries can
+    target uncertainty hotspots instead of only revisiting the same 9 core
+    windows on a 40x40 map.
+    """
+    if width <= MAX_VIEWPORT:
+        xs = [0]
+    else:
+        xs = list(range(0, max(1, width - MAX_VIEWPORT + 1), max(1, stride)))
+        right_edge = width - MAX_VIEWPORT
+        if xs[-1] != right_edge:
+            xs.append(right_edge)
+
+    if height <= MAX_VIEWPORT:
+        ys = [0]
+    else:
+        ys = list(range(0, max(1, height - MAX_VIEWPORT + 1), max(1, stride)))
+        bottom_edge = height - MAX_VIEWPORT
+        if ys[-1] != bottom_edge:
+            ys.append(bottom_edge)
+
+    viewports = [
         (x, y, min(MAX_VIEWPORT, width - x), min(MAX_VIEWPORT, height - y))
         for y in ys for x in xs
     ]
+    # Preserve deterministic ordering and de-duplicate edge insertions.
+    return sorted(set(viewports), key=lambda vp: (vp[1], vp[0], vp[3], vp[2]))
+
+
+def candidate_viewports(
+    width: int,
+    height: int,
+    *,
+    stride: int = 5,
+) -> list[tuple[int, int, int, int]]:
+    """
+    Backwards-compatible alias for dense reserve viewport generation.
+    """
+    return all_viewports(width, height, stride=stride)
 
 
 # ── Observation store ─────────────────────────────────────────────────────────
@@ -474,6 +513,12 @@ class ObservationStore:
         }
         n_obs = cnt.sum(axis=2)  # H×W
         single_mask = (n_obs == 1)
+        double_mask = (n_obs == 2)
+        # Cells with fewer independent observations remain noisy even if already
+        # observed. This complements entropy so reserve queries are spent where
+        # another sample is likely to reduce variance the most.
+        scarcity = 1.0 / np.maximum(n_obs.astype(np.float32), 1.0)
+        scarcity[~obs_mask] = 1.0
         if single_mask.any():
             richness = np.zeros((self.height, self.width), dtype=np.float32)
             for y, row in enumerate(self.latest[seed]):
@@ -489,8 +534,19 @@ class ObservationStore:
             vx, vy, vw, vh = vp
             region = entropy_map[vy:vy + vh, vx:vx + vw]
             unseen_frac = float((~obs_mask[vy:vy + vh, vx:vx + vw]).mean())
-            penalty = visited.get(vp, 0) * 0.15
-            score = float(region.mean()) + 2.0 * unseen_frac - penalty
+            single_frac = float(single_mask[vy:vy + vh, vx:vx + vw].mean())
+            double_frac = float(double_mask[vy:vy + vh, vx:vx + vw].mean())
+            scarcity_mean = float(scarcity[vy:vy + vh, vx:vx + vw].mean())
+            revisit_count = visited.get(vp, 0)
+            penalty = 0.22 * np.log1p(revisit_count)
+            score = (
+                float(region.mean())
+                + 2.1 * unseen_frac
+                + 0.8 * single_frac
+                + 0.35 * double_frac
+                + 0.55 * scarcity_mean
+                - penalty
+            )
             if score > best_score:
                 best_score, best_vp = score, vp
         return best_vp

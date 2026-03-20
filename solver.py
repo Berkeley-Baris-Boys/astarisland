@@ -26,7 +26,7 @@ from config import (
 )
 from metrics import MetricsLogger, fetch_and_log_analysis, holdout_self_check
 from predictor import build_predictions, validate_prediction
-from state import ObservationStore, all_viewports, plan_core_queries
+from state import ObservationStore, all_viewports, plan_core_queries, candidate_viewports
 from world_dynamics import estimate_world_dynamics
 
 MAX_CONSECUTIVE_RESERVE_API_ERRORS = 8
@@ -126,7 +126,9 @@ def run_query_phase(
         initial_states=initial_states,
         budget=budget,
     )
-    viewports = all_viewports(store.width, store.height)
+    # Use denser reserve candidates than coarse 15x15 tiling to spend
+    # leftover budget on locally high-information regions.
+    viewports = candidate_viewports(store.width, store.height, stride=5)
     viewport_hits: dict[int, dict[tuple[int, int, int, int], int]] = {
         seed: {} for seed in range(store.seeds_count)
     }
