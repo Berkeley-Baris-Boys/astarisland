@@ -100,12 +100,15 @@ def holdout_self_check(
     predictions: dict[int, np.ndarray],
     holdout_fraction: float = 0.15,
     random_seed: int = 2026,
+    posterior_tau: float = 2.0,
 ) -> dict:
     """
     Hold out a fraction of observed cells, run predictions without them,
     then measure KL divergence between held-out observations and predictions.
 
-    This estimates expected prediction quality before submitting.
+    Observed cell counts are sparse samples from a latent probability vector, so
+    the comparison uses a smoothed posterior mean by default instead of the raw
+    empirical counts. This is less prone to rewarding overconfident predictors.
     """
     from state import ObservationStore, code_to_class  # avoid circular
     import copy
@@ -113,6 +116,13 @@ def holdout_self_check(
     rng = np.random.default_rng(random_seed)
     held_kls: list[float] = []
     seed_reports: dict[int, dict] = {}
+    global_counts = np.zeros(N_CLASSES, dtype=np.float64)
+
+    for seed in range(store.seeds_count):
+        global_counts += store.counts[seed].sum(axis=(0, 1))
+    if global_counts.sum() <= 0:
+        global_counts += 1.0
+    global_prior = global_counts / global_counts.sum()
 
     for seed in range(store.seeds_count):
         counts = store.counts[seed]
@@ -129,11 +139,14 @@ def holdout_self_check(
         # KL: empirical distribution at held-out cells vs prediction
         kls_seed: list[float] = []
         for y, x in sel.tolist():
-            emp = counts[seed][y, x].astype(np.float64)
+            emp = counts[y, x].astype(np.float64)
             total = float(emp.sum())
             if total <= 0:
                 continue
-            p = emp / total
+            if posterior_tau > 0.0:
+                p = (emp + posterior_tau * global_prior) / (total + posterior_tau)
+            else:
+                p = emp / total
             q = np.maximum(predictions[seed][y, x].astype(np.float64), PROB_FLOOR)
             q = q / q.sum()
             kls_seed.append(kl_divergence(p, q))
@@ -150,7 +163,10 @@ def holdout_self_check(
     overall_kl = float(np.mean(held_kls)) if held_kls else float("nan")
     overall_score = float(100 * np.exp(-3 * overall_kl)) if not np.isnan(overall_kl) else float("nan")
 
-    print("\nSelf-check (holdout validation):")
+    label = "holdout validation"
+    if posterior_tau > 0.0:
+        label = f"smoothed holdout validation, tau={posterior_tau:g}"
+    print(f"\nSelf-check ({label}):")
     print(f"  Overall KL={overall_kl:.4f}, approx score={overall_score:.1f}/100")
     for s, r in sorted(seed_reports.items()):
         kl_str = f"{r['mean_kl']:.4f}" if not np.isnan(r.get('mean_kl', float('nan'))) else "n/a"
@@ -158,7 +174,11 @@ def holdout_self_check(
         print(f"  Seed {s}: n={r['n_holdout']}, KL={kl_str}, score≈{sc_str}")
 
     return {
-        "overall": {"mean_kl": overall_kl, "approx_score": overall_score},
+        "overall": {
+            "mean_kl": overall_kl,
+            "approx_score": overall_score,
+            "posterior_tau": posterior_tau,
+        },
         "by_seed": seed_reports,
     }
 

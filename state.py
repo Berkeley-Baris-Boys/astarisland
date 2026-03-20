@@ -193,18 +193,14 @@ def plan_core_queries(
     budget: int = TOTAL_BUDGET,
 ) -> list[tuple[int, int, int, int, int]]:
     """
-    Plan queries using asymmetric seed allocation (PDF recommendation):
+    Plan queries with guaranteed full coverage first.
 
-    - Rank seeds by "richness" (settlement count × coastal complexity)
-    - Spend ~60% of budget on the richest 1-2 seeds (more repetitions = better
-      regime/distribution estimates for those dynamic cells)
-    - Spend remaining ~40% on light single-pass coverage of the other seeds
-    - Within each seed, prioritise viewports with many settlements + coastline
+    For the standard 40x40 / 15x15 setup this means:
+    - 45 queries for a single full pass over all 5 seeds
+    - remaining queries reserved for adaptive re-sampling
 
-    With budget=50, seeds=5 and 9 tiles/seed this typically yields:
-      Seed (rich 1): ~16 queries  (full cover + 7 repeats on settlement areas)
-      Seed (rich 2): ~12 queries  (full cover + 3 repeats)
-      Seeds 3-5:      ~7 queries each  (7 of 9 tiles, best ones first)
+    Seeds are still ordered by richness so that, if a run is interrupted early,
+    the most informative windows are queried first.
     """
     xs = tiling_offsets(width, MAX_VIEWPORT)
     ys = tiling_offsets(height, MAX_VIEWPORT)
@@ -217,52 +213,39 @@ def plan_core_queries(
     if initial_states is None:
         # Fallback: even distribution, interleaved
         plan: list[tuple[int, int, int, int, int]] = []
-        for x, y, w, h in all_tiles:
+        for tile_idx in range(n_tiles):
             for seed in range(seeds_count):
+                x, y, w, h = all_tiles[tile_idx]
                 plan.append((seed, x, y, w, h))
-                if len(plan) >= budget:
+                if len(plan) >= min(budget, seeds_count * n_tiles):
                     return plan
         return plan
 
-    # Rank seeds by richness
     richness = [
         (s, _seed_richness(initial_states[s], width, height))
         for s in range(seeds_count)
     ]
     richness.sort(key=lambda x: -x[1])
     ranked_seeds = [s for s, _ in richness]
+    coverage_budget = min(budget, seeds_count * n_tiles)
+    reserve_budget = max(0, budget - coverage_budget)
+    print(
+        f"Query plan: full coverage={coverage_budget} "
+        f"reserve={reserve_budget} ranked_seeds={ranked_seeds}"
+    )
 
-    # Allocate budget: top seed gets ~30%, second ~25%, rest share remaining
-    alloc = [0] * seeds_count
-    remaining = budget
-    if seeds_count >= 2:
-        alloc[ranked_seeds[0]] = min(int(budget * 0.30), remaining)
-        remaining -= alloc[ranked_seeds[0]]
-        alloc[ranked_seeds[1]] = min(int(budget * 0.22), remaining)
-        remaining -= alloc[ranked_seeds[1]]
-    light_seeds = ranked_seeds[2:] if seeds_count > 2 else []
-    per_light = remaining // max(len(light_seeds), 1)
-    for s in light_seeds:
-        alloc[s] = min(per_light, remaining)
-        remaining -= alloc[s]
-    # Give any leftover to the richest seed
-    alloc[ranked_seeds[0]] += remaining
+    ordered_tiles = {
+        seed: rank_viewports_by_interest(all_tiles, initial_states[seed])
+        for seed in range(seeds_count)
+    }
 
-    print(f"Query allocation: { {s: alloc[s] for s in ranked_seeds} }")
-
-    # Build plan: for each seed, use settlement-prioritised tile order
-    plan = []
-    for seed in range(seeds_count):
-        q = alloc[seed]
-        if q == 0:
-            continue
-        ordered = rank_viewports_by_interest(all_tiles, initial_states[seed])
-        # Full coverage pass first (up to n_tiles queries), then repeat the best tiles
-        full_pass = ordered[:n_tiles]
-        bonus     = ordered[:max(0, q - n_tiles)]  # best tiles again if budget allows
-        seed_plan = full_pass + bonus
-        for vp in seed_plan[:q]:
+    plan: list[tuple[int, int, int, int, int]] = []
+    for tile_idx in range(n_tiles):
+        for seed in ranked_seeds:
+            vp = ordered_tiles[seed][tile_idx]
             plan.append((seed, vp[0], vp[1], vp[2], vp[3]))
+            if len(plan) >= coverage_budget:
+                return plan
 
     return plan
 

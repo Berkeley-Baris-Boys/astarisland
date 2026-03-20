@@ -1,0 +1,189 @@
+{
+  "fd3c92ff-3178-4dc9-8d9b-acf389b3982b": {
+    "round_id": "fd3c92ff-3178-4dc9-8d9b-acf389b3982b",
+    "round_number": "fd3c92ff-3178-4dc9-8d9b-acf389b3982b",
+    "width": 40,
+    "height": 40,
+    "seeds_count": 5,
+    "round_weight": 1.2763,
+    "started_at": "2026-03-20T08:33:45Z",
+    "queries_used": 50,
+    "coverage_by_seed": {
+      "0": 0.9062,
+      "1": 0.9375,
+      "2": 1.0,
+      "3": 1.0,
+      "4": 0.9375
+    },
+    "samples_by_seed": {
+      "0": 1800,
+      "1": 1800,
+      "2": 3375,
+      "3": 2475,
+      "4": 1800
+    },
+    "avg_coverage": 0.95624,
+    "estimated_params": {
+      "survival_rate": 0.5322,
+      "ruin_rate": 0.0215,
+      "expansion_rate": 0.1282,
+      "forest_growth": 0.0344,
+      "avg_food": 0.6995,
+      "avg_port_wealth": 0.0277
+    },
+    "prediction_summary": {
+      "0": {
+        "class_counts": {
+          "Empty": 1160,
+          "Settlement": 156,
+          "Port": 6,
+          "Ruin": 2,
+          "Forest": 250,
+          "Mountain": 26
+        },
+        "avg_confidence": 0.7176,
+        "avg_entropy": 0.7783
+      },
+      "1": {
+        "class_counts": {
+          "Empty": 1105,
+          "Settlement": 182,
+          "Port": 6,
+          "Ruin": 7,
+          "Forest": 271,
+          "Mountain": 29
+        },
+        "avg_confidence": 0.719,
+        "avg_entropy": 0.7758
+      },
+      "2": {
+        "class_counts": {
+          "Empty": 1123,
+          "Settlement": 136,
+          "Port": 7,
+          "Ruin": 4,
+          "Forest": 300,
+          "Mountain": 30
+        },
+        "avg_confidence": 0.7461,
+        "avg_entropy": 0.6996
+      },
+      "3": {
+        "class_counts": {
+          "Empty": 1135,
+          "Settlement": 164,
+          "Port": 6,
+          "Ruin": 4,
+          "Forest": 249,
+          "Mountain": 42
+        },
+        "avg_confidence": 0.7278,
+        "avg_entropy": 0.7387
+      },
+      "4": {
+        "class_counts": {
+          "Empty": 981,
+          "Settlement": 299,
+          "Port": 36,
+          "Ruin": 11,
+          "Forest": 233,
+          "Mountain": 40
+        },
+        "avg_confidence": 0.6916,
+        "avg_entropy": 0.7964
+      }
+    },
+    "submission_statuses": {
+      "0": "accepted",
+      "1": "accepted",
+      "2": "accepted",
+      "3": "accepted",
+      "4": "accepted"
+    },
+    "submitted_at": "2026-03-20T08:35:53Z",
+    "transition_priors": {
+      "10": [
+        1.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0
+      ],
+      "11": [
+        0.8234,
+        0.1194,
+        0.0089,
+        0.0141,
+        0.0342,
+        0.0
+      ],
+      "4": [
+        0.0709,
+        0.1296,
+        0.0127,
+        0.0115,
+        0.7753,
+        0.0
+      ],
+      "1": [
+        0.4444,
+        0.3333,
+        0.0,
+        0.0133,
+        0.2089,
+        0.0
+      ],
+      "5": [
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        1.0
+      ],
+      "2": [
+        0.5,
+        0.0,
+        0.0,
+        0.25,
+        0.25,
+        0.0
+      ]
+    }
+  },
+  "ae78003a-4efe-425a-881a-d16a39bca0ad": {
+    "round_id": "ae78003a-4efe-425a-881a-d16a39bca0ad",
+    "round_number": "ae78003a-4efe-425a-881a-d16a39bca0ad",
+    "width": 40,
+    "height": 40,
+    "seeds_count": 5,
+    "round_weight": 1.3401,
+    "started_at": "2026-03-20T11:43:19Z",
+    "submission_statuses": {
+      "0": "accepted",
+      "1": "accepted",
+      "2": "accepted",
+      "3": "accepted",
+      "4": "accepted"
+    },
+    "submitted_at": "2026-03-20T11:43:26Z"
+  },
+  "36e581f1-73f8-453f-ab98-cbe3052b701b": {
+    "round_id": "36e581f1-73f8-453f-ab98-cbe3052b701b",
+    "round_number": "36e581f1-73f8-453f-ab98-cbe3052b701b",
+    "width": 40,
+    "height": 40,
+    "seeds_count": 5,
+    "round_weight": 1.4071,
+    "started_at": "2026-03-20T14:21:13Z",
+    "submission_statuses": {
+      "0": "accepted",
+      "1": "accepted",
+      "2": "accepted",
+      "3": "accepted",
+      "4": "accepted"
+    },
+    "submitted_at": "2026-03-20T14:21:22Z"
+  }
+}

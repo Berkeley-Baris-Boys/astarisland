@@ -3,13 +3,12 @@
 Astar Island — Norse Civilisation Prediction Pipeline
 NM i AI 2026
 
-No local simulator. Instead we:
-  1. Tile the full map across all 5 seeds (covers 100% of cells)
-  2. Pool observations across seeds → estimate round-level "world dynamics"
-  3. For observed cells: blend empirical counts with dynamics-adjusted prior
-  4. For unobserved cells: dynamics-adjusted prior + spatial smoothing
-  5. Override specific positions with direct alive/dead settlement signals
-  6. Submit H×W×6 tensors for all 5 seeds
+Simulator-backed pipeline:
+  1. Spend the query budget on broad coverage plus selective re-sampling
+  2. Pool observations across seeds to infer round-level hidden dynamics
+  3. Run local Monte Carlo rollouts for each seed using the inferred regime
+  4. Blend rollout probabilities with direct empirical counts from observations
+  5. Submit H×W×6 tensors for all 5 seeds
 
 Usage:
   export ASTAR_TOKEN="<your JWT>"
@@ -128,10 +127,9 @@ def run_query_phase(
 
 def _mean_entropy(counts: np.ndarray) -> float:
     tot = counts.sum(axis=2, keepdims=True).astype(np.float32)
-    with __import__("numpy").errstate(divide="ignore", invalid="ignore"):
-        p = __import__("numpy").where(tot > 0, counts / tot, 0)
-    with __import__("numpy").errstate(divide="ignore", invalid="ignore"):
-        import numpy as np
+    with np.errstate(divide="ignore", invalid="ignore"):
+        p = np.where(tot > 0, counts / tot, 0)
+    with np.errstate(divide="ignore", invalid="ignore"):
         ent = -np.sum(np.where(p > 0, p * np.log(p + 1e-12), 0), axis=2)
     return float(ent.mean())
 
