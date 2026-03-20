@@ -151,5 +151,22 @@
         0.0
       ]
     }
+  },
+  "ae78003a-4efe-425a-881a-d16a39bca0ad": {
+    "round_id": "ae78003a-4efe-425a-881a-d16a39bca0ad",
+    "round_number": "ae78003a-4efe-425a-881a-d16a39bca0ad",
+    "width": 40,
+    "height": 40,
+    "seeds_count": 5,
+    "round_weight": 1.3401,
+    "started_at": "2026-03-20T11:43:19Z",
+    "submission_statuses": {
+      "0": "accepted",
+      "1": "accepted",
+      "2": "accepted",
+      "3": "accepted",
+      "4": "accepted"
+    },
+    "submitted_at": "2026-03-20T11:43:26Z"
   }
 }

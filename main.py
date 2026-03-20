@@ -127,10 +127,9 @@ def run_query_phase(
 
 def _mean_entropy(counts: np.ndarray) -> float:
     tot = counts.sum(axis=2, keepdims=True).astype(np.float32)
-    with __import__("numpy").errstate(divide="ignore", invalid="ignore"):
-        p = __import__("numpy").where(tot > 0, counts / tot, 0)
-    with __import__("numpy").errstate(divide="ignore", invalid="ignore"):
-        import numpy as np
+    with np.errstate(divide="ignore", invalid="ignore"):
+        p = np.where(tot > 0, counts / tot, 0)
+    with np.errstate(divide="ignore", invalid="ignore"):
         ent = -np.sum(np.where(p > 0, p * np.log(p + 1e-12), 0), axis=2)
     return float(ent.mean())
 

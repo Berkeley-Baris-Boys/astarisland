@@ -3,15 +3,12 @@ Prediction builder.
 
 Primary strategy:
 
-1. Build a current-round empirical transition model from observed cells.
-2. Infer round-level simulator parameters from observed terrain outcomes and
-   settlement snapshots.
-3. Run local Monte Carlo rollouts for each seed with the inferred parameters.
-4. Blend empirical transitions, calibrated rollouts, and heuristic priors.
-5. Apply a probability floor and keep a heuristic fallback path.
-
-If rollout inference fails for any reason, fall back to the older heuristic
-model so the solver still produces a valid submission.
+1. Build both an empirical-constrained predictor and a hybrid rollout-backed
+   predictor.
+2. Compare them with a smoothed holdout score that treats sparse cell
+   observations as noisy samples from an underlying distribution.
+3. Return the better-calibrated predictor for the current round.
+4. Fall back to heuristics if the stronger paths fail.
 """
 from __future__ import annotations
 
@@ -41,6 +38,9 @@ from world_dynamics import WorldDynamics, dynamics_adjusted_prior
 ROLLOUT_MC_RUNS = 80
 ROLLOUT_BASE_SEED = 20260320
 ROLLOUT_MAX_WEIGHT = 0.26
+EMPIRICAL_FINAL_SCALE = np.array([1.03, 0.97, 0.45, 0.40, 1.08, 0.85], dtype=np.float64)
+MODEL_SELECTION_TAU = 2.0
+MODEL_SELECTION_SEEDS = (2026, 2027, 2028)
 
 try:
     from testing.simulator import estimate_params_from_observations, monte_carlo
@@ -65,21 +65,130 @@ def build_predictions(
     """
     Build per-seed HxWx6 probability tensors.
 
-    Preferred path is a hybrid empirical + simulator predictor. The heuristic
-    path remains as a safety net.
+    Build both main predictor families when available and select between them
+    using a smoothed holdout score. This avoids raw sample-fit metrics pushing
+    the model toward overly sharp rollout predictions.
     """
+    empirical_predictions: dict[int, np.ndarray] | None = None
+    try:
+        empirical_predictions = _build_empirical_constrained_predictions(
+            initial_states, store, dynamics, verbose=verbose
+        )
+    except Exception as exc:
+        if verbose:
+            print(
+                "Empirical constrained predictor failed, "
+                f"falling back to hybrid: {exc}"
+            )
+
+    hybrid_predictions: dict[int, np.ndarray] | None = None
     if estimate_params_from_observations is not None and monte_carlo is not None:
         try:
-            return _build_hybrid_predictions(
+            hybrid_predictions = _build_hybrid_predictions(
                 initial_states, store, dynamics, verbose=verbose
             )
         except Exception as exc:
             if verbose:
                 print(f"Hybrid predictor failed, falling back to heuristics: {exc}")
 
+    if empirical_predictions is not None and hybrid_predictions is not None:
+        return _select_prediction_candidate(
+            store,
+            {
+                "empirical": empirical_predictions,
+                "hybrid": hybrid_predictions,
+            },
+            verbose=verbose,
+        )
+
+    if empirical_predictions is not None:
+        return empirical_predictions
+
+    if hybrid_predictions is not None:
+        return hybrid_predictions
+
     return _build_heuristic_predictions(
         initial_states, store, dynamics, verbose=verbose
     )
+
+
+def _select_prediction_candidate(
+    store: ObservationStore,
+    candidates: dict[str, dict[int, np.ndarray]],
+    *,
+    verbose: bool = True,
+) -> dict[int, np.ndarray]:
+    scores = {
+        name: _smoothed_holdout_score(
+            store,
+            preds,
+            tau=MODEL_SELECTION_TAU,
+            random_seeds=MODEL_SELECTION_SEEDS,
+        )
+        for name, preds in candidates.items()
+    }
+    best_name = max(scores, key=scores.get)
+    if verbose:
+        parts = ", ".join(
+            f"{name}={scores[name]:.1f}" for name in sorted(scores.keys())
+        )
+        print(
+            "Model selection (smoothed holdout): "
+            f"{parts}; chose {best_name}"
+        )
+    return candidates[best_name]
+
+
+def _smoothed_holdout_score(
+    store: ObservationStore,
+    predictions: dict[int, np.ndarray],
+    *,
+    tau: float,
+    random_seeds: tuple[int, ...],
+    holdout_fraction: float = 0.15,
+) -> float:
+    global_counts = np.zeros(N_CLASSES, dtype=np.float64)
+    for seed in range(store.seeds_count):
+        global_counts += store.counts[seed].sum(axis=(0, 1))
+    if global_counts.sum() <= 0:
+        global_counts += 1.0
+    global_prior = safe_normalize(global_counts)
+
+    approx_scores: list[float] = []
+    for rs in random_seeds:
+        rng = np.random.default_rng(rs)
+        kls: list[float] = []
+        for seed in range(store.seeds_count):
+            counts = store.counts[seed]
+            n_samp = counts.sum(axis=2)
+            obs_indices = np.argwhere(n_samp > 0)
+            if len(obs_indices) == 0:
+                continue
+            n_hold = max(1, int(round(len(obs_indices) * holdout_fraction)))
+            sel = obs_indices[rng.choice(len(obs_indices), n_hold, replace=False)]
+            for y, x in sel.tolist():
+                empirical = counts[y, x].astype(np.float64)
+                total = float(empirical.sum())
+                if total <= 0:
+                    continue
+                p = (empirical + tau * global_prior) / (total + tau)
+                q = np.maximum(predictions[seed][y, x].astype(np.float64), PROB_FLOOR)
+                q /= q.sum()
+                kls.append(
+                    float(
+                        np.sum(
+                            p * (
+                                np.log(np.maximum(p, 1e-9)) -
+                                np.log(np.maximum(q, 1e-9))
+                            )
+                        )
+                    )
+                )
+        if kls:
+            mean_kl = float(np.mean(kls))
+            approx_scores.append(float(100.0 * math.exp(-3.0 * mean_kl)))
+
+    return float(np.mean(approx_scores)) if approx_scores else float("-inf")
 
 
 def _build_hybrid_predictions(
@@ -317,6 +426,146 @@ def _build_heuristic_predictions(
 
         if verbose:
             _print_seed_summary(seed, pred, obs_mask, n_samp)
+
+    return predictions
+
+
+def _build_empirical_constrained_predictions(
+    initial_states: list[dict],
+    store: ObservationStore,
+    dynamics: WorldDynamics,
+    *,
+    verbose: bool = True,
+) -> dict[int, np.ndarray]:
+    """
+    Empirical-only alternative.
+
+    Uses current-round transition priors plus heuristic geography, with no
+    simulator rollout contribution on unobserved cells. This is intended as a
+    structurally different fallback when rollout-based predictions appear
+    overconfident on rare classes like ports and ruins.
+    """
+    H, W = store.height, store.width
+    contexts = _build_seed_contexts(initial_states, H, W)
+    transition_model = _build_transition_model(store, contexts)
+    predictions: dict[int, np.ndarray] = {}
+
+    for seed in range(store.seeds_count):
+        context = contexts[seed]
+        init_grid = context["grid"]
+        counts = store.counts[seed].astype(np.float64)
+        n_samp = counts.sum(axis=2, keepdims=True)
+        obs_mask = n_samp[:, :, 0] > 0
+        pred = np.zeros((H, W, N_CLASSES), dtype=np.float64)
+
+        for y in range(H):
+            for x in range(W):
+                init_code = int(init_grid[y, x])
+                if init_code == OCEAN_CODE:
+                    pred[y, x] = _ocean_distribution()
+                    continue
+                if init_code == MOUNTAIN_CODE:
+                    pred[y, x] = _mountain_distribution()
+                    continue
+
+                heuristic = dynamics_adjusted_prior(
+                    init_code=init_code,
+                    dyn=dynamics,
+                    is_near_settlement=bool(context["near_settle"][y, x]),
+                    is_coastal=bool(context["coast"][y, x]),
+                    n_forest_adj=int(context["fadj"][y, x]),
+                    is_near_port=bool(context["has_port"][y, x]) or (
+                        bool(context["coast"][y, x]) and bool(context["near_settle"][y, x])
+                    ),
+                    dist_to_coast=float(context["dist_coast"][y, x]),
+                    local_settle_density=float(context["settle_den"][y, x]),
+                )
+                empirical_prior, support = _lookup_transition_prior(
+                    transition_model,
+                    init_code=init_code,
+                    is_near_settlement=bool(context["near_settle"][y, x]),
+                    is_coastal=bool(context["coast"][y, x]),
+                    forest_bucket=int(context["fadj_bucket"][y, x]),
+                )
+
+                if obs_mask[y, x]:
+                    empirical = safe_normalize(counts[y, x] / float(n_samp[y, x, 0]))
+                    weights = np.array([
+                        min(0.92, 0.66 + 0.12 * min(float(n_samp[y, x, 0]), 2.0)),
+                        0.22 + 0.22 * support,
+                        0.10 + 0.08 * (1.0 - support),
+                    ])
+                    pred[y, x] = _blend_distributions(
+                        [empirical, empirical_prior, heuristic],
+                        weights,
+                    )
+                else:
+                    weights = np.array([
+                        0.58 + 0.24 * support,
+                        0.42 - 0.24 * support,
+                    ])
+                    pred[y, x] = _blend_distributions(
+                        [empirical_prior, heuristic],
+                        weights,
+                    )
+
+                pred[y, x] = _conservative_unobserved_adjustment(
+                    pred[y, x],
+                    empirical_prior=empirical_prior,
+                    heuristic_prior=heuristic,
+                    near_settlement=bool(context["near_settle"][y, x]),
+                    is_coastal=bool(context["coast"][y, x]),
+                    init_code=init_code,
+                )
+
+        _force_static_cells(pred, init_grid)
+        pred = _spatial_smooth(pred, obs_mask, init_grid, sigma=0.55)
+        for y in range(H):
+            for x in range(W):
+                if obs_mask[y, x]:
+                    continue
+                init_code = int(init_grid[y, x])
+                if init_code in (OCEAN_CODE, MOUNTAIN_CODE):
+                    continue
+                heuristic = dynamics_adjusted_prior(
+                    init_code=init_code,
+                    dyn=dynamics,
+                    is_near_settlement=bool(context["near_settle"][y, x]),
+                    is_coastal=bool(context["coast"][y, x]),
+                    n_forest_adj=int(context["fadj"][y, x]),
+                    is_near_port=bool(context["has_port"][y, x]) or (
+                        bool(context["coast"][y, x]) and bool(context["near_settle"][y, x])
+                    ),
+                    dist_to_coast=float(context["dist_coast"][y, x]),
+                    local_settle_density=float(context["settle_den"][y, x]),
+                )
+                empirical_prior, _ = _lookup_transition_prior(
+                    transition_model,
+                    init_code=init_code,
+                    is_near_settlement=bool(context["near_settle"][y, x]),
+                    is_coastal=bool(context["coast"][y, x]),
+                    forest_bucket=int(context["fadj_bucket"][y, x]),
+                )
+                pred[y, x] = _conservative_unobserved_adjustment(
+                    pred[y, x],
+                    empirical_prior=empirical_prior,
+                    heuristic_prior=heuristic,
+                    near_settlement=bool(context["near_settle"][y, x]),
+                    is_coastal=bool(context["coast"][y, x]),
+                    init_code=init_code,
+                )
+
+        pred = _apply_final_class_calibration(
+            pred,
+            scale=EMPIRICAL_FINAL_SCALE,
+        )
+        _force_static_cells(pred, init_grid)
+        pred = np.maximum(pred, PROB_FLOOR)
+        pred = pred / pred.sum(axis=2, keepdims=True)
+        predictions[seed] = pred.astype(np.float32)
+
+        if verbose:
+            _print_seed_summary(seed, pred, obs_mask, n_samp[:, :, 0])
 
     return predictions
 
@@ -696,6 +945,18 @@ def _spatial_smooth(
             pred[:, :, c],
         )
     return pred
+
+
+def _apply_final_class_calibration(
+    pred: np.ndarray,
+    *,
+    scale: np.ndarray,
+) -> np.ndarray:
+    out = pred.astype(np.float64, copy=True)
+    out *= scale.reshape(1, 1, -1)
+    out = np.maximum(out, PROB_FLOOR)
+    out /= out.sum(axis=2, keepdims=True)
+    return out
 
 
 def validate_prediction(pred: np.ndarray, seed: int) -> None:
