@@ -3,16 +3,19 @@ Prediction builder.
 
 Primary strategy:
 
-1. Infer round-level simulator parameters from observed terrain outcomes and
+1. Build a current-round empirical transition model from observed cells.
+2. Infer round-level simulator parameters from observed terrain outcomes and
    settlement snapshots.
-2. Run local Monte Carlo rollouts for each seed with the inferred parameters.
-3. Blend rollout probabilities with direct empirical counts at observed cells.
-4. Apply a probability floor and keep a heuristic fallback path.
+3. Run local Monte Carlo rollouts for each seed with the inferred parameters.
+4. Blend empirical transitions, calibrated rollouts, and heuristic priors.
+5. Apply a probability floor and keep a heuristic fallback path.
 
 If rollout inference fails for any reason, fall back to the older heuristic
 model so the solver still produces a valid submission.
 """
 from __future__ import annotations
+
+import math
 
 import numpy as np
 
@@ -37,6 +40,7 @@ from world_dynamics import WorldDynamics, dynamics_adjusted_prior
 
 ROLLOUT_MC_RUNS = 80
 ROLLOUT_BASE_SEED = 20260320
+ROLLOUT_MAX_WEIGHT = 0.26
 
 try:
     from testing.simulator import estimate_params_from_observations, monte_carlo
@@ -61,24 +65,24 @@ def build_predictions(
     """
     Build per-seed HxWx6 probability tensors.
 
-    Preferred path is simulator-backed Monte Carlo. The heuristic path remains
-    as a safety net.
+    Preferred path is a hybrid empirical + simulator predictor. The heuristic
+    path remains as a safety net.
     """
     if estimate_params_from_observations is not None and monte_carlo is not None:
         try:
-            return _build_rollout_predictions(
+            return _build_hybrid_predictions(
                 initial_states, store, dynamics, verbose=verbose
             )
         except Exception as exc:
             if verbose:
-                print(f"Rollout predictor failed, falling back to heuristics: {exc}")
+                print(f"Hybrid predictor failed, falling back to heuristics: {exc}")
 
     return _build_heuristic_predictions(
         initial_states, store, dynamics, verbose=verbose
     )
 
 
-def _build_rollout_predictions(
+def _build_hybrid_predictions(
     initial_states: list[dict],
     store: ObservationStore,
     dynamics: WorldDynamics,
@@ -87,6 +91,8 @@ def _build_rollout_predictions(
 ) -> dict[int, np.ndarray]:
     H, W = store.height, store.width
     observations = _store_to_observations(store)
+    contexts = _build_seed_contexts(initial_states, H, W)
+    transition_model = _build_transition_model(store, contexts)
     inferred_params = estimate_params_from_observations(
         observations,
         initial_states,
@@ -94,15 +100,11 @@ def _build_rollout_predictions(
         verbose=verbose,
     )
 
-    if verbose:
-        print(f"Rollout predictor: {ROLLOUT_MC_RUNS} simulations per seed")
-
-    predictions: dict[int, np.ndarray] = {}
+    rollout_predictions: dict[int, np.ndarray] = {}
     for seed in range(store.seeds_count):
         init_state = initial_states[seed]
         init_grid = np.asarray(init_state["grid"], dtype=np.int64)
-
-        pred = monte_carlo(
+        rollout_predictions[seed] = monte_carlo(
             init_grid,
             init_state.get("settlements", []),
             inferred_params,
@@ -110,29 +112,131 @@ def _build_rollout_predictions(
             seed=ROLLOUT_BASE_SEED + seed * 1009,
         ).astype(np.float64, copy=False)
 
+    rollout_predictions, rollout_trust, rollout_scale = _calibrate_rollouts(
+        rollout_predictions, store
+    )
+
+    if verbose:
+        print(
+            "Hybrid predictor: "
+            f"{ROLLOUT_MC_RUNS} simulations per seed, "
+            f"rollout_trust={rollout_trust:.3f}, "
+            f"class_scale={np.round(rollout_scale, 3).tolist()}"
+        )
+
+    predictions: dict[int, np.ndarray] = {}
+    for seed in range(store.seeds_count):
+        context = contexts[seed]
+        init_grid = context["grid"]
         counts = store.counts[seed].astype(np.float64)
         n_samp = counts.sum(axis=2, keepdims=True)
-        empirical = np.divide(
-            counts,
-            np.maximum(n_samp, 1.0),
-            out=np.zeros_like(counts),
-            where=n_samp > 0,
-        )
-        # Observed cells should dominate quickly; the rollout model fills the map.
-        alpha = np.clip(n_samp / 3.0, 0.0, 1.0)
-        pred = (1.0 - alpha) * pred + alpha * empirical
+        obs_mask = n_samp[:, :, 0] > 0
+        pred = np.zeros((H, W, N_CLASSES), dtype=np.float64)
+
+        for y in range(H):
+            for x in range(W):
+                init_code = int(init_grid[y, x])
+                if init_code == OCEAN_CODE:
+                    pred[y, x] = _ocean_distribution()
+                    continue
+                if init_code == MOUNTAIN_CODE:
+                    pred[y, x] = _mountain_distribution()
+                    continue
+
+                heuristic = dynamics_adjusted_prior(
+                    init_code=init_code,
+                    dyn=dynamics,
+                    is_near_settlement=bool(context["near_settle"][y, x]),
+                    is_coastal=bool(context["coast"][y, x]),
+                    n_forest_adj=int(context["fadj"][y, x]),
+                    is_near_port=bool(context["has_port"][y, x]) or (
+                        bool(context["coast"][y, x]) and bool(context["near_settle"][y, x])
+                    ),
+                    dist_to_coast=float(context["dist_coast"][y, x]),
+                    local_settle_density=float(context["settle_den"][y, x]),
+                )
+                empirical_prior, support = _lookup_transition_prior(
+                    transition_model,
+                    init_code=init_code,
+                    is_near_settlement=bool(context["near_settle"][y, x]),
+                    is_coastal=bool(context["coast"][y, x]),
+                    forest_bucket=int(context["fadj_bucket"][y, x]),
+                )
+                rollout = rollout_predictions[seed][y, x]
+
+                if obs_mask[y, x]:
+                    empirical = safe_normalize(counts[y, x] / float(n_samp[y, x, 0]))
+                    weights = np.array([
+                        min(0.88, 0.60 + 0.10 * min(float(n_samp[y, x, 0]), 2.0)),
+                        0.22 + 0.18 * support,
+                        0.08 + 0.14 * rollout_trust,
+                        0.10 + 0.08 * (1.0 - support),
+                    ])
+                    pred[y, x] = _blend_distributions(
+                        [empirical, empirical_prior, rollout, heuristic],
+                        weights,
+                    )
+                else:
+                    weights = np.array([
+                        0.42 + 0.40 * support,
+                        0.12 + ROLLOUT_MAX_WEIGHT * rollout_trust,
+                        0.22 + 0.24 * (1.0 - support),
+                    ])
+                    cell_pred = _blend_distributions(
+                        [empirical_prior, rollout, heuristic],
+                        weights,
+                    )
+                    pred[y, x] = _conservative_unobserved_adjustment(
+                        cell_pred,
+                        empirical_prior=empirical_prior,
+                        heuristic_prior=heuristic,
+                        near_settlement=bool(context["near_settle"][y, x]),
+                        is_coastal=bool(context["coast"][y, x]),
+                        init_code=init_code,
+                    )
 
         _force_static_cells(pred, init_grid)
-        # Snapshot terrain outcomes are already represented in the empirical
-        # counts above. A single settlement snapshot should shape parameter
-        # inference, not overwrite the full rollout distribution.
+        pred = _spatial_smooth(pred, obs_mask, init_grid, sigma=0.9)
+        for y in range(H):
+            for x in range(W):
+                if obs_mask[y, x]:
+                    continue
+                init_code = int(init_grid[y, x])
+                if init_code in (OCEAN_CODE, MOUNTAIN_CODE):
+                    continue
+                heuristic = dynamics_adjusted_prior(
+                    init_code=init_code,
+                    dyn=dynamics,
+                    is_near_settlement=bool(context["near_settle"][y, x]),
+                    is_coastal=bool(context["coast"][y, x]),
+                    n_forest_adj=int(context["fadj"][y, x]),
+                    is_near_port=bool(context["has_port"][y, x]) or (
+                        bool(context["coast"][y, x]) and bool(context["near_settle"][y, x])
+                    ),
+                    dist_to_coast=float(context["dist_coast"][y, x]),
+                    local_settle_density=float(context["settle_den"][y, x]),
+                )
+                empirical_prior, _ = _lookup_transition_prior(
+                    transition_model,
+                    init_code=init_code,
+                    is_near_settlement=bool(context["near_settle"][y, x]),
+                    is_coastal=bool(context["coast"][y, x]),
+                    forest_bucket=int(context["fadj_bucket"][y, x]),
+                )
+                pred[y, x] = _conservative_unobserved_adjustment(
+                    pred[y, x],
+                    empirical_prior=empirical_prior,
+                    heuristic_prior=heuristic,
+                    near_settlement=bool(context["near_settle"][y, x]),
+                    is_coastal=bool(context["coast"][y, x]),
+                    init_code=init_code,
+                )
 
         pred = np.maximum(pred, PROB_FLOOR)
         pred = pred / pred.sum(axis=2, keepdims=True)
         predictions[seed] = pred.astype(np.float32)
 
         if verbose:
-            obs_mask = n_samp[:, :, 0] > 0
             _print_seed_summary(seed, pred, obs_mask, n_samp[:, :, 0])
 
     return predictions
@@ -227,6 +331,281 @@ def _store_to_observations(store: ObservationStore) -> dict[int, np.ndarray]:
                     obs[y, x] = int(raw_val)
         observations[seed] = obs
     return observations
+
+
+def _build_seed_contexts(
+    initial_states: list[dict], height: int, width: int
+) -> dict[int, dict[str, np.ndarray]]:
+    contexts: dict[int, dict[str, np.ndarray]] = {}
+    for seed, state in enumerate(initial_states):
+        grid = np.asarray(state["grid"], dtype=np.int32)
+        has_settle, has_port, near_settle = settlement_influence(
+            state, height, width, radius=4
+        )
+        fadj = forest_adjacency(grid)
+        contexts[seed] = {
+            "grid": grid,
+            "has_settle": has_settle,
+            "has_port": has_port,
+            "near_settle": near_settle,
+            "coast": coastal_mask(grid),
+            "dist_coast": distance_to_coast(grid),
+            "settle_den": settlement_density(grid),
+            "fadj": fadj,
+            "fadj_bucket": np.minimum(fadj, 2).astype(np.int8),
+        }
+    return contexts
+
+
+def _build_transition_model(
+    store: ObservationStore,
+    contexts: dict[int, dict[str, np.ndarray]],
+) -> dict[str, object]:
+    counts_by_key: dict[tuple, np.ndarray] = {}
+    global_counts = np.zeros(N_CLASSES, dtype=np.float64)
+
+    for seed in range(store.seeds_count):
+        ctx = contexts[seed]
+        counts = store.counts[seed].astype(np.float64)
+        totals = counts.sum(axis=2)
+        ys, xs = np.where(totals > 0)
+        for y, x in zip(ys.tolist(), xs.tolist()):
+            cell_counts = counts[y, x]
+            global_counts += cell_counts
+            keys = _transition_keys(
+                init_code=int(ctx["grid"][y, x]),
+                is_near_settlement=bool(ctx["near_settle"][y, x]),
+                is_coastal=bool(ctx["coast"][y, x]),
+                forest_bucket=int(ctx["fadj_bucket"][y, x]),
+            )
+            for key in keys[:-1]:
+                bucket = counts_by_key.get(key)
+                if bucket is None:
+                    counts_by_key[key] = cell_counts.copy()
+                else:
+                    bucket += cell_counts
+
+    if global_counts.sum() <= 0:
+        global_counts += 1.0
+
+    return {
+        "counts_by_key": counts_by_key,
+        "global_counts": global_counts,
+        "global_prior": safe_normalize(global_counts),
+    }
+
+
+def _transition_keys(
+    init_code: int,
+    is_near_settlement: bool,
+    is_coastal: bool,
+    forest_bucket: int,
+) -> list[tuple]:
+    near = int(is_near_settlement)
+    coast = int(is_coastal)
+    fb = int(forest_bucket)
+    return [
+        ("full", init_code, near, coast, fb),
+        ("context", init_code, near, coast),
+        ("near", init_code, near),
+        ("init", init_code),
+        ("global",),
+    ]
+
+
+def _lookup_transition_prior(
+    model: dict[str, object],
+    *,
+    init_code: int,
+    is_near_settlement: bool,
+    is_coastal: bool,
+    forest_bucket: int,
+) -> tuple[np.ndarray, float]:
+    counts_by_key = model["counts_by_key"]
+    global_counts = model["global_counts"]
+    global_prior = model["global_prior"]
+
+    dists: list[np.ndarray] = []
+    weights: list[float] = []
+    support_score = 0.0
+    level_bases = [1.15, 0.85, 0.55, 0.35]
+    level_scales = [50.0, 90.0, 150.0, 240.0]
+
+    keys = _transition_keys(
+        init_code=init_code,
+        is_near_settlement=is_near_settlement,
+        is_coastal=is_coastal,
+        forest_bucket=forest_bucket,
+    )
+    for idx, key in enumerate(keys[:-1]):
+        bucket = counts_by_key.get(key)
+        if bucket is None:
+            continue
+        total = float(bucket.sum())
+        if total <= 0:
+            continue
+        conf = 1.0 - math.exp(-total / level_scales[idx])
+        pseudo = global_prior * max(2.0, 10.0 / math.sqrt(total + 1.0))
+        dist = safe_normalize(bucket + pseudo)
+        weight = level_bases[idx] * conf
+        dists.append(dist)
+        weights.append(weight)
+        support_score += weight
+
+    dists.append(safe_normalize(global_counts))
+    weights.append(0.18)
+
+    support = min(1.0, support_score / 2.2)
+    return _blend_distributions(dists, np.asarray(weights, dtype=np.float64)), support
+
+
+def _calibrate_rollouts(
+    rollout_predictions: dict[int, np.ndarray],
+    store: ObservationStore,
+) -> tuple[dict[int, np.ndarray], float, np.ndarray]:
+    empirical_totals = np.zeros(N_CLASSES, dtype=np.float64)
+    rollout_totals = np.zeros(N_CLASSES, dtype=np.float64)
+    weighted_kl_sum = 0.0
+    weight_sum = 0.0
+
+    for seed in rollout_predictions:
+        rollout = rollout_predictions[seed].astype(np.float64, copy=False)
+        counts = store.counts[seed].astype(np.float64)
+        n_samp = counts.sum(axis=2)
+        mask = n_samp > 0
+        if not mask.any():
+            continue
+
+        empirical_totals += counts[mask].sum(axis=0)
+        rollout_totals += (rollout[mask] * n_samp[mask, None]).sum(axis=0)
+
+        empirical = np.divide(
+            counts[mask],
+            n_samp[mask, None],
+            out=np.zeros_like(counts[mask]),
+            where=n_samp[mask, None] > 0,
+        )
+        q = np.maximum(rollout[mask], PROB_FLOOR)
+        q = q / q.sum(axis=1, keepdims=True)
+        kls = np.sum(
+            empirical * (np.log(np.maximum(empirical, 1e-9)) - np.log(q)),
+            axis=1,
+        )
+        weighted_kl_sum += float((kls * n_samp[mask]).sum())
+        weight_sum += float(n_samp[mask].sum())
+
+    if weight_sum <= 0:
+        return rollout_predictions, 0.0, np.ones(N_CLASSES, dtype=np.float64)
+
+    class_scale = np.sqrt((empirical_totals + 1.0) / (rollout_totals + 1.0))
+    class_scale = np.clip(class_scale, 0.65, 1.45)
+    mean_kl = weighted_kl_sum / weight_sum
+    trust = float(np.clip(math.exp(-1.8 * mean_kl), 0.12, 0.95))
+
+    calibrated: dict[int, np.ndarray] = {}
+    for seed, rollout in rollout_predictions.items():
+        adjusted = rollout.astype(np.float64, copy=True) * class_scale.reshape(1, 1, -1)
+        adjusted = adjusted / adjusted.sum(axis=2, keepdims=True)
+        calibrated[seed] = adjusted
+
+    return calibrated, trust, class_scale
+
+
+def _blend_distributions(
+    dists: list[np.ndarray],
+    weights: np.ndarray,
+) -> np.ndarray:
+    w = np.maximum(weights.astype(np.float64), 0.0)
+    if w.sum() <= 0:
+        return np.full(N_CLASSES, 1.0 / N_CLASSES)
+    w = w / w.sum()
+    out = np.zeros(N_CLASSES, dtype=np.float64)
+    for weight, dist in zip(w, dists):
+        out += weight * dist
+    return safe_normalize(out)
+
+
+def _conservative_unobserved_adjustment(
+    pred: np.ndarray,
+    *,
+    empirical_prior: np.ndarray,
+    heuristic_prior: np.ndarray,
+    near_settlement: bool,
+    is_coastal: bool,
+    init_code: int,
+) -> np.ndarray:
+    out = pred.astype(np.float64, copy=True)
+
+    settlement_cap = max(
+        float(empirical_prior[1] + empirical_prior[2]),
+        float(heuristic_prior[1] + heuristic_prior[2]),
+    )
+    if near_settlement:
+        settlement_cap = min(settlement_cap + 0.06, 0.35)
+    else:
+        settlement_cap = min(settlement_cap + 0.02, 0.20)
+
+    current_settlement = float(out[1] + out[2])
+    if current_settlement > settlement_cap:
+        excess = current_settlement - settlement_cap
+        scale = settlement_cap / max(current_settlement, 1e-9)
+        out[1] *= scale
+        out[2] *= scale
+        redist = heuristic_prior.copy()
+        redist[1] = 0.0
+        redist[2] = 0.0
+        redist = safe_normalize(redist)
+        out += excess * redist
+
+    port_cap = max(float(empirical_prior[2]), float(heuristic_prior[2]))
+    if init_code == PORT_CODE:
+        port_cap = min(max(port_cap, 0.22) + 0.10, 0.45)
+    elif is_coastal and near_settlement:
+        port_cap = min(port_cap + 0.04, 0.12)
+    elif is_coastal:
+        port_cap = min(port_cap + 0.02, 0.08)
+    else:
+        port_cap = min(port_cap + 0.01, 0.04)
+
+    if out[2] > port_cap:
+        excess = float(out[2] - port_cap)
+        out[2] = port_cap
+        redist = heuristic_prior.copy()
+        redist[2] = 0.0
+        redist = safe_normalize(redist)
+        out += excess * redist
+
+    ruin_cap = max(float(empirical_prior[3]), float(heuristic_prior[3]))
+    if init_code == 3:
+        ruin_cap = min(max(ruin_cap, 0.22) + 0.10, 0.45)
+    elif init_code in (SETTLEMENT_CODE, PORT_CODE):
+        ruin_cap = min(ruin_cap + 0.08, 0.30)
+    else:
+        ruin_cap = min(ruin_cap + (0.04 if near_settlement else 0.02), 0.14)
+
+    if out[3] > ruin_cap:
+        excess = float(out[3] - ruin_cap)
+        out[3] = ruin_cap
+        redist = heuristic_prior.copy()
+        redist[3] = 0.0
+        redist = safe_normalize(redist)
+        out += excess * redist
+
+    forest_cap = max(float(empirical_prior[4]), float(heuristic_prior[4]))
+    if init_code == 4:
+        forest_cap = min(forest_cap + 0.10, 0.75)
+    else:
+        forest_cap = min(forest_cap + 0.05, 0.35)
+
+    if out[4] > forest_cap:
+        excess = float(out[4] - forest_cap)
+        out[4] = forest_cap
+        redist = heuristic_prior.copy()
+        redist[4] = 0.0
+        redist = safe_normalize(redist)
+        out += excess * redist
+
+    return safe_normalize(out)
 
 
 def _ocean_distribution() -> np.ndarray:
