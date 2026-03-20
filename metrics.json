@@ -176,14 +176,110 @@
     "height": 40,
     "seeds_count": 5,
     "round_weight": 1.4071,
-    "started_at": "2026-03-20T13:32:16Z",
-    "submission_statuses": {
-      "0": "accepted",
-      "1": "accepted",
-      "2": "accepted",
-      "3": "accepted",
-      "4": "accepted"
+    "started_at": "2026-03-20T13:48:57Z",
+    "estimated_params": {
+      "survival_rate": 0.5572,
+      "ruin_rate": 0.0148,
+      "expansion_rate": 0.1521,
+      "forest_growth": 0.0211,
+      "avg_food": 0.6564,
+      "avg_port_wealth": 0.0214
     },
-    "submitted_at": "2026-03-20T13:32:24Z"
+    "prediction_summary": {
+      "0": {
+        "class_counts": {
+          "Empty": 1180,
+          "Settlement": 104,
+          "Port": 2,
+          "Ruin": 3,
+          "Forest": 275,
+          "Mountain": 36
+        },
+        "avg_confidence": 0.6928,
+        "avg_entropy": 0.8603
+      },
+      "1": {
+        "class_counts": {
+          "Empty": 1210,
+          "Settlement": 116,
+          "Port": 7,
+          "Ruin": 3,
+          "Forest": 233,
+          "Mountain": 31
+        },
+        "avg_confidence": 0.6873,
+        "avg_entropy": 0.8717
+      },
+      "2": {
+        "class_counts": {
+          "Empty": 1187,
+          "Settlement": 77,
+          "Port": 1,
+          "Ruin": 4,
+          "Forest": 308,
+          "Mountain": 23
+        },
+        "avg_confidence": 0.6907,
+        "avg_entropy": 0.8628
+      },
+      "3": {
+        "class_counts": {
+          "Empty": 1192,
+          "Settlement": 93,
+          "Port": 6,
+          "Ruin": 1,
+          "Forest": 288,
+          "Mountain": 20
+        },
+        "avg_confidence": 0.7084,
+        "avg_entropy": 0.8404
+      },
+      "4": {
+        "class_counts": {
+          "Empty": 1174,
+          "Settlement": 101,
+          "Port": 5,
+          "Ruin": 2,
+          "Forest": 286,
+          "Mountain": 32
+        },
+        "avg_confidence": 0.6906,
+        "avg_entropy": 0.8635
+      }
+    },
+    "self_check": {
+      "overall": {
+        "mean_kl": 0.10142195412760872,
+        "approx_score": 73.76647230771701,
+        "posterior_tau": 2.0
+      },
+      "by_seed": {
+        "0": {
+          "n_holdout": 240,
+          "mean_kl": 0.10619753111240478,
+          "approx_score": 72.7171743579805
+        },
+        "1": {
+          "n_holdout": 240,
+          "mean_kl": 0.09219550213742747,
+          "approx_score": 75.83680125980588
+        },
+        "2": {
+          "n_holdout": 240,
+          "mean_kl": 0.07244859592677348,
+          "approx_score": 80.46516824744677
+        },
+        "3": {
+          "n_holdout": 240,
+          "mean_kl": 0.1015068005507207,
+          "approx_score": 73.74769823322528
+        },
+        "4": {
+          "n_holdout": 240,
+          "mean_kl": 0.1347613409107172,
+          "approx_score": 66.74545220880144
+        }
+      }
+    }
   }
 }

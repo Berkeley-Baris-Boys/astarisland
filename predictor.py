@@ -6,7 +6,7 @@ Primary strategy:
 1. Build an empirical-constrained predictor from current-round observations.
 2. Smooth the settlement and ruin fields to better match the spatially
    coherent ground-truth probability maps.
-3. On fully observed rounds, blend in a smoothed majority-label field.
+3. On fully observed rounds, blend in a smoothed empirical class field.
 4. Re-anchor observed rare-class cells so smoothing does not erase them.
 5. Fall back to hybrid rollout or heuristics if the empirical path fails.
 """
@@ -47,8 +47,11 @@ EMPIRICAL_FOREST_SMOOTH_ALPHA = 0.15
 EMPIRICAL_FOREST_SMOOTH_SIGMA = 0.8
 EMPIRICAL_GLOBAL_SMOOTH_ALPHA = 0.08
 EMPIRICAL_GLOBAL_SMOOTH_SIGMA = 1.2
-EMPIRICAL_FULL_COVERAGE_FIELD_ALPHA = 0.24
-EMPIRICAL_FULL_COVERAGE_FIELD_SIGMA = 1.8
+EMPIRICAL_FULL_COVERAGE_FIELD_SIGMA = 2.2
+EMPIRICAL_FULL_COVERAGE_FIELD_ALPHA_SINGLE = 0.44
+EMPIRICAL_FULL_COVERAGE_FIELD_ALPHA_DOUBLE = 0.24
+EMPIRICAL_FULL_COVERAGE_FIELD_ALPHA_MULTI = 0.12
+EMPIRICAL_FULL_COVERAGE_FIELD_CONF_BIAS = 0.05
 EMPIRICAL_OBS_SETTLEMENT_ANCHOR_BASE = 0.10
 EMPIRICAL_OBS_SETTLEMENT_ANCHOR_BONUS = 0.20
 EMPIRICAL_OBS_PORT_RUIN_ANCHOR_BASE = 0.20
@@ -495,12 +498,15 @@ def _build_empirical_constrained_predictions(
             sigma=EMPIRICAL_GLOBAL_SMOOTH_SIGMA,
         )
         if fully_observed_round:
-            pred = _blend_smoothed_majority_field(
+            pred = _blend_smoothed_empirical_field(
                 pred,
                 counts,
                 init_grid,
-                alpha=EMPIRICAL_FULL_COVERAGE_FIELD_ALPHA,
                 sigma=EMPIRICAL_FULL_COVERAGE_FIELD_SIGMA,
+                alpha_single=EMPIRICAL_FULL_COVERAGE_FIELD_ALPHA_SINGLE,
+                alpha_double=EMPIRICAL_FULL_COVERAGE_FIELD_ALPHA_DOUBLE,
+                alpha_multi=EMPIRICAL_FULL_COVERAGE_FIELD_ALPHA_MULTI,
+                conf_bias=EMPIRICAL_FULL_COVERAGE_FIELD_CONF_BIAS,
             )
             pred = _reanchor_observed_dynamic_cells(
                 pred,
@@ -1061,22 +1067,26 @@ def _reanchor_observed_dynamic_cells(
     return out
 
 
-def _blend_smoothed_majority_field(
+def _blend_smoothed_empirical_field(
     pred: np.ndarray,
     counts: np.ndarray,
     init_grid: np.ndarray,
     *,
-    alpha: float,
     sigma: float,
+    alpha_single: float,
+    alpha_double: float,
+    alpha_multi: float,
+    conf_bias: float,
 ) -> np.ndarray:
     """
-    Convert the observed majority map into a smooth class field and blend it.
+    Convert the observed empirical map into a smooth class field and blend it.
 
     On full-coverage rounds, every cell has at least one direct observation.
-    The raw majority labels are noisy, but after spatial smoothing they form a
-    strong non-parametric prior that better matches coherent GT blobs.
+    The raw per-cell empirical distributions are noisy, but after confidence-
+    weighted spatial smoothing they form a strong non-parametric prior that
+    better matches coherent GT blobs.
     """
-    if alpha <= 0.0:
+    if max(alpha_single, alpha_double, alpha_multi) <= 0.0:
         return pred
 
     totals = counts.sum(axis=2)
@@ -1094,19 +1104,35 @@ def _blend_smoothed_majority_field(
         out=np.zeros_like(counts, dtype=np.float64),
         where=totals[:, :, None] > 0,
     )
-    majority = empirical.argmax(axis=2)
     top2 = np.partition(empirical, -2, axis=2)[:, :, -2]
-    strength = np.clip(empirical.max(axis=2) - top2, 0.0, 1.0)
+    margin = np.clip(empirical.max(axis=2) - top2, 0.0, 1.0)
+    support = np.clip(totals / 2.0, 0.0, 1.0)
+    confidence = np.clip(conf_bias + 0.7 * margin + 0.3 * support, 0.0, 1.0)
+    weights = confidence * dynamic_mask
+    denom = _masked_gaussian_blur(weights, dynamic_mask, sigma)
 
     field = np.zeros_like(pred, dtype=np.float64)
     for c in range(N_CLASSES):
-        one_hot = (majority == c).astype(np.float64) * strength * dynamic_mask
-        field[:, :, c] = _masked_gaussian_blur(one_hot, dynamic_mask, sigma)
+        numer = _masked_gaussian_blur(
+            empirical[:, :, c] * weights,
+            dynamic_mask,
+            sigma,
+        )
+        field[:, :, c] = np.divide(numer, np.maximum(denom, 1e-9))
 
     field = np.maximum(field, PROB_FLOOR)
     field /= field.sum(axis=2, keepdims=True)
 
-    out = (1.0 - alpha) * pred.astype(np.float64, copy=False) + alpha * field
+    alpha = np.where(
+        totals <= 1,
+        alpha_single,
+        np.where(totals == 2, alpha_double, alpha_multi),
+    ).astype(np.float64, copy=False)
+
+    out = (
+        (1.0 - alpha[:, :, None]) * pred.astype(np.float64, copy=False) +
+        alpha[:, :, None] * field
+    )
     out = np.maximum(out, PROB_FLOOR)
     out /= out.sum(axis=2, keepdims=True)
     return out
