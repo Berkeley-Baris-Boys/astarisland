@@ -1,0 +1,617 @@
+{
+  "latent_summary": {
+    "forest_share_dynamic": 0.9421134421134422,
+    "mean_defense": 0.275304347826087,
+    "mean_food": 0.7752971014492753,
+    "mean_population": 0.9046884057971015,
+    "mean_wealth": 0.0032971014492753628,
+    "observed_cells": 6741.0,
+    "port_share_given_active": 0.021739130434782608,
+    "ruin_share_given_active": 0.0738255033557047,
+    "settlement_rate": 0.013666072489601902
+  },
+  "query_history": [
+    {
+      "phase": "recon",
+      "reason": "broad coverage of likely-active region",
+      "score": 3.8951111111111114,
+      "seed_index": 3,
+      "viewport": {
+        "h": 15,
+        "w": 15,
+        "x": 12,
+        "y": 24
+      }
+    },
+    {
+      "phase": "recon",
+      "reason": "broad coverage of likely-active region",
+      "score": 3.802666666666667,
+      "seed_index": 1,
+      "viewport": {
+        "h": 15,
+        "w": 15,
+        "x": 8,
+        "y": 20
+      }
+    },
+    {
+      "phase": "recon",
+      "reason": "broad coverage of likely-active region",
+      "score": 3.794666666666667,
+      "seed_index": 4,
+      "viewport": {
+        "h": 15,
+        "w": 15,
+        "x": 4,
+        "y": 24
+      }
+    },
+    {
+      "phase": "recon",
+      "reason": "broad coverage of likely-active region",
+      "score": 3.7911111111111113,
+      "seed_index": 1,
+      "viewport": {
+        "h": 15,
+        "w": 15,
+        "x": 0,
+        "y": 0
+      }
+    },
+    {
+      "phase": "recon",
+      "reason": "broad coverage of likely-active region",
+      "score": 3.7671111111111113,
+      "seed_index": 3,
+      "viewport": {
+        "h": 15,
+        "w": 15,
+        "x": 0,
+        "y": 4
+      }
+    },
+    {
+      "phase": "recon",
+      "reason": "broad coverage of likely-active region",
+      "score": 3.750222222222223,
+      "seed_index": 4,
+      "viewport": {
+        "h": 15,
+        "w": 15,
+        "x": 24,
+        "y": 4
+      }
+    },
+    {
+      "phase": "recon",
+      "reason": "broad coverage of likely-active region",
+      "score": 3.706666666666667,
+      "seed_index": 2,
+      "viewport": {
+        "h": 15,
+        "w": 15,
+        "x": 4,
+        "y": 20
+      }
+    },
+    {
+      "phase": "recon",
+      "reason": "broad coverage of likely-active region",
+      "score": 3.690666666666667,
+      "seed_index": 0,
+      "viewport": {
+        "h": 15,
+        "w": 15,
+        "x": 8,
+        "y": 12
+      }
+    },
+    {
+      "phase": "recon",
+      "reason": "broad coverage of likely-active region",
+      "score": 3.6880000000000006,
+      "seed_index": 0,
+      "viewport": {
+        "h": 15,
+        "w": 15,
+        "x": 24,
+        "y": 8
+      }
+    },
+    {
+      "phase": "recon",
+      "reason": "broad coverage of likely-active region",
+      "score": 3.670222222222222,
+      "seed_index": 1,
+      "viewport": {
+        "h": 15,
+        "w": 15,
+        "x": 24,
+        "y": 8
+      }
+    },
+    {
+      "phase": "recon",
+      "reason": "broad coverage of likely-active region",
+      "score": 3.6639999999999997,
+      "seed_index": 4,
+      "viewport": {
+        "h": 15,
+        "w": 15,
+        "x": 8,
+        "y": 0
+      }
+    },
+    {
+      "phase": "recon",
+      "reason": "broad coverage of likely-active region",
+      "score": 3.634666666666667,
+      "seed_index": 2,
+      "viewport": {
+        "h": 15,
+        "w": 15,
+        "x": 20,
+        "y": 4
+      }
+    },
+    {
+      "phase": "recon",
+      "reason": "broad coverage of likely-active region",
+      "score": 3.5742222222222226,
+      "seed_index": 3,
+      "viewport": {
+        "h": 15,
+        "w": 15,
+        "x": 20,
+        "y": 0
+      }
+    },
+    {
+      "phase": "recon",
+      "reason": "broad coverage of likely-active region",
+      "score": 3.485333333333333,
+      "seed_index": 2,
+      "viewport": {
+        "h": 15,
+        "w": 15,
+        "x": 20,
+        "y": 20
+      }
+    },
+    {
+      "phase": "recon",
+      "reason": "broad coverage of likely-active region",
+      "score": 3.4435555555555553,
+      "seed_index": 4,
+      "viewport": {
+        "h": 15,
+        "w": 15,
+        "x": 24,
+        "y": 20
+      }
+    },
+    {
+      "phase": "recon",
+      "reason": "broad coverage of likely-active region",
+      "score": 3.3999999999999995,
+      "seed_index": 0,
+      "viewport": {
+        "h": 15,
+        "w": 15,
+        "x": 24,
+        "y": 24
+      }
+    },
+    {
+      "phase": "recon",
+      "reason": "broad coverage of likely-active region",
+      "score": 3.3919999999999995,
+      "seed_index": 1,
+      "viewport": {
+        "h": 15,
+        "w": 15,
+        "x": 24,
+        "y": 24
+      }
+    },
+    {
+      "phase": "recon",
+      "reason": "broad coverage of likely-active region",
+      "score": 3.3697796394912247,
+      "seed_index": 0,
+      "viewport": {
+        "h": 15,
+        "w": 15,
+        "x": 0,
+        "y": 24
+      }
+    },
+    {
+      "phase": "recon",
+      "reason": "broad coverage of likely-active region",
+      "score": 3.335111111111111,
+      "seed_index": 2,
+      "viewport": {
+        "h": 15,
+        "w": 15,
+        "x": 0,
+        "y": 0
+      }
+    },
+    {
+      "phase": "recon",
+      "reason": "broad coverage of likely-active region",
+      "score": 3.17027469119424,
+      "seed_index": 3,
+      "viewport": {
+        "h": 15,
+        "w": 15,
+        "x": 24,
+        "y": 20
+      }
+    },
+    {
+      "phase": "targeted",
+      "reason": "target high-value frontier/conflict cells",
+      "score": 2.7414245343609505,
+      "seed_index": 3,
+      "viewport": {
+        "h": 15,
+        "w": 15,
+        "x": 8,
+        "y": 20
+      }
+    },
+    {
+      "phase": "targeted",
+      "reason": "target high-value frontier/conflict cells",
+      "score": 2.639459335624284,
+      "seed_index": 1,
+      "viewport": {
+        "h": 15,
+        "w": 15,
+        "x": 12,
+        "y": 4
+      }
+    },
+    {
+      "phase": "targeted",
+      "reason": "target high-value frontier/conflict cells",
+      "score": 2.551745401030169,
+      "seed_index": 4,
+      "viewport": {
+        "h": 15,
+        "w": 15,
+        "x": 8,
+        "y": 16
+      }
+    },
+    {
+      "phase": "targeted",
+      "reason": "target high-value frontier/conflict cells",
+      "score": 2.39742453436095,
+      "seed_index": 1,
+      "viewport": {
+        "h": 15,
+        "w": 15,
+        "x": 4,
+        "y": 24
+      }
+    },
+    {
+      "phase": "targeted",
+      "reason": "target high-value frontier/conflict cells",
+      "score": 2.3387578676942837,
+      "seed_index": 3,
+      "viewport": {
+        "h": 15,
+        "w": 15,
+        "x": 4,
+        "y": 0
+      }
+    },
+    {
+      "phase": "targeted",
+      "reason": "target high-value frontier/conflict cells",
+      "score": 2.2241175625123355,
+      "seed_index": 3,
+      "viewport": {
+        "h": 15,
+        "w": 15,
+        "x": 0,
+        "y": 24
+      }
+    },
+    {
+      "phase": "targeted",
+      "reason": "target high-value frontier/conflict cells",
+      "score": 2.1957636148001174,
+      "seed_index": 4,
+      "viewport": {
+        "h": 15,
+        "w": 15,
+        "x": 0,
+        "y": 12
+      }
+    },
+    {
+      "phase": "targeted",
+      "reason": "target high-value frontier/conflict cells",
+      "score": 2.169697493488778,
+      "seed_index": 1,
+      "viewport": {
+        "h": 15,
+        "w": 15,
+        "x": 4,
+        "y": 4
+      }
+    },
+    {
+      "phase": "targeted",
+      "reason": "target high-value frontier/conflict cells",
+      "score": 2.1163112203112204,
+      "seed_index": 0,
+      "viewport": {
+        "h": 15,
+        "w": 15,
+        "x": 16,
+        "y": 8
+      }
+    },
+    {
+      "phase": "targeted",
+      "reason": "target high-value frontier/conflict cells",
+      "score": 2.0989572649572654,
+      "seed_index": 2,
+      "viewport": {
+        "h": 15,
+        "w": 15,
+        "x": 24,
+        "y": 4
+      }
+    },
+    {
+      "phase": "targeted",
+      "reason": "target high-value frontier/conflict cells",
+      "score": 2.0894245343609503,
+      "seed_index": 2,
+      "viewport": {
+        "h": 15,
+        "w": 15,
+        "x": 0,
+        "y": 24
+      }
+    },
+    {
+      "phase": "targeted",
+      "reason": "target high-value frontier/conflict cells",
+      "score": 1.9642911877394633,
+      "seed_index": 4,
+      "viewport": {
+        "h": 15,
+        "w": 15,
+        "x": 24,
+        "y": 12
+      }
+    },
+    {
+      "phase": "targeted",
+      "reason": "target high-value frontier/conflict cells",
+      "score": 1.9569605734767024,
+      "seed_index": 0,
+      "viewport": {
+        "h": 15,
+        "w": 15,
+        "x": 4,
+        "y": 0
+      }
+    },
+    {
+      "phase": "targeted",
+      "reason": "target high-value frontier/conflict cells",
+      "score": 1.9388229802484793,
+      "seed_index": 0,
+      "viewport": {
+        "h": 15,
+        "w": 15,
+        "x": 12,
+        "y": 24
+      }
+    },
+    {
+      "phase": "targeted",
+      "reason": "target high-value frontier/conflict cells",
+      "score": 1.8371794871794873,
+      "seed_index": 2,
+      "viewport": {
+        "h": 15,
+        "w": 15,
+        "x": 24,
+        "y": 20
+      }
+    },
+    {
+      "phase": "targeted",
+      "reason": "target high-value frontier/conflict cells",
+      "score": 1.7365356454720613,
+      "seed_index": 3,
+      "viewport": {
+        "h": 15,
+        "w": 15,
+        "x": 24,
+        "y": 4
+      }
+    },
+    {
+      "phase": "targeted",
+      "reason": "target high-value frontier/conflict cells",
+      "score": 1.6974739087918675,
+      "seed_index": 1,
+      "viewport": {
+        "h": 15,
+        "w": 15,
+        "x": 12,
+        "y": 20
+      }
+    },
+    {
+      "phase": "targeted",
+      "reason": "target high-value frontier/conflict cells",
+      "score": 1.680655218393983,
+      "seed_index": 3,
+      "viewport": {
+        "h": 15,
+        "w": 15,
+        "x": 16,
+        "y": 20
+      }
+    },
+    {
+      "phase": "targeted",
+      "reason": "target high-value frontier/conflict cells",
+      "score": 1.5496165884373958,
+      "seed_index": 4,
+      "viewport": {
+        "h": 15,
+        "w": 15,
+        "x": 8,
+        "y": 24
+      }
+    },
+    {
+      "phase": "targeted",
+      "reason": "target high-value frontier/conflict cells",
+      "score": 1.470466080075019,
+      "seed_index": 4,
+      "viewport": {
+        "h": 15,
+        "w": 15,
+        "x": 12,
+        "y": 4
+      }
+    },
+    {
+      "phase": "targeted",
+      "reason": "target high-value frontier/conflict cells",
+      "score": 1.3973596112293833,
+      "seed_index": 0,
+      "viewport": {
+        "h": 15,
+        "w": 15,
+        "x": 24,
+        "y": 0
+      }
+    },
+    {
+      "phase": "targeted",
+      "reason": "target high-value frontier/conflict cells",
+      "score": 1.3193587986803033,
+      "seed_index": 3,
+      "viewport": {
+        "h": 15,
+        "w": 15,
+        "x": 4,
+        "y": 16
+      }
+    },
+    {
+      "phase": "calibration",
+      "reason": "repeat sample for uncertainty calibration",
+      "score": 1.0801234567901234,
+      "seed_index": 4,
+      "viewport": {
+        "h": 9,
+        "w": 9,
+        "x": 0,
+        "y": 0
+      }
+    },
+    {
+      "phase": "calibration",
+      "reason": "repeat sample for uncertainty calibration",
+      "score": 1.052962962962963,
+      "seed_index": 1,
+      "viewport": {
+        "h": 9,
+        "w": 9,
+        "x": 27,
+        "y": 0
+      }
+    },
+    {
+      "phase": "calibration",
+      "reason": "repeat sample for uncertainty calibration",
+      "score": 0.9492592592592592,
+      "seed_index": 0,
+      "viewport": {
+        "h": 9,
+        "w": 9,
+        "x": 0,
+        "y": 15
+      }
+    },
+    {
+      "phase": "calibration",
+      "reason": "repeat sample for uncertainty calibration",
+      "score": 0.8574868597970909,
+      "seed_index": 2,
+      "viewport": {
+        "h": 9,
+        "w": 9,
+        "x": 0,
+        "y": 15
+      }
+    },
+    {
+      "phase": "calibration",
+      "reason": "repeat sample for uncertainty calibration",
+      "score": 0.7957584647353625,
+      "seed_index": 2,
+      "viewport": {
+        "h": 9,
+        "w": 9,
+        "x": 15,
+        "y": 0
+      }
+    },
+    {
+      "phase": "calibration",
+      "reason": "repeat sample for uncertainty calibration",
+      "score": 0.7695590828924164,
+      "seed_index": 1,
+      "viewport": {
+        "h": 9,
+        "w": 9,
+        "x": 0,
+        "y": 15
+      }
+    },
+    {
+      "phase": "calibration",
+      "reason": "repeat sample for uncertainty calibration",
+      "score": 0.7251146384479719,
+      "seed_index": 2,
+      "viewport": {
+        "h": 9,
+        "w": 9,
+        "x": 12,
+        "y": 12
+      }
+    },
+    {
+      "phase": "calibration",
+      "reason": "repeat sample for uncertainty calibration",
+      "score": 0.5823302469135803,
+      "seed_index": 4,
+      "viewport": {
+        "h": 9,
+        "w": 9,
+        "x": 0,
+        "y": 3
+      }
+    }
+  ],
+  "round_id": "75e625c3-60cb-4392-af3e-c86a98bde8c2",
+  "round_number": 10
+}

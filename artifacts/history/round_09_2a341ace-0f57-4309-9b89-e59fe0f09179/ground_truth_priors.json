@@ -1,0 +1,86 @@
+{
+  "available": true,
+  "num_seed_tensors": 5,
+  "priors": [
+    {
+      "avg_ground_truth": [
+        0.4675476190476192,
+        0.274904761904762,
+        0.004333333333333333,
+        0.026285714285714253,
+        0.22692857142857153,
+        0.0
+      ],
+      "count": 210,
+      "terrain_code": 1,
+      "terrain_name": "Settlement"
+    },
+    {
+      "avg_ground_truth": [
+        0.54,
+        0.061111111111111116,
+        0.11,
+        0.019444444444444445,
+        0.2694444444444445,
+        0.0
+      ],
+      "count": 9,
+      "terrain_code": 2,
+      "terrain_name": "Port"
+    },
+    {
+      "avg_ground_truth": [
+        0.10605369515011558,
+        0.14087471131639726,
+        0.007601039260969971,
+        0.01710161662817556,
+        0.7283689376443419,
+        0.0
+      ],
+      "count": 1732,
+      "terrain_code": 4,
+      "terrain_name": "Forest"
+    },
+    {
+      "avg_ground_truth": [
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        1.0
+      ],
+      "count": 145,
+      "terrain_code": 5,
+      "terrain_name": "Mountain"
+    },
+    {
+      "avg_ground_truth": [
+        1.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0
+      ],
+      "count": 1067,
+      "terrain_code": 10,
+      "terrain_name": "Ocean"
+    },
+    {
+      "avg_ground_truth": [
+        0.7864916270415551,
+        0.13659706429605037,
+        0.009228860864172012,
+        0.016534008683068268,
+        0.05114843911515354,
+        0.0
+      ],
+      "count": 4837,
+      "terrain_code": 11,
+      "terrain_name": "Plains"
+    }
+  ],
+  "round_id": "2a341ace-0f57-4309-9b89-e59fe0f09179",
+  "round_number": 9
+}
