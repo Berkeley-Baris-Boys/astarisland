@@ -54,7 +54,8 @@ PRED_TEMPLATE        = "predictions_seed_{seed}.npy"
 
 # ── Prediction safety ─────────────────────────────────────────────────────────
 # Never let any class probability reach 0 — KL divergence becomes infinite.
-PROB_FLOOR = 0.01
+# Keep this floor extremely small to avoid distorting near one-hot cells.
+PROB_FLOOR = 1e-12
 
 # ── Default hidden parameters (prior belief, updated per round) ───────────────
 # Calibrated from rounds 2 & 3 observations:
