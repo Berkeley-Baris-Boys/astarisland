@@ -1,0 +1,35 @@
+{
+  "version": "0.0.1",
+  "configurations": [
+    {
+      "name": "main — full pipeline",
+      "runtimeExecutable": "python3",
+      "runtimeArgs": ["main.py"],
+      "port": 0
+    },
+    {
+      "name": "main — resume (continue querying)",
+      "runtimeExecutable": "python3",
+      "runtimeArgs": ["main.py", "--resume"],
+      "port": 0
+    },
+    {
+      "name": "main — dry-run with self-check",
+      "runtimeExecutable": "python3",
+      "runtimeArgs": ["main.py", "--resume", "--dry-run", "--self-check"],
+      "port": 0
+    },
+    {
+      "name": "main — check only (no submit)",
+      "runtimeExecutable": "python3",
+      "runtimeArgs": ["main.py", "--resume", "--check-only"],
+      "port": 0
+    },
+    {
+      "name": "main — fetch ground truth analysis",
+      "runtimeExecutable": "python3",
+      "runtimeArgs": ["main.py", "--fetch-analysis"],
+      "port": 0
+    }
+  ]
+}
