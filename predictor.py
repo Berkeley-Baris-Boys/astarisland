@@ -4,9 +4,11 @@ Prediction builder.
 Primary strategy:
 
 1. Build an empirical-constrained predictor from current-round observations.
-2. Smooth the settlement and forest fields to better match the spatially
+2. Smooth the settlement and ruin fields to better match the spatially
    coherent ground-truth probability maps.
-3. Fall back to hybrid rollout or heuristics if the empirical path fails.
+3. On fully observed rounds, blend in a smoothed majority-label field.
+4. Re-anchor observed rare-class cells so smoothing does not erase them.
+5. Fall back to hybrid rollout or heuristics if the empirical path fails.
 """
 from __future__ import annotations
 
@@ -45,6 +47,12 @@ EMPIRICAL_FOREST_SMOOTH_ALPHA = 0.15
 EMPIRICAL_FOREST_SMOOTH_SIGMA = 0.8
 EMPIRICAL_GLOBAL_SMOOTH_ALPHA = 0.08
 EMPIRICAL_GLOBAL_SMOOTH_SIGMA = 1.2
+EMPIRICAL_FULL_COVERAGE_FIELD_ALPHA = 0.24
+EMPIRICAL_FULL_COVERAGE_FIELD_SIGMA = 1.8
+EMPIRICAL_OBS_SETTLEMENT_ANCHOR_BASE = 0.10
+EMPIRICAL_OBS_SETTLEMENT_ANCHOR_BONUS = 0.20
+EMPIRICAL_OBS_PORT_RUIN_ANCHOR_BASE = 0.20
+EMPIRICAL_OBS_PORT_RUIN_ANCHOR_BONUS = 0.22
 
 try:
     from testing.simulator import estimate_params_from_observations, monte_carlo
@@ -356,6 +364,10 @@ def _build_empirical_constrained_predictions(
     contexts = _build_seed_contexts(initial_states, H, W)
     transition_model = _build_transition_model(store, contexts)
     predictions: dict[int, np.ndarray] = {}
+    fully_observed_round = all(
+        bool((store.counts[s].sum(axis=2) > 0).all())
+        for s in range(store.seeds_count)
+    )
 
     for seed in range(store.seeds_count):
         context = contexts[seed]
@@ -482,6 +494,23 @@ def _build_empirical_constrained_predictions(
             alpha=EMPIRICAL_GLOBAL_SMOOTH_ALPHA,
             sigma=EMPIRICAL_GLOBAL_SMOOTH_SIGMA,
         )
+        if fully_observed_round:
+            pred = _blend_smoothed_majority_field(
+                pred,
+                counts,
+                init_grid,
+                alpha=EMPIRICAL_FULL_COVERAGE_FIELD_ALPHA,
+                sigma=EMPIRICAL_FULL_COVERAGE_FIELD_SIGMA,
+            )
+            pred = _reanchor_observed_dynamic_cells(
+                pred,
+                counts,
+                init_grid,
+                settlement_base=EMPIRICAL_OBS_SETTLEMENT_ANCHOR_BASE,
+                settlement_bonus=EMPIRICAL_OBS_SETTLEMENT_ANCHOR_BONUS,
+                port_ruin_base=EMPIRICAL_OBS_PORT_RUIN_ANCHOR_BASE,
+                port_ruin_bonus=EMPIRICAL_OBS_PORT_RUIN_ANCHOR_BONUS,
+            )
         _force_static_cells(pred, init_grid)
         pred = np.maximum(pred, PROB_FLOOR)
         pred = pred / pred.sum(axis=2, keepdims=True)
@@ -974,6 +1003,110 @@ def _apply_global_probability_smoothing(
             sigma,
         )
     out = (1.0 - alpha) * out + alpha * blurred
+    out = np.maximum(out, PROB_FLOOR)
+    out /= out.sum(axis=2, keepdims=True)
+    return out
+
+
+def _reanchor_observed_dynamic_cells(
+    pred: np.ndarray,
+    counts: np.ndarray,
+    init_grid: np.ndarray,
+    *,
+    settlement_base: float,
+    settlement_bonus: float,
+    port_ruin_base: float,
+    port_ruin_bonus: float,
+) -> np.ndarray:
+    """
+    Restore part of the raw empirical signal on observed rare-class cells.
+
+    Full-map smoothing is useful, but on fully covered rounds it can flatten
+    observed settlement/port/ruin cells until Empty wins every argmax. This
+    step only nudges cells whose observed majority is one of those classes.
+    """
+    totals = counts.sum(axis=2)
+    obs_mask = totals > 0
+    if not obs_mask.any():
+        return pred
+
+    dynamic_mask = ~np.isin(init_grid, [OCEAN_CODE, MOUNTAIN_CODE])
+    target_mask = obs_mask & dynamic_mask
+    if not target_mask.any():
+        return pred
+
+    empirical = np.divide(
+        counts,
+        totals[:, :, None],
+        out=np.zeros_like(counts, dtype=np.float64),
+        where=totals[:, :, None] > 0,
+    )
+    majority = empirical.argmax(axis=2)
+    support = np.clip(totals / 2.0, 0.0, 1.0)
+
+    anchor = np.zeros_like(totals, dtype=np.float64)
+    settle_mask = target_mask & (majority == SETTLEMENT_CODE)
+    port_ruin_mask = target_mask & np.isin(majority, [PORT_CODE, 3])
+    anchor[settle_mask] = settlement_base + settlement_bonus * support[settle_mask]
+    anchor[port_ruin_mask] = port_ruin_base + port_ruin_bonus * support[port_ruin_mask]
+
+    out = pred.astype(np.float64, copy=True)
+    mask3 = anchor > 0.0
+    out[mask3] = (
+        (1.0 - anchor[mask3, None]) * out[mask3] +
+        anchor[mask3, None] * empirical[mask3]
+    )
+    out = np.maximum(out, PROB_FLOOR)
+    out /= out.sum(axis=2, keepdims=True)
+    return out
+
+
+def _blend_smoothed_majority_field(
+    pred: np.ndarray,
+    counts: np.ndarray,
+    init_grid: np.ndarray,
+    *,
+    alpha: float,
+    sigma: float,
+) -> np.ndarray:
+    """
+    Convert the observed majority map into a smooth class field and blend it.
+
+    On full-coverage rounds, every cell has at least one direct observation.
+    The raw majority labels are noisy, but after spatial smoothing they form a
+    strong non-parametric prior that better matches coherent GT blobs.
+    """
+    if alpha <= 0.0:
+        return pred
+
+    totals = counts.sum(axis=2)
+    obs_mask = totals > 0
+    if not obs_mask.any():
+        return pred
+
+    dynamic_mask = obs_mask & ~np.isin(init_grid, [OCEAN_CODE, MOUNTAIN_CODE])
+    if not dynamic_mask.any():
+        return pred
+
+    empirical = np.divide(
+        counts,
+        totals[:, :, None],
+        out=np.zeros_like(counts, dtype=np.float64),
+        where=totals[:, :, None] > 0,
+    )
+    majority = empirical.argmax(axis=2)
+    top2 = np.partition(empirical, -2, axis=2)[:, :, -2]
+    strength = np.clip(empirical.max(axis=2) - top2, 0.0, 1.0)
+
+    field = np.zeros_like(pred, dtype=np.float64)
+    for c in range(N_CLASSES):
+        one_hot = (majority == c).astype(np.float64) * strength * dynamic_mask
+        field[:, :, c] = _masked_gaussian_blur(one_hot, dynamic_mask, sigma)
+
+    field = np.maximum(field, PROB_FLOOR)
+    field /= field.sum(axis=2, keepdims=True)
+
+    out = (1.0 - alpha) * pred.astype(np.float64, copy=False) + alpha * field
     out = np.maximum(out, PROB_FLOOR)
     out /= out.sum(axis=2, keepdims=True)
     return out
