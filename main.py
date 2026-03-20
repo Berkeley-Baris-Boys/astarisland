@@ -25,23 +25,27 @@ Usage:
 from __future__ import annotations
 
 import argparse
+import json
 import os
+import shutil
 import sys
 from pathlib import Path
 
 import numpy as np
 
 from api import AstarAPI, APIError, BudgetExhausted
-from config import TOTAL_BUDGET, N_CLASSES, OBSERVATIONS_FILE, PRED_TEMPLATE
+from config import TOTAL_BUDGET, N_CLASSES, OBSERVATIONS_FILE, INITIAL_STATES_FILE, PRED_TEMPLATE
 from state import ObservationStore, plan_core_queries, all_viewports
 from world_dynamics import estimate_world_dynamics
 from predictor import build_predictions, validate_prediction
 from metrics import MetricsLogger, holdout_self_check, fetch_and_log_analysis
 
+MAX_CONSECUTIVE_RESERVE_API_ERRORS = 8
+
 
 # ── Load round ────────────────────────────────────────────────────────────────
 
-def load_active_round(api: AstarAPI) -> tuple[str, int, int, int, float, list[dict]]:
+def load_active_round(api: AstarAPI) -> tuple[str, int | None, int, int, int, float, list[dict]]:
     active = api.get_active_round()
     if active is None:
         raise SystemExit("No active round found. Check app.ainm.no.")
@@ -50,13 +54,18 @@ def load_active_round(api: AstarAPI) -> tuple[str, int, int, int, float, list[di
     W        = int(detail["map_width"])
     H        = int(detail["map_height"])
     seeds    = int(detail["seeds_count"])
-    rn       = active.get("round_number", "?")
+    rn_raw   = active.get("round_number", detail.get("round_number"))
+    try:
+        rn = int(rn_raw) if rn_raw is not None else None
+    except (TypeError, ValueError):
+        rn = None
     wt       = float(active.get("round_weight", detail.get("round_weight", 1.0)))
     states   = detail["initial_states"]
     if not isinstance(states, list) or len(states) != seeds:
         raise SystemExit("initial_states missing or wrong length")
-    print(f"Round {rn}  weight={wt}  map={W}×{H}  seeds={seeds}")
-    return round_id, W, H, seeds, wt, states
+    rn_display = rn if rn is not None else "?"
+    print(f"Round {rn_display}  weight={wt}  map={W}×{H}  seeds={seeds}")
+    return round_id, rn, W, H, seeds, wt, states
 
 
 # ── Query phase ───────────────────────────────────────────────────────────────
@@ -101,6 +110,7 @@ def run_query_phase(
             print(f"API error (continuing): {exc}")
 
     # Reserve: re-sample areas with most uncertainty
+    reserve_api_errors = 0
     while store.queries_used < budget:
         # Prioritise seeds with incomplete coverage first
         coverages = {s: store.coverage(s) for s in range(store.seeds_count)}
@@ -116,11 +126,19 @@ def run_query_phase(
         vx, vy, vw, vh = vp
         try:
             execute(seed, vx, vy, vw, vh)
+            reserve_api_errors = 0
         except BudgetExhausted:
             print("Budget exhausted in reserve queries.")
             break
         except APIError as exc:
+            reserve_api_errors += 1
             print(f"API error (continuing): {exc}")
+            if reserve_api_errors >= MAX_CONSECUTIVE_RESERVE_API_ERRORS:
+                print(
+                    "Stopping reserve queries after repeated API errors "
+                    f"({reserve_api_errors} consecutive failures)."
+                )
+                break
 
     store.print_summary()
 
@@ -173,6 +191,44 @@ def save_predictions(predictions: dict[int, np.ndarray]) -> None:
         np.save(path, pred)
 
 
+def save_initial_states(initial_states: list[dict]) -> None:
+    """Persist initial_states to disk so they survive to next round."""
+    Path(INITIAL_STATES_FILE).write_text(
+        json.dumps(initial_states, indent=2), encoding="utf-8"
+    )
+
+
+def load_initial_states() -> list[dict] | None:
+    p = Path(INITIAL_STATES_FILE)
+    if not p.exists():
+        return None
+    return json.loads(p.read_text(encoding="utf-8"))
+
+
+def archive_round(round_id: str, seeds_count: int) -> None:
+    """
+    Copy observations, initial_states, and predictions into
+    data_prev_rounds/<round_id[:8]>/ for later backtesting.
+    """
+    label = round_id[:8]
+    dest = Path("data_prev_rounds") / label
+    dest.mkdir(parents=True, exist_ok=True)
+
+    files_to_copy = [OBSERVATIONS_FILE, INITIAL_STATES_FILE]
+    for seed in range(seeds_count):
+        files_to_copy.append(PRED_TEMPLATE.format(seed=seed))
+
+    copied = []
+    for fname in files_to_copy:
+        src = Path(fname)
+        if src.exists():
+            shutil.copy2(src, dest / src.name)
+            copied.append(src.name)
+
+    if copied:
+        print(f"  Archived to data_prev_rounds/{label}/: {', '.join(copied)}")
+
+
 def load_predictions(seeds_count: int) -> dict[int, np.ndarray]:
     preds: dict[int, np.ndarray] = {}
     for seed in range(seeds_count):
@@ -211,11 +267,14 @@ def main() -> None:
 
     # Load round
     try:
-        round_id, W, H, seeds_count, round_weight, initial_states = load_active_round(api)
+        round_id, round_number, W, H, seeds_count, round_weight, initial_states = load_active_round(api)
     except APIError as exc:
         raise SystemExit(f"Failed to load round: {exc}") from exc
 
-    logger.log_round_start(round_id, round_id, W, H, seeds_count, round_weight)
+    logger.log_round_start(round_id, round_number, W, H, seeds_count, round_weight)
+
+    # Save initial_states immediately — they're only available from the API at round start
+    save_initial_states(initial_states)
 
     # Post-round analysis mode
     if args.fetch_analysis:
@@ -284,6 +343,10 @@ def main() -> None:
     statuses = submit_predictions(api, round_id, predictions, dry_run=args.dry_run)
     logger.log_submission(round_id, statuses)
     logger.log_transition_priors(round_id, store, initial_states)
+
+    # Archive everything for future backtesting
+    print("\nArchiving round data...")
+    archive_round(round_id, seeds_count)
 
     # Summary
     print(f"\n── Done ──────────────────────────────────────────")

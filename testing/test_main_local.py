@@ -13,6 +13,8 @@ Usage:
   python -m testing.test_main_local
   python -m testing.test_main_local --budget 50 --gt-runs 100 --quiet
   python -m testing.test_main_local --initial-state path/to/file.json
+  python -m testing.test_main_local --save-dir local_run/   # save obs + preds + GT
+  python -m testing.test_main_local --save-dir local_run/ --resume  # skip re-querying
 """
 from __future__ import annotations
 
@@ -87,6 +89,7 @@ def _run_queries(
     budget: int,
     base_seed: int,
     quiet: bool,
+    save_path: str | None = None,
 ) -> None:
     width, height = store.width, store.height
     seeds_count = store.seeds_count
@@ -121,6 +124,9 @@ def _run_queries(
         new_cells = store.ingest(seed, vx, vy, api_result)
         queries_used += 1
         vp_hits[seed][(vx, vy, vw, vh)] = vp_hits[seed].get((vx, vy, vw, vh), 0) + 1
+
+        if save_path:
+            store.save(save_path)
 
         if not quiet:
             cov = store.coverage(seed)
@@ -181,7 +187,16 @@ def main() -> None:
                         help="Random seed (default: 42)")
     parser.add_argument("--quiet", action="store_true",
                         help="Suppress per-query output")
+    parser.add_argument("--save-dir", default=None,
+                        help="Directory to save observations.json, predictions_seed_*.npy, gt_seed_*.npy")
+    parser.add_argument("--resume", action="store_true",
+                        help="Load saved observations from --save-dir and skip querying")
     args = parser.parse_args()
+
+    save_dir = Path(args.save_dir) if args.save_dir else None
+    if save_dir:
+        save_dir.mkdir(parents=True, exist_ok=True)
+    obs_path = str(save_dir / "observations.json") if save_dir else None
 
     if args.initial_state:
         init_states, height, width = _load_initial_state(args.initial_state)
@@ -197,10 +212,9 @@ def main() -> None:
     print(f"Map size: {width}x{height}")
     print(f"Query budget: {args.budget} viewport queries")
     print(f"Ground truth: {args.gt_runs} MC runs")
+    if save_dir:
+        print(f"Save dir: {save_dir}")
     print()
-
-    init_grid = np.array(init_states[0]["grid"], dtype=np.int64)
-    static_mask = (init_grid == 10) | (init_grid == 5)
 
     print("Computing ground truth...")
     ground_truth: dict[int, np.ndarray] = {}
@@ -208,29 +222,49 @@ def main() -> None:
         state = init_states[seed]
         ig_arr = np.array(state["grid"], dtype=np.int64)
         settle_data = state.get("settlements", [])
-        gt = monte_carlo(
-            ig_arr, settle_data, SimParams(),
-            n_runs=args.gt_runs, n_years=50, param_noise=0.0,
-            seed=args.seed + seed * 1000,
-        )
-        ground_truth[seed] = gt
+
+        gt_path = save_dir / f"gt_seed_{seed}.npy" if save_dir else None
+        if gt_path and gt_path.exists():
+            ground_truth[seed] = np.load(gt_path)
+        else:
+            gt = monte_carlo(
+                ig_arr, settle_data, SimParams(),
+                n_runs=args.gt_runs, n_years=50, param_noise=0.0,
+                seed=args.seed + seed * 1000,
+            )
+            ground_truth[seed] = gt
+            if gt_path:
+                np.save(gt_path, gt)
     print("  Done.\n")
 
-    store = ObservationStore(
-        round_id="local-test",
-        width=width,
-        height=height,
-        seeds_count=seeds_count,
-    )
+    if args.resume and obs_path and Path(obs_path).exists():
+        print(f"Resuming from {obs_path}...")
+        store = ObservationStore.load(obs_path)
+        print(f"  Loaded: {store.queries_used} queries already used")
+    else:
+        store = ObservationStore(
+            round_id="local-test",
+            width=width,
+            height=height,
+            seeds_count=seeds_count,
+        )
 
-    print("Running viewport queries (local simulator)...")
-    _run_queries(
-        store, init_states,
-        params=SimParams(),
-        budget=args.budget,
-        base_seed=args.seed,
-        quiet=args.quiet,
-    )
+    remaining = args.budget - store.queries_used
+    if remaining > 0:
+        print("Running viewport queries (local simulator)...")
+        _run_queries(
+            store, init_states,
+            params=SimParams(),
+            budget=args.budget,
+            base_seed=args.seed,
+            quiet=args.quiet,
+            save_path=obs_path,
+        )
+        if obs_path:
+            store.save(obs_path)
+    else:
+        print(f"Budget already used ({store.queries_used}/{args.budget}), skipping queries.")
+
     store.print_summary()
 
     print("\nEstimating world dynamics...")
@@ -241,11 +275,18 @@ def main() -> None:
         init_states, store, dynamics, verbose=not args.quiet,
     )
 
+    if save_dir:
+        for seed, pred in predictions.items():
+            np.save(save_dir / f"predictions_seed_{seed}.npy", pred)
+        print(f"Saved predictions to {save_dir}/")
+
     print("\n--- Results ---")
     scores: list[float] = []
     for seed in range(seeds_count):
         gt = ground_truth[seed]
         pred = predictions[seed]
+        init_grid = np.array(init_states[seed]["grid"], dtype=np.int64)
+        static_mask = (init_grid == MOUNTAIN) | (init_grid == OCEAN)
         wkl = _weighted_kl(gt, pred, static_mask)
         sc = _score(wkl)
         scores.append(sc)

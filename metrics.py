@@ -206,11 +206,20 @@ class MetricsLogger:
         if self.path.exists():
             try:
                 self._data = json.loads(self.path.read_text(encoding="utf-8"))
-            except (json.JSONDecodeError, IOError):
+            except (json.JSONDecodeError, IOError) as exc:
+                print(f"Warning: failed to read metrics log '{self.path}': {exc}")
+                backup_path = self.path.with_suffix(
+                    f"{self.path.suffix}.corrupt.{int(time.time())}.bak"
+                )
+                try:
+                    self.path.rename(backup_path)
+                    print(f"  Corrupt metrics file moved to '{backup_path}'.")
+                except OSError as backup_exc:
+                    print(f"  Warning: failed to back up corrupt metrics file: {backup_exc}")
                 self._data = {}
 
     def log_round_start(
-        self, round_id: str, round_number: int, width: int, height: int,
+        self, round_id: str, round_number: int | None, width: int, height: int,
         seeds_count: int, round_weight: float = 1.0,
     ) -> None:
         self._data[round_id] = {
@@ -349,7 +358,17 @@ class MetricsLogger:
 
         print("\n── Cross-round summary ──────────────────────────────")
         print(f"{'Round':<8} {'Coverage':>9} {'SelfCheck':>10} {'Score':>7} {'Params'}")
-        for rid, d in sorted(completed.items(), key=lambda x: x[1].get("round_number", 0)):
+        def round_sort_key(item: tuple[str, dict]) -> tuple[int, int, str]:
+            d = item[1]
+            rn = d.get("round_number")
+            if isinstance(rn, int):
+                return (0, rn, item[0])
+            try:
+                return (0, int(rn), item[0])
+            except (TypeError, ValueError):
+                return (1, 0, item[0])
+
+        for rid, d in sorted(completed.items(), key=round_sort_key):
             rn   = d.get("round_number", "?")
             cov  = f"{d.get('avg_coverage', 0):.1%}"
             sc_r = d.get("self_check", {}).get("overall", {})
@@ -379,16 +398,19 @@ def fetch_and_log_analysis(
     from api import APIError  # avoid circular
 
     ground_truth: dict[int, np.ndarray] = {}
+    missing_seeds: list[int] = []
     for seed in range(seeds_count):
         try:
             resp = api.get_analysis(round_id, seed)
         except APIError as exc:
             print(f"  Seed {seed}: analysis not available ({exc})")
-            return None
+            missing_seeds.append(seed)
+            continue
 
         if "ground_truth" not in resp:
             print(f"  Seed {seed}: no ground_truth in response")
-            return None
+            missing_seeds.append(seed)
+            continue
 
         gt = np.array(resp["ground_truth"], dtype=np.float32)
         ground_truth[seed] = gt
@@ -399,8 +421,10 @@ def fetch_and_log_analysis(
 
     if ground_truth:
         logger.log_ground_truth(round_id, ground_truth, predictions)
+    if missing_seeds:
+        print(f"  Missing analysis for seeds: {missing_seeds}")
 
-    return ground_truth
+    return ground_truth if ground_truth else None
 
 
 def load_previous_round_data(data_dir: str) -> Optional[dict]:

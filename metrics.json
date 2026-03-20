@@ -185,5 +185,311 @@
       "4": "accepted"
     },
     "submitted_at": "2026-03-20T14:21:22Z"
+  },
+  "c5cdf100-a876-4fb7-b5d8-757162c97989": {
+    "round_id": "c5cdf100-a876-4fb7-b5d8-757162c97989",
+    "round_number": "c5cdf100-a876-4fb7-b5d8-757162c97989",
+    "width": 40,
+    "height": 40,
+    "seeds_count": 5,
+    "round_weight": 1.4775,
+    "started_at": "2026-03-20T17:33:20Z",
+    "queries_used": 50,
+    "coverage_by_seed": {
+      "0": 1.0,
+      "1": 1.0,
+      "2": 1.0,
+      "3": 1.0,
+      "4": 1.0
+    },
+    "samples_by_seed": {
+      "0": 2025,
+      "1": 2025,
+      "2": 3150,
+      "3": 2025,
+      "4": 2025
+    },
+    "avg_coverage": 1.0,
+    "estimated_params": {
+      "survival_rate": 0.3728,
+      "ruin_rate": 0.0088,
+      "expansion_rate": 0.017,
+      "forest_growth": 0.0304,
+      "avg_food": 0.6674,
+      "avg_port_wealth": 0.001
+    },
+    "prediction_summary": {
+      "0": {
+        "class_counts": {
+          "Empty": 1397,
+          "Settlement": 0,
+          "Port": 0,
+          "Ruin": 0,
+          "Forest": 171,
+          "Mountain": 32
+        },
+        "avg_confidence": 0.741,
+        "avg_entropy": 0.6716
+      },
+      "1": {
+        "class_counts": {
+          "Empty": 1446,
+          "Settlement": 0,
+          "Port": 0,
+          "Ruin": 0,
+          "Forest": 137,
+          "Mountain": 17
+        },
+        "avg_confidence": 0.7567,
+        "avg_entropy": 0.6393
+      },
+      "2": {
+        "class_counts": {
+          "Empty": 1428,
+          "Settlement": 3,
+          "Port": 0,
+          "Ruin": 0,
+          "Forest": 138,
+          "Mountain": 31
+        },
+        "avg_confidence": 0.7525,
+        "avg_entropy": 0.6726
+      },
+      "3": {
+        "class_counts": {
+          "Empty": 1452,
+          "Settlement": 0,
+          "Port": 0,
+          "Ruin": 0,
+          "Forest": 122,
+          "Mountain": 26
+        },
+        "avg_confidence": 0.7502,
+        "avg_entropy": 0.6384
+      },
+      "4": {
+        "class_counts": {
+          "Empty": 1472,
+          "Settlement": 0,
+          "Port": 0,
+          "Ruin": 0,
+          "Forest": 95,
+          "Mountain": 33
+        },
+        "avg_confidence": 0.7647,
+        "avg_entropy": 0.6199
+      }
+    },
+    "submission_statuses": {
+      "0": "accepted",
+      "1": "accepted",
+      "2": "accepted",
+      "3": "accepted",
+      "4": "accepted"
+    },
+    "submitted_at": "2026-03-20T17:34:45Z",
+    "transition_priors": {
+      "10": [
+        1.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0
+      ],
+      "11": [
+        0.9454,
+        0.0166,
+        0.0004,
+        0.0043,
+        0.0332,
+        0.0
+      ],
+      "4": [
+        0.0585,
+        0.0165,
+        0.0006,
+        0.0035,
+        0.9209,
+        0.0
+      ],
+      "1": [
+        0.6284,
+        0.055,
+        0.0,
+        0.0046,
+        0.3119,
+        0.0
+      ],
+      "2": [
+        0.4,
+        0.0,
+        0.0,
+        0.1,
+        0.5,
+        0.0
+      ],
+      "5": [
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        1.0
+      ]
+    }
+  },
+  "2a341ace-0f57-4309-9b89-e59fe0f09179": {
+    "round_id": "2a341ace-0f57-4309-9b89-e59fe0f09179",
+    "round_number": 9,
+    "width": 40,
+    "height": 40,
+    "seeds_count": 5,
+    "round_weight": 1.5513,
+    "started_at": "2026-03-20T20:29:35Z",
+    "queries_used": 50,
+    "coverage_by_seed": {
+      "0": 1.0,
+      "1": 1.0,
+      "2": 1.0,
+      "3": 1.0,
+      "4": 1.0
+    },
+    "samples_by_seed": {
+      "0": 2025,
+      "1": 3150,
+      "2": 2025,
+      "3": 2025,
+      "4": 2025
+    },
+    "avg_coverage": 1.0,
+    "estimated_params": {
+      "survival_rate": 0.5068,
+      "ruin_rate": 0.0137,
+      "expansion_rate": 0.152,
+      "forest_growth": 0.0558,
+      "avg_food": 0.685,
+      "avg_port_wealth": 0.0137
+    },
+    "prediction_summary": {
+      "0": {
+        "class_counts": {
+          "Empty": 1126,
+          "Settlement": 141,
+          "Port": 6,
+          "Ruin": 15,
+          "Forest": 284,
+          "Mountain": 28
+        },
+        "avg_confidence": 0.7059,
+        "avg_entropy": 0.7986
+      },
+      "1": {
+        "class_counts": {
+          "Empty": 1116,
+          "Settlement": 131,
+          "Port": 6,
+          "Ruin": 10,
+          "Forest": 310,
+          "Mountain": 27
+        },
+        "avg_confidence": 0.6887,
+        "avg_entropy": 0.821
+      },
+      "2": {
+        "class_counts": {
+          "Empty": 1025,
+          "Settlement": 196,
+          "Port": 12,
+          "Ruin": 8,
+          "Forest": 344,
+          "Mountain": 15
+        },
+        "avg_confidence": 0.6596,
+        "avg_entropy": 0.8841
+      },
+      "3": {
+        "class_counts": {
+          "Empty": 1079,
+          "Settlement": 155,
+          "Port": 7,
+          "Ruin": 11,
+          "Forest": 313,
+          "Mountain": 35
+        },
+        "avg_confidence": 0.6849,
+        "avg_entropy": 0.8422
+      },
+      "4": {
+        "class_counts": {
+          "Empty": 1025,
+          "Settlement": 180,
+          "Port": 10,
+          "Ruin": 18,
+          "Forest": 327,
+          "Mountain": 40
+        },
+        "avg_confidence": 0.6734,
+        "avg_entropy": 0.8662
+      }
+    },
+    "submission_statuses": {
+      "0": "accepted",
+      "1": "accepted",
+      "2": "accepted",
+      "3": "accepted",
+      "4": "accepted"
+    },
+    "submitted_at": "2026-03-20T20:30:59Z",
+    "transition_priors": {
+      "10": [
+        1.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0
+      ],
+      "11": [
+        0.7804,
+        0.1439,
+        0.0081,
+        0.011,
+        0.0566,
+        0.0
+      ],
+      "4": [
+        0.1016,
+        0.1432,
+        0.0075,
+        0.0115,
+        0.7361,
+        0.0
+      ],
+      "5": [
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        1.0
+      ],
+      "1": [
+        0.4762,
+        0.2952,
+        0.0,
+        0.0143,
+        0.2143,
+        0.0
+      ],
+      "2": [
+        0.5556,
+        0.0,
+        0.1111,
+        0.0,
+        0.3333,
+        0.0
+      ]
+    }
   }
 }

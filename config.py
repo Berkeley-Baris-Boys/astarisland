@@ -46,10 +46,11 @@ STATIC_CODES = {OCEAN_CODE, MOUNTAIN_CODE}
 DYNAMIC_CODES = {0, 1, 2, 3, 4, 11}
 
 # ── File paths ────────────────────────────────────────────────────────────────
-OBSERVATIONS_FILE = "observations.json"
-SIM_RESULTS_FILE  = "sim_results.npz"
-METRICS_FILE      = "metrics.json"
-PRED_TEMPLATE     = "predictions_seed_{seed}.npy"
+OBSERVATIONS_FILE    = "observations.json"
+INITIAL_STATES_FILE  = "initial_states.json"
+SIM_RESULTS_FILE     = "sim_results.npz"
+METRICS_FILE         = "metrics.json"
+PRED_TEMPLATE        = "predictions_seed_{seed}.npy"
 
 # ── Prediction safety ─────────────────────────────────────────────────────────
 # Never let any class probability reach 0 — KL divergence becomes infinite.
