@@ -40,10 +40,12 @@ from world_dynamics import estimate_world_dynamics
 from predictor import build_predictions, validate_prediction
 from metrics import MetricsLogger, holdout_self_check, fetch_and_log_analysis
 
+MAX_CONSECUTIVE_RESERVE_API_ERRORS = 8
+
 
 # ── Load round ────────────────────────────────────────────────────────────────
 
-def load_active_round(api: AstarAPI) -> tuple[str, int, int, int, float, list[dict]]:
+def load_active_round(api: AstarAPI) -> tuple[str, int | None, int, int, int, float, list[dict]]:
     active = api.get_active_round()
     if active is None:
         raise SystemExit("No active round found. Check app.ainm.no.")
@@ -52,13 +54,18 @@ def load_active_round(api: AstarAPI) -> tuple[str, int, int, int, float, list[di
     W        = int(detail["map_width"])
     H        = int(detail["map_height"])
     seeds    = int(detail["seeds_count"])
-    rn       = active.get("round_number", "?")
+    rn_raw   = active.get("round_number", detail.get("round_number"))
+    try:
+        rn = int(rn_raw) if rn_raw is not None else None
+    except (TypeError, ValueError):
+        rn = None
     wt       = float(active.get("round_weight", detail.get("round_weight", 1.0)))
     states   = detail["initial_states"]
     if not isinstance(states, list) or len(states) != seeds:
         raise SystemExit("initial_states missing or wrong length")
-    print(f"Round {rn}  weight={wt}  map={W}×{H}  seeds={seeds}")
-    return round_id, W, H, seeds, wt, states
+    rn_display = rn if rn is not None else "?"
+    print(f"Round {rn_display}  weight={wt}  map={W}×{H}  seeds={seeds}")
+    return round_id, rn, W, H, seeds, wt, states
 
 
 # ── Query phase ───────────────────────────────────────────────────────────────
@@ -103,6 +110,7 @@ def run_query_phase(
             print(f"API error (continuing): {exc}")
 
     # Reserve: re-sample areas with most uncertainty
+    reserve_api_errors = 0
     while store.queries_used < budget:
         # Prioritise seeds with incomplete coverage first
         coverages = {s: store.coverage(s) for s in range(store.seeds_count)}
@@ -118,11 +126,19 @@ def run_query_phase(
         vx, vy, vw, vh = vp
         try:
             execute(seed, vx, vy, vw, vh)
+            reserve_api_errors = 0
         except BudgetExhausted:
             print("Budget exhausted in reserve queries.")
             break
         except APIError as exc:
+            reserve_api_errors += 1
             print(f"API error (continuing): {exc}")
+            if reserve_api_errors >= MAX_CONSECUTIVE_RESERVE_API_ERRORS:
+                print(
+                    "Stopping reserve queries after repeated API errors "
+                    f"({reserve_api_errors} consecutive failures)."
+                )
+                break
 
     store.print_summary()
 
@@ -251,11 +267,11 @@ def main() -> None:
 
     # Load round
     try:
-        round_id, W, H, seeds_count, round_weight, initial_states = load_active_round(api)
+        round_id, round_number, W, H, seeds_count, round_weight, initial_states = load_active_round(api)
     except APIError as exc:
         raise SystemExit(f"Failed to load round: {exc}") from exc
 
-    logger.log_round_start(round_id, round_id, W, H, seeds_count, round_weight)
+    logger.log_round_start(round_id, round_number, W, H, seeds_count, round_weight)
 
     # Save initial_states immediately — they're only available from the API at round start
     save_initial_states(initial_states)

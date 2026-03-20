@@ -349,6 +349,7 @@ class ObservationStore:
         if not isinstance(grid, list):
             raise ValueError(f"simulate response missing 'grid': {result}")
 
+        query_index = self.queries_used + 1
         new_cells = 0
         for dy, row in enumerate(grid):
             for dx, raw_val in enumerate(row):
@@ -372,7 +373,7 @@ class ObservationStore:
                 if isinstance(s, dict)
             ]
             self.settlement_snaps[seed].append({
-                "query_index": self.queries_used,
+                "query_index": query_index,
                 "viewport": {"x": vx, "y": vy,
                              "w": result.get("viewport", {}).get("w", MAX_VIEWPORT),
                              "h": result.get("viewport", {}).get("h", MAX_VIEWPORT)},
@@ -381,7 +382,7 @@ class ObservationStore:
 
         self.queries_used += 1
         self.query_log.append({
-            "query_index": self.queries_used,
+            "query_index": query_index,
             "seed": seed,
             "viewport": {"x": vx, "y": vy},
             "new_cells": new_cells,
