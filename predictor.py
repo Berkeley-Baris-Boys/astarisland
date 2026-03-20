@@ -36,13 +36,14 @@ from state import (
     settlement_density,
 )
 from world_dynamics import WorldDynamics, dynamics_adjusted_prior
+from historical_prior import get_historical_prior
 
-ROLLOUT_MC_RUNS = 80
+ROLLOUT_MC_RUNS = 400
 ROLLOUT_BASE_SEED = 20260320
-ROLLOUT_MAX_WEIGHT = 0.26
+ROLLOUT_MAX_WEIGHT = 0.85
 EMPIRICAL_FINAL_SCALE = np.array([1.03, 0.97, 0.85, 0.45, 1.08, 0.85], dtype=np.float64)
 EMPIRICAL_SETTLEMENT_SMOOTH_ALPHA = 0.60
-EMPIRICAL_SETTLEMENT_SMOOTH_SIGMA = 1.4
+EMPIRICAL_SETTLEMENT_SMOOTH_SIGMA = 2.5
 EMPIRICAL_RUIN_SMOOTH_ALPHA = 0.55
 EMPIRICAL_RUIN_SMOOTH_SIGMA = 1.6
 EMPIRICAL_FOREST_SMOOTH_ALPHA = 0.15
@@ -169,13 +170,20 @@ def build_predictions(
     """
     Build per-seed HxWx6 probability tensors.
 
-    Preferred path is the empirical constrained predictor with semantic
-    settlement/forest smoothing. Hybrid rollout and heuristics remain as
-    fallbacks when that path fails.
+    Primary path: Monte Carlo simulator with inferred hidden parameters.
+    Observations are used to calibrate the simulator output and anchor
+    observed cells directly.
     """
-    predictions = _build_empirical_constrained_predictions(
-        initial_states, store, dynamics, verbose=verbose
-    )
+    if monte_carlo is not None and estimate_params_from_observations is not None:
+        predictions = _build_hybrid_predictions(
+            initial_states, store, dynamics, verbose=verbose
+        )
+    else:
+        if verbose:
+            print("Simulator unavailable — falling back to empirical predictor.")
+        predictions = _build_empirical_constrained_predictions(
+            initial_states, store, dynamics, verbose=verbose
+        )
 
     _apply_hard_constraints(predictions, initial_states, store)
     return predictions
@@ -265,24 +273,24 @@ def _build_hybrid_predictions(
 
                 if obs_mask[y, x]:
                     empirical = safe_normalize(counts[y, x] / float(n_samp[y, x, 0]))
-                    weights = np.array([
-                        min(0.88, 0.60 + 0.10 * min(float(n_samp[y, x, 0]), 2.0)),
-                        0.22 + 0.18 * support,
-                        0.08 + 0.14 * rollout_trust,
-                        0.10 + 0.08 * (1.0 - support),
-                    ])
+                    # Observation anchors the cell; rollout provides distributional shape
+                    obs_w     = min(0.75, 0.55 + 0.10 * min(float(n_samp[y, x, 0]), 2.0))
+                    rollout_w = 0.15 + 0.20 * rollout_trust
+                    emp_w     = max(0.0, 0.18 + 0.12 * support)
+                    heur_w    = max(0.0, 1.0 - obs_w - rollout_w - emp_w)
+                    weights = np.array([obs_w, rollout_w, emp_w, heur_w])
                     pred[y, x] = _blend_distributions(
-                        [empirical, empirical_prior, rollout, heuristic],
+                        [empirical, rollout, empirical_prior, heuristic],
                         weights,
                     )
                 else:
-                    weights = np.array([
-                        0.42 + 0.40 * support,
-                        0.12 + ROLLOUT_MAX_WEIGHT * rollout_trust,
-                        0.22 + 0.24 * (1.0 - support),
-                    ])
+                    # MC rollout is the primary signal for unobserved cells
+                    rollout_w = ROLLOUT_MAX_WEIGHT * rollout_trust
+                    emp_w     = max(0.0, 0.15 + 0.10 * support)
+                    heur_w    = max(0.0, 1.0 - rollout_w - emp_w)
+                    weights = np.array([rollout_w, emp_w, heur_w])
                     cell_pred = _blend_distributions(
-                        [empirical_prior, rollout, heuristic],
+                        [rollout, empirical_prior, heuristic],
                         weights,
                     )
                     pred[y, x] = _conservative_unobserved_adjustment(
@@ -438,6 +446,7 @@ def _build_empirical_constrained_predictions(
     H, W = store.height, store.width
     contexts = _build_seed_contexts(initial_states, H, W)
     transition_model = _build_transition_model(store, contexts)
+    hist = get_historical_prior()
     predictions: dict[int, np.ndarray] = {}
     fully_observed_round = all(
         bool((store.counts[s].sum(axis=2) > 0).all())
@@ -485,24 +494,34 @@ def _build_empirical_constrained_predictions(
                     forest_bucket=int(context["fadj_bucket"][y, x]),
                 )
 
+                hist_dist, hist_conf = hist.lookup(
+                    init_code,
+                    float(context["dist_to_settle"][y, x]),
+                    bool(context["coast"][y, x]),
+                    int(context["fadj"][y, x]),
+                )
+
                 if obs_mask[y, x]:
                     empirical = safe_normalize(counts[y, x] / float(n_samp[y, x, 0]))
-                    weights = np.array([
-                        min(0.92, 0.66 + 0.12 * min(float(n_samp[y, x, 0]), 2.0)),
-                        0.22 + 0.22 * support,
-                        0.10 + 0.08 * (1.0 - support),
-                    ])
+                    # Direct observation dominates; hist smooths noise
+                    obs_w  = min(0.88, 0.62 + 0.13 * min(float(n_samp[y, x, 0]), 2.0))
+                    hist_w = 0.10 + 0.12 * hist_conf
+                    emp_w  = max(0.0, 0.18 + 0.18 * support - hist_w * 0.4)
+                    heur_w = max(0.0, 1.0 - obs_w - hist_w - emp_w)
+                    weights = np.array([obs_w, emp_w, hist_w, heur_w])
                     pred[y, x] = _blend_distributions(
-                        [empirical, empirical_prior, heuristic],
+                        [empirical, empirical_prior, hist_dist, heuristic],
                         weights,
                     )
                 else:
-                    weights = np.array([
-                        0.58 + 0.24 * support,
-                        0.42 - 0.24 * support,
-                    ])
+                    # Unobserved: dynamics heuristic is primary; bucket hist
+                    # and empirical_prior provide secondary context.
+                    hist_w = 0.15 * hist_conf
+                    emp_w  = 0.20 + 0.15 * support
+                    heur_w = max(0.0, 1.0 - hist_w - emp_w)
+                    weights = np.array([hist_w, emp_w, heur_w])
                     pred[y, x] = _blend_distributions(
-                        [empirical_prior, heuristic],
+                        [hist_dist, empirical_prior, heuristic],
                         weights,
                     )
 
@@ -655,6 +674,16 @@ def _build_seed_contexts(
             state, height, width, radius=4
         )
         fadj = forest_adjacency(grid)
+        try:
+            from scipy.ndimage import distance_transform_edt
+            settle_mask = np.isin(grid, [SETTLEMENT_CODE, PORT_CODE])
+            dist_to_settle = (
+                distance_transform_edt(~settle_mask).astype(np.float32)
+                if settle_mask.any()
+                else np.full(grid.shape, 999.0, dtype=np.float32)
+            )
+        except ImportError:
+            dist_to_settle = np.full(grid.shape, 999.0, dtype=np.float32)
         contexts[seed] = {
             "grid": grid,
             "has_settle": has_settle,
@@ -662,6 +691,7 @@ def _build_seed_contexts(
             "near_settle": near_settle,
             "coast": coastal_mask(grid),
             "dist_coast": distance_to_coast(grid),
+            "dist_to_settle": dist_to_settle,
             "settle_den": settlement_density(grid),
             "fadj": fadj,
             "fadj_bucket": np.minimum(fadj, 2).astype(np.int8),
