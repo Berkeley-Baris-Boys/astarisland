@@ -1,5 +1,31 @@
 # Astar Island Competition Baseline
 
+## Current system (source of truth)
+
+This repo is a **Python package** (`astar_island`) under `src/`, installed via `pyproject.toml` / `pip install -e .`. The live round loop is **`scripts/run_round.py`** → `astar_island.submit.run_active_round`, not a top-level `main.py`.
+
+**Runtime stack**
+
+| Piece | Role |
+|--------|------|
+| `astar_island.api` | `GET` active round, round detail, `POST` simulate, submit |
+| `astar_island.query_planner` | 50-query budget split into **recon → targeted → calibration** |
+| `astar_island.aggregator` | Per-cell counts, entropy, query history |
+| `astar_island.predictor` | Feature + observation-driven `H×W×6` probabilities |
+| Optional artifacts | Historical priors (`priors.py`), learned prior, **residual calibrator**, **prior blend gate** — loaded when artifact paths exist and the corresponding blend strengths allow it (`config.AstarConfig`) |
+
+**Config / env**
+
+- Token: `ASTAR_ISLAND_TOKEN` (see `src/astar_island/config.py` for `ASTAR_ISLAND_*` paths and toggles).
+- API base URL default: `https://api.ainm.no/astar-island` (`AstarConfig.base_url`).
+
+**Docs**
+
+- Challenge facts and API details remain in `MDs/` (see below).
+- If you have a local `STATE.md`, treat it as **design notes**; it may describe an older or alternate layout. **This README + `src/` tree** reflect the packaged baseline.
+
+---
+
 ## What This Does
 
 This repository implements a practical baseline for the Astar Island Norse civilisation prediction challenge. It is built around the documented constraints:
@@ -19,6 +45,7 @@ The system combines:
 - calibrated probability floors and final validation
 - optional learned feature-conditioned priors from completed rounds via the analysis endpoint
 - optional tree-based residual calibration learned from archived prediction and ground-truth pairs
+- optional **prior blend gate** (trained blend weights) when `prior_blend_gate.joblib` is present
 
 ## Markdown Facts Used As Primary Context
 
@@ -43,13 +70,19 @@ Key facts encoded in the baseline:
 ## Project Layout
 
 ```text
+pyproject.toml
+requirements.txt
 src/astar_island/
+  __init__.py
   api.py
   aggregator.py
   config.py
   features.py
+  history.py
   learned_prior.py
   predictor.py
+  prior_blend_gate.py
+  priors.py
   query_planner.py
   residual_calibrator.py
   scoring.py
@@ -58,14 +91,20 @@ src/astar_island/
   utils.py
   visualize.py
 scripts/
-  archive_completed_rounds.py
-  build_learned_prior.py
-  build_residual_calibrator.py
-  evaluate_residual_calibrator.py
-  run_round.py
   analyze_round.py
+  archive_completed_rounds.py
+  build_historical_priors.py
+  build_learned_prior.py
+  build_prior_blend_gate.py
+  build_residual_calibrator.py
+  evaluate_prior_blend_gate.py
+  evaluate_residual_calibrator.py
   inspect_predictions.py
-requirements.txt
+  replay_saved_run.py
+  run_round.py
+  submit_saved_predictions.py
+artifacts/          # default log + built artifacts (gitignored / local)
+MDs/                # task + API + scoring reference docs
 ```
 
 ## Baseline Design
@@ -129,10 +168,11 @@ For each seed:
    - round-wide feature buckets learned across all seeds
    - global class prevalence from all observations
 3. Blend in direct empirical counts where cells were actually observed.
-4. Apply the settlement shape prior from `CONCRETE_TWEAKS.md`.
-5. Enforce physical constraints and apply a probability floor.
+4. Optionally blend in **learned prior**, **residual calibrator**, and **prior blend gate** outputs when the corresponding artifacts exist (see `astar_island.predictor.Predictor`).
+5. Apply the settlement shape prior from `CONCRETE_TWEAKS.md`.
+6. Enforce physical constraints and apply a probability floor.
 
-This is not a learned offline model; it is a round-adaptive empirical Bayes baseline designed for the challenge’s limited-query setting.
+This is not a single end-to-end neural model; it is a round-adaptive empirical Bayes-style stack designed for the challenge’s limited-query setting, with optional offline-learned add-ons.
 
 ## Installation
 
@@ -143,11 +183,15 @@ pip install -r requirements.txt
 pip install -e .
 ```
 
-If you prefer not to install editable mode:
+After `pip install -e .`, you can run `python scripts/run_round.py` from the repo root without setting `PYTHONPATH`.
+
+If you prefer not to install editable mode, keep using:
 
 ```bash
 export PYTHONPATH=src
 ```
+
+before invoking any `scripts/*.py` command.
 
 ## Authentication
 
@@ -220,6 +264,13 @@ Evaluate the residual calibrator with leave-one-round-out exact scoring:
 PYTHONPATH=src python scripts/evaluate_residual_calibrator.py --rounds 8 9 10 11 12
 ```
 
+Optional **prior blend gate** (cell-level blend of structural vs observation mass):
+
+```bash
+PYTHONPATH=src python scripts/build_prior_blend_gate.py
+PYTHONPATH=src python scripts/evaluate_prior_blend_gate.py --rounds 8 9 10 11 12
+```
+
 ## Run The Full Pipeline
 
 Dry run without submission:
@@ -240,7 +291,7 @@ Submit predictions from an earlier `--no-submit` run without using any more simu
 PYTHONPATH=src python scripts/submit_saved_predictions.py artifacts/<run_dir>
 ```
 
-Artifacts are written under `artifacts/<timestamp>/`:
+Each run writes a timestamped directory under `artifacts/` (see `AstarConfig.log_dir`), e.g. `artifacts/<timestamp>/`:
 
 - `run.log`
 - `active_round.json`
@@ -248,17 +299,22 @@ Artifacts are written under `artifacts/<timestamp>/`:
 - `metadata.json`
 - `observations.json`
 - `query_events.jsonl`
-- `submission_events.jsonl`
+- `submission_events.jsonl` (when submitting)
 - `class_counts.npy`
 - `observation_counts.npy`
 - `conditional_counts.json`
-- `prediction_seed_*.npy`
+- `prediction_seed_<n>.npy` (one file per seed; these are the tensors submitted to the API)
 - `diagnostics/index.json`
 - `diagnostics/seed_<n>/summary.json`
-- `diagnostics/seed_<n>/*.npy` for stage tensors like `prior`, `transfer`, `combined`, `learned_prior`, `post_structural`, `rare_port_support`, `rare_ruin_support`, and `final_prediction`
-- `artifacts/learned_prior.json`
-- `artifacts/residual_calibrator.joblib`
-- visualization PNGs
+- `diagnostics/seed_<n>/*.npy` for stage tensors such as `prior`, `transfer`, `combined`, `learned_prior`, `post_structural`, `rare_port_support`, `rare_ruin_support`, and `final_prediction`
+- visualization PNGs (unless `--no-plots`)
+
+**Separate from run folders**, the predictor may load optional **repo-level** artifacts (defaults under `artifacts/`):
+
+- `historical_priors.json` — from `build_historical_priors.py`
+- `learned_prior.json` — from `build_learned_prior.py`
+- `residual_calibrator.joblib` — from `build_residual_calibrator.py`
+- `prior_blend_gate.joblib` — from `build_prior_blend_gate.py` (controlled by `ASTAR_ISLAND_PRIOR_BLEND_GATE_STRENGTH` and path env vars in `AstarConfig`)
 
 ## Inspection Utilities
 
@@ -285,8 +341,8 @@ PYTHONPATH=src python scripts/analyze_round.py <round_id> --seed 0
 
 ## Current Limitations
 
-- No historical backtesting dataset is included here.
-- The transfer model is heuristic rather than a trained probabilistic classifier.
+- No offline evaluation dataset is bundled in this repository (you can still build priors/calibrators from archived API history).
+- The core transfer model is heuristic rather than a trained probabilistic classifier (optional `sklearn`-based calibrators augment it when built).
 - Query planning is adaptive but still hand-engineered.
 - The post-round analysis script assumes the analysis payload can be serialized directly; adjust if the live schema differs.
 

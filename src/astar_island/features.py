@@ -68,7 +68,12 @@ def _gaussian_intensity(mask: np.ndarray, sigma: float) -> np.ndarray:
     return intensity
 
 
-def build_seed_features(seed_index: int, initial_state: InitialState) -> SeedFeatures:
+def build_seed_features(
+    seed_index: int,
+    initial_state: InitialState,
+    *,
+    settlement_sigma: float = 2.2,
+) -> SeedFeatures:
     grid = initial_state.grid
     class_grid = terrain_grid_to_class_grid(grid)
     h, w = grid.shape
@@ -95,7 +100,10 @@ def build_seed_features(seed_index: int, initial_state: InitialState) -> SeedFea
     conflict_mask = frontier_mask & (settlement_density >= np.quantile(settlement_density[is_buildable], 0.75) if np.any(is_buildable) else False)
     reclaimable_mask = is_buildable & ((grid == TERRAIN_RUIN) | (dist_to_ruin <= 2))
     dynamic_prior_mask = is_buildable & (~is_ocean)
-    settlement_intensity = _gaussian_intensity(initial_settlement_mask.astype(float), sigma=2.2)
+    settlement_intensity = _gaussian_intensity(
+        initial_settlement_mask.astype(float),
+        sigma=max(float(settlement_sigma), 1e-6),
+    )
     port_intensity = _gaussian_intensity(initial_port_mask.astype(float), sigma=2.0)
     ys, xs = np.indices((h, w))
     border_distance = np.minimum.reduce([ys, xs, h - 1 - ys, w - 1 - xs]).astype(np.float64)
@@ -160,9 +168,17 @@ def build_seed_features(seed_index: int, initial_state: InitialState) -> SeedFea
     )
 
 
-def build_all_features(initial_states: list[InitialState]) -> dict[int, SeedFeatures]:
+def build_all_features(
+    initial_states: list[InitialState],
+    *,
+    settlement_sigma: float = 2.2,
+) -> dict[int, SeedFeatures]:
     return {
-        seed_index: build_seed_features(seed_index, state)
+        seed_index: build_seed_features(
+            seed_index,
+            state,
+            settlement_sigma=settlement_sigma,
+        )
         for seed_index, state in enumerate(initial_states)
     }
 

@@ -1,0 +1,2129 @@
+{
+  "all_results": [
+    {
+      "num_scored_seeds": 15,
+      "overall_delta": -0.27603215528262126,
+      "overall_mean": 86.01090226438548,
+      "overrides": {
+        "observation_smoothing_sigma": 1.4,
+        "plains_settlement_gain": 0.5,
+        "settlement_focus_blend_high_activity": 0.35,
+        "settlement_intensity_blend": 0.22,
+        "settlement_sigma": 1.6
+      },
+      "runs": [
+        {
+          "num_scored_seeds": 5,
+          "overall_mean": 89.40279201755126,
+          "round_id": "7b4bda99-6165-4221-97cc-27880f5e6d95",
+          "round_number": 13,
+          "run_dir": "artifacts/20260321_093308",
+          "settlement_mean": 96.50893645054929
+        },
+        {
+          "num_scored_seeds": 5,
+          "overall_mean": 77.97525225925594,
+          "round_id": "d0a2c894-2162-4d49-86cf-435b9013f3b8",
+          "round_number": 14,
+          "run_dir": "artifacts/20260321_112939",
+          "settlement_mean": 85.61705204748236
+        },
+        {
+          "num_scored_seeds": 5,
+          "overall_mean": 90.65466251634922,
+          "round_id": "cc5442dd-bc5d-418b-911b-7eb960cb0390",
+          "round_number": 15,
+          "run_dir": "artifacts/20260321_150037",
+          "settlement_mean": 95.60986607710069
+        }
+      ],
+      "settlement_delta": -0.2702788756969454,
+      "settlement_mean": 92.57861819171077
+    },
+    {
+      "num_scored_seeds": 15,
+      "overall_delta": 0.11538448826898673,
+      "overall_mean": 86.40231890793709,
+      "overrides": {
+        "observation_smoothing_sigma": 1.4,
+        "plains_settlement_gain": 0.5,
+        "settlement_focus_blend_high_activity": 0.35,
+        "settlement_intensity_blend": 0.22,
+        "settlement_sigma": 2.2
+      },
+      "runs": [
+        {
+          "num_scored_seeds": 5,
+          "overall_mean": 89.23190487665185,
+          "round_id": "7b4bda99-6165-4221-97cc-27880f5e6d95",
+          "round_number": 13,
+          "run_dir": "artifacts/20260321_093308",
+          "settlement_mean": 96.39719457819835
+        },
+        {
+          "num_scored_seeds": 5,
+          "overall_mean": 77.6724209294448,
+          "round_id": "d0a2c894-2162-4d49-86cf-435b9013f3b8",
+          "round_number": 14,
+          "run_dir": "artifacts/20260321_112939",
+          "settlement_mean": 85.47430713040626
+        },
+        {
+          "num_scored_seeds": 5,
+          "overall_mean": 92.30263091771458,
+          "round_id": "cc5442dd-bc5d-418b-911b-7eb960cb0390",
+          "round_number": 15,
+          "run_dir": "artifacts/20260321_150037",
+          "settlement_mean": 96.91524857935762
+        }
+      ],
+      "settlement_delta": 0.08001969524634944,
+      "settlement_mean": 92.92891676265407
+    },
+    {
+      "num_scored_seeds": 15,
+      "overall_delta": -0.48427725636804553,
+      "overall_mean": 85.80265716330005,
+      "overrides": {
+        "observation_smoothing_sigma": 1.4,
+        "plains_settlement_gain": 0.5,
+        "settlement_focus_blend_high_activity": 0.35,
+        "settlement_intensity_blend": 0.32,
+        "settlement_sigma": 1.6
+      },
+      "runs": [
+        {
+          "num_scored_seeds": 5,
+          "overall_mean": 89.35554948379448,
+          "round_id": "7b4bda99-6165-4221-97cc-27880f5e6d95",
+          "round_number": 13,
+          "run_dir": "artifacts/20260321_093308",
+          "settlement_mean": 96.48452778010923
+        },
+        {
+          "num_scored_seeds": 5,
+          "overall_mean": 77.9337695116228,
+          "round_id": "d0a2c894-2162-4d49-86cf-435b9013f3b8",
+          "round_number": 14,
+          "run_dir": "artifacts/20260321_112939",
+          "settlement_mean": 85.52452899265488
+        },
+        {
+          "num_scored_seeds": 5,
+          "overall_mean": 90.11865249448289,
+          "round_id": "cc5442dd-bc5d-418b-911b-7eb960cb0390",
+          "round_number": 15,
+          "run_dir": "artifacts/20260321_150037",
+          "settlement_mean": 95.1038332588523
+        }
+      ],
+      "settlement_delta": -0.4779337235355712,
+      "settlement_mean": 92.37096334387215
+    },
+    {
+      "num_scored_seeds": 15,
+      "overall_delta": 0.06085952866170885,
+      "overall_mean": 86.34779394832981,
+      "overrides": {
+        "observation_smoothing_sigma": 1.4,
+        "plains_settlement_gain": 0.5,
+        "settlement_focus_blend_high_activity": 0.35,
+        "settlement_intensity_blend": 0.32,
+        "settlement_sigma": 2.2
+      },
+      "runs": [
+        {
+          "num_scored_seeds": 5,
+          "overall_mean": 89.22584707163907,
+          "round_id": "7b4bda99-6165-4221-97cc-27880f5e6d95",
+          "round_number": 13,
+          "run_dir": "artifacts/20260321_093308",
+          "settlement_mean": 96.40104657085547
+        },
+        {
+          "num_scored_seeds": 5,
+          "overall_mean": 77.66477692347698,
+          "round_id": "d0a2c894-2162-4d49-86cf-435b9013f3b8",
+          "round_number": 14,
+          "run_dir": "artifacts/20260321_112939",
+          "settlement_mean": 85.43349830508761
+        },
+        {
+          "num_scored_seeds": 5,
+          "overall_mean": 92.15275784987341,
+          "round_id": "cc5442dd-bc5d-418b-911b-7eb960cb0390",
+          "round_number": 15,
+          "run_dir": "artifacts/20260321_150037",
+          "settlement_mean": 96.7592576407052
+        }
+      ],
+      "settlement_delta": 0.01570377147506008,
+      "settlement_mean": 92.86460083888278
+    },
+    {
+      "num_scored_seeds": 15,
+      "overall_delta": -0.6010243181119534,
+      "overall_mean": 85.68591010155615,
+      "overrides": {
+        "observation_smoothing_sigma": 1.4,
+        "plains_settlement_gain": 0.5,
+        "settlement_focus_blend_high_activity": 0.55,
+        "settlement_intensity_blend": 0.22,
+        "settlement_sigma": 1.6
+      },
+      "runs": [
+        {
+          "num_scored_seeds": 5,
+          "overall_mean": 89.40279201755126,
+          "round_id": "7b4bda99-6165-4221-97cc-27880f5e6d95",
+          "round_number": 13,
+          "run_dir": "artifacts/20260321_093308",
+          "settlement_mean": 96.50893645054929
+        },
+        {
+          "num_scored_seeds": 5,
+          "overall_mean": 77.86984770225449,
+          "round_id": "d0a2c894-2162-4d49-86cf-435b9013f3b8",
+          "round_number": 14,
+          "run_dir": "artifacts/20260321_112939",
+          "settlement_mean": 85.37545022101862
+        },
+        {
+          "num_scored_seeds": 5,
+          "overall_mean": 89.7850905848627,
+          "round_id": "cc5442dd-bc5d-418b-911b-7eb960cb0390",
+          "round_number": 15,
+          "run_dir": "artifacts/20260321_150037",
+          "settlement_mean": 94.68119028369611
+        }
+      ],
+      "settlement_delta": -0.66037141565306,
+      "settlement_mean": 92.18852565175466
+    },
+    {
+      "num_scored_seeds": 15,
+      "overall_delta": 0.03361227516329279,
+      "overall_mean": 86.32054669483139,
+      "overrides": {
+        "observation_smoothing_sigma": 1.4,
+        "plains_settlement_gain": 0.5,
+        "settlement_focus_blend_high_activity": 0.55,
+        "settlement_intensity_blend": 0.22,
+        "settlement_sigma": 2.2
+      },
+      "runs": [
+        {
+          "num_scored_seeds": 5,
+          "overall_mean": 89.23190487665185,
+          "round_id": "7b4bda99-6165-4221-97cc-27880f5e6d95",
+          "round_number": 13,
+          "run_dir": "artifacts/20260321_093308",
+          "settlement_mean": 96.39719457819835
+        },
+        {
+          "num_scored_seeds": 5,
+          "overall_mean": 77.92054826707451,
+          "round_id": "d0a2c894-2162-4d49-86cf-435b9013f3b8",
+          "round_number": 14,
+          "run_dir": "artifacts/20260321_112939",
+          "settlement_mean": 85.67242159375019
+        },
+        {
+          "num_scored_seeds": 5,
+          "overall_mean": 91.80918694076782,
+          "round_id": "cc5442dd-bc5d-418b-911b-7eb960cb0390",
+          "round_number": 15,
+          "run_dir": "artifacts/20260321_150037",
+          "settlement_mean": 96.39484491811633
+        }
+      ],
+      "settlement_delta": -0.02741003738610459,
+      "settlement_mean": 92.82148703002161
+    },
+    {
+      "num_scored_seeds": 15,
+      "overall_delta": -0.8508187156402585,
+      "overall_mean": 85.43611570402784,
+      "overrides": {
+        "observation_smoothing_sigma": 1.4,
+        "plains_settlement_gain": 0.5,
+        "settlement_focus_blend_high_activity": 0.55,
+        "settlement_intensity_blend": 0.32,
+        "settlement_sigma": 1.6
+      },
+      "runs": [
+        {
+          "num_scored_seeds": 5,
+          "overall_mean": 89.35554948379448,
+          "round_id": "7b4bda99-6165-4221-97cc-27880f5e6d95",
+          "round_number": 13,
+          "run_dir": "artifacts/20260321_093308",
+          "settlement_mean": 96.48452778010923
+        },
+        {
+          "num_scored_seeds": 5,
+          "overall_mean": 77.76208396651171,
+          "round_id": "d0a2c894-2162-4d49-86cf-435b9013f3b8",
+          "round_number": 14,
+          "run_dir": "artifacts/20260321_112939",
+          "settlement_mean": 85.20361292769664
+        },
+        {
+          "num_scored_seeds": 5,
+          "overall_mean": 89.19071366177737,
+          "round_id": "cc5442dd-bc5d-418b-911b-7eb960cb0390",
+          "round_number": 15,
+          "run_dir": "artifacts/20260321_150037",
+          "settlement_mean": 94.11061161753769
+        }
+      ],
+      "settlement_delta": -0.9159796256265054,
+      "settlement_mean": 91.93291744178121
+    },
+    {
+      "num_scored_seeds": 15,
+      "overall_delta": -0.04645164145331648,
+      "overall_mean": 86.24048277821478,
+      "overrides": {
+        "observation_smoothing_sigma": 1.4,
+        "plains_settlement_gain": 0.5,
+        "settlement_focus_blend_high_activity": 0.55,
+        "settlement_intensity_blend": 0.32,
+        "settlement_sigma": 2.2
+      },
+      "runs": [
+        {
+          "num_scored_seeds": 5,
+          "overall_mean": 89.22584707163907,
+          "round_id": "7b4bda99-6165-4221-97cc-27880f5e6d95",
+          "round_number": 13,
+          "run_dir": "artifacts/20260321_093308",
+          "settlement_mean": 96.40104657085547
+        },
+        {
+          "num_scored_seeds": 5,
+          "overall_mean": 77.87982334177586,
+          "round_id": "d0a2c894-2162-4d49-86cf-435b9013f3b8",
+          "round_number": 14,
+          "run_dir": "artifacts/20260321_112939",
+          "settlement_mean": 85.59147106322578
+        },
+        {
+          "num_scored_seeds": 5,
+          "overall_mean": 91.61577792122945,
+          "round_id": "cc5442dd-bc5d-418b-911b-7eb960cb0390",
+          "round_number": 15,
+          "run_dir": "artifacts/20260321_150037",
+          "settlement_mean": 96.19175730561626
+        }
+      ],
+      "settlement_delta": -0.12080542084187584,
+      "settlement_mean": 92.72809164656584
+    },
+    {
+      "num_scored_seeds": 15,
+      "overall_delta": -0.3212963750626727,
+      "overall_mean": 85.96563804460543,
+      "overrides": {
+        "observation_smoothing_sigma": 1.4,
+        "plains_settlement_gain": 0.8,
+        "settlement_focus_blend_high_activity": 0.35,
+        "settlement_intensity_blend": 0.22,
+        "settlement_sigma": 1.6
+      },
+      "runs": [
+        {
+          "num_scored_seeds": 5,
+          "overall_mean": 89.28496426779766,
+          "round_id": "7b4bda99-6165-4221-97cc-27880f5e6d95",
+          "round_number": 13,
+          "run_dir": "artifacts/20260321_093308",
+          "settlement_mean": 96.39467500003748
+        },
+        {
+          "num_scored_seeds": 5,
+          "overall_mean": 77.97525225925594,
+          "round_id": "d0a2c894-2162-4d49-86cf-435b9013f3b8",
+          "round_number": 14,
+          "run_dir": "artifacts/20260321_112939",
+          "settlement_mean": 85.61705204748236
+        },
+        {
+          "num_scored_seeds": 5,
+          "overall_mean": 90.63669760676268,
+          "round_id": "cc5442dd-bc5d-418b-911b-7eb960cb0390",
+          "round_number": 15,
+          "run_dir": "artifacts/20260321_150037",
+          "settlement_mean": 95.59406343397788
+        }
+      ],
+      "settlement_delta": -0.31363357357513166,
+      "settlement_mean": 92.53526349383259
+    },
+    {
+      "num_scored_seeds": 15,
+      "overall_delta": 0.05461094898430474,
+      "overall_mean": 86.3415453686524,
+      "overrides": {
+        "observation_smoothing_sigma": 1.4,
+        "plains_settlement_gain": 0.8,
+        "settlement_focus_blend_high_activity": 0.35,
+        "settlement_intensity_blend": 0.22,
+        "settlement_sigma": 2.2
+      },
+      "runs": [
+        {
+          "num_scored_seeds": 5,
+          "overall_mean": 89.07751345420857,
+          "round_id": "7b4bda99-6165-4221-97cc-27880f5e6d95",
+          "round_number": 13,
+          "run_dir": "artifacts/20260321_093308",
+          "settlement_mean": 96.24875145382087
+        },
+        {
+          "num_scored_seeds": 5,
+          "overall_mean": 77.6724209294448,
+          "round_id": "d0a2c894-2162-4d49-86cf-435b9013f3b8",
+          "round_number": 14,
+          "run_dir": "artifacts/20260321_112939",
+          "settlement_mean": 85.47430713040626
+        },
+        {
+          "num_scored_seeds": 5,
+          "overall_mean": 92.27470172230389,
+          "round_id": "cc5442dd-bc5d-418b-911b-7eb960cb0390",
+          "round_number": 15,
+          "run_dir": "artifacts/20260321_150037",
+          "settlement_mean": 96.89141305356532
+        }
+      ],
+      "settlement_delta": 0.022593478523077692,
+      "settlement_mean": 92.8714905459308
+    },
+    {
+      "num_scored_seeds": 15,
+      "overall_delta": -0.539167039693254,
+      "overall_mean": 85.74776737997485,
+      "overrides": {
+        "observation_smoothing_sigma": 1.4,
+        "plains_settlement_gain": 0.8,
+        "settlement_focus_blend_high_activity": 0.35,
+        "settlement_intensity_blend": 0.32,
+        "settlement_sigma": 1.6
+      },
+      "runs": [
+        {
+          "num_scored_seeds": 5,
+          "overall_mean": 89.22465096570487,
+          "round_id": "7b4bda99-6165-4221-97cc-27880f5e6d95",
+          "round_number": 13,
+          "run_dir": "artifacts/20260321_093308",
+          "settlement_mean": 96.35354610685046
+        },
+        {
+          "num_scored_seeds": 5,
+          "overall_mean": 77.9337695116228,
+          "round_id": "d0a2c894-2162-4d49-86cf-435b9013f3b8",
+          "round_number": 14,
+          "run_dir": "artifacts/20260321_112939",
+          "settlement_mean": 85.52452899265488
+        },
+        {
+          "num_scored_seeds": 5,
+          "overall_mean": 90.08488166259681,
+          "round_id": "cc5442dd-bc5d-418b-911b-7eb960cb0390",
+          "round_number": 15,
+          "run_dir": "artifacts/20260321_150037",
+          "settlement_mean": 95.07224586775286
+        }
+      ],
+      "settlement_delta": -0.5321234116549789,
+      "settlement_mean": 92.31677365575274
+    },
+    {
+      "num_scored_seeds": 15,
+      "overall_delta": -0.005085674762440817,
+      "overall_mean": 86.28184874490566,
+      "overrides": {
+        "observation_smoothing_sigma": 1.4,
+        "plains_settlement_gain": 0.8,
+        "settlement_focus_blend_high_activity": 0.35,
+        "settlement_intensity_blend": 0.32,
+        "settlement_sigma": 2.2
+      },
+      "runs": [
+        {
+          "num_scored_seeds": 5,
+          "overall_mean": 89.05965394719564,
+          "round_id": "7b4bda99-6165-4221-97cc-27880f5e6d95",
+          "round_number": 13,
+          "run_dir": "artifacts/20260321_093308",
+          "settlement_mean": 96.23930179576114
+        },
+        {
+          "num_scored_seeds": 5,
+          "overall_mean": 77.66477692347698,
+          "round_id": "d0a2c894-2162-4d49-86cf-435b9013f3b8",
+          "round_number": 14,
+          "run_dir": "artifacts/20260321_112939",
+          "settlement_mean": 85.43349830508761
+        },
+        {
+          "num_scored_seeds": 5,
+          "overall_mean": 92.12111536404441,
+          "round_id": "cc5442dd-bc5d-418b-911b-7eb960cb0390",
+          "round_number": 15,
+          "run_dir": "artifacts/20260321_150037",
+          "settlement_mean": 96.73157243245174
+        }
+      ],
+      "settlement_delta": -0.04743955630756602,
+      "settlement_mean": 92.80145751110015
+    },
+    {
+      "num_scored_seeds": 15,
+      "overall_delta": -0.6496391586617136,
+      "overall_mean": 85.63729526100639,
+      "overrides": {
+        "observation_smoothing_sigma": 1.4,
+        "plains_settlement_gain": 0.8,
+        "settlement_focus_blend_high_activity": 0.55,
+        "settlement_intensity_blend": 0.22,
+        "settlement_sigma": 1.6
+      },
+      "runs": [
+        {
+          "num_scored_seeds": 5,
+          "overall_mean": 89.28496426779766,
+          "round_id": "7b4bda99-6165-4221-97cc-27880f5e6d95",
+          "round_number": 13,
+          "run_dir": "artifacts/20260321_093308",
+          "settlement_mean": 96.39467500003748
+        },
+        {
+          "num_scored_seeds": 5,
+          "overall_mean": 77.86984770225449,
+          "round_id": "d0a2c894-2162-4d49-86cf-435b9013f3b8",
+          "round_number": 14,
+          "run_dir": "artifacts/20260321_112939",
+          "settlement_mean": 85.37545022101862
+        },
+        {
+          "num_scored_seeds": 5,
+          "overall_mean": 89.75707381296698,
+          "round_id": "cc5442dd-bc5d-418b-911b-7eb960cb0390",
+          "round_number": 15,
+          "run_dir": "artifacts/20260321_150037",
+          "settlement_mean": 94.65463630019376
+        }
+      ],
+      "settlement_delta": -0.7073098936577651,
+      "settlement_mean": 92.14158717374995
+    },
+    {
+      "num_scored_seeds": 15,
+      "overall_delta": -0.03011534338502031,
+      "overall_mean": 86.25681907628308,
+      "overrides": {
+        "observation_smoothing_sigma": 1.4,
+        "plains_settlement_gain": 0.8,
+        "settlement_focus_blend_high_activity": 0.55,
+        "settlement_intensity_blend": 0.22,
+        "settlement_sigma": 2.2
+      },
+      "runs": [
+        {
+          "num_scored_seeds": 5,
+          "overall_mean": 89.07751345420857,
+          "round_id": "7b4bda99-6165-4221-97cc-27880f5e6d95",
+          "round_number": 13,
+          "run_dir": "artifacts/20260321_093308",
+          "settlement_mean": 96.24875145382087
+        },
+        {
+          "num_scored_seeds": 5,
+          "overall_mean": 77.92054826707451,
+          "round_id": "d0a2c894-2162-4d49-86cf-435b9013f3b8",
+          "round_number": 14,
+          "run_dir": "artifacts/20260321_112939",
+          "settlement_mean": 85.67242159375019
+        },
+        {
+          "num_scored_seeds": 5,
+          "overall_mean": 91.77239550756615,
+          "round_id": "cc5442dd-bc5d-418b-911b-7eb960cb0390",
+          "round_number": 15,
+          "run_dir": "artifacts/20260321_150037",
+          "settlement_mean": 96.36238603749152
+        }
+      ],
+      "settlement_delta": -0.08771070572018402,
+      "settlement_mean": 92.76118636168754
+    },
+    {
+      "num_scored_seeds": 15,
+      "overall_delta": -0.9056917651376182,
+      "overall_mean": 85.38124265453048,
+      "overrides": {
+        "observation_smoothing_sigma": 1.4,
+        "plains_settlement_gain": 0.8,
+        "settlement_focus_blend_high_activity": 0.55,
+        "settlement_intensity_blend": 0.32,
+        "settlement_sigma": 1.6
+      },
+      "runs": [
+        {
+          "num_scored_seeds": 5,
+          "overall_mean": 89.22465096570487,
+          "round_id": "7b4bda99-6165-4221-97cc-27880f5e6d95",
+          "round_number": 13,
+          "run_dir": "artifacts/20260321_093308",
+          "settlement_mean": 96.35354610685046
+        },
+        {
+          "num_scored_seeds": 5,
+          "overall_mean": 77.76208396651171,
+          "round_id": "d0a2c894-2162-4d49-86cf-435b9013f3b8",
+          "round_number": 14,
+          "run_dir": "artifacts/20260321_112939",
+          "settlement_mean": 85.20361292769664
+        },
+        {
+          "num_scored_seeds": 5,
+          "overall_mean": 89.15699303137487,
+          "round_id": "cc5442dd-bc5d-418b-911b-7eb960cb0390",
+          "round_number": 15,
+          "run_dir": "artifacts/20260321_150037",
+          "settlement_mean": 94.07941187777791
+        }
+      ],
+      "settlement_delta": -0.9700400966327294,
+      "settlement_mean": 91.87885697077499
+    },
+    {
+      "num_scored_seeds": 15,
+      "overall_delta": -0.1148031398370648,
+      "overall_mean": 86.17213127983104,
+      "overrides": {
+        "observation_smoothing_sigma": 1.4,
+        "plains_settlement_gain": 0.8,
+        "settlement_focus_blend_high_activity": 0.55,
+        "settlement_intensity_blend": 0.32,
+        "settlement_sigma": 2.2
+      },
+      "runs": [
+        {
+          "num_scored_seeds": 5,
+          "overall_mean": 89.05965394719564,
+          "round_id": "7b4bda99-6165-4221-97cc-27880f5e6d95",
+          "round_number": 13,
+          "run_dir": "artifacts/20260321_093308",
+          "settlement_mean": 96.23930179576114
+        },
+        {
+          "num_scored_seeds": 5,
+          "overall_mean": 77.87982334177586,
+          "round_id": "d0a2c894-2162-4d49-86cf-435b9013f3b8",
+          "round_number": 14,
+          "run_dir": "artifacts/20260321_112939",
+          "settlement_mean": 85.59147106322578
+        },
+        {
+          "num_scored_seeds": 5,
+          "overall_mean": 91.57691655052153,
+          "round_id": "cc5442dd-bc5d-418b-911b-7eb960cb0390",
+          "round_number": 15,
+          "run_dir": "artifacts/20260321_150037",
+          "settlement_mean": 96.15691364436779
+        }
+      ],
+      "settlement_delta": -0.18633489962280692,
+      "settlement_mean": 92.66256216778491
+    },
+    {
+      "num_scored_seeds": 15,
+      "overall_delta": -0.29987556762854695,
+      "overall_mean": 85.98705885203955,
+      "overrides": {
+        "observation_smoothing_sigma": 2.2,
+        "plains_settlement_gain": 0.5,
+        "settlement_focus_blend_high_activity": 0.35,
+        "settlement_intensity_blend": 0.22,
+        "settlement_sigma": 1.6
+      },
+      "runs": [
+        {
+          "num_scored_seeds": 5,
+          "overall_mean": 89.35240580753066,
+          "round_id": "7b4bda99-6165-4221-97cc-27880f5e6d95",
+          "round_number": 13,
+          "run_dir": "artifacts/20260321_093308",
+          "settlement_mean": 96.5010505097735
+        },
+        {
+          "num_scored_seeds": 5,
+          "overall_mean": 77.82173171901684,
+          "round_id": "d0a2c894-2162-4d49-86cf-435b9013f3b8",
+          "round_number": 14,
+          "run_dir": "artifacts/20260321_112939",
+          "settlement_mean": 85.53245735231972
+        },
+        {
+          "num_scored_seeds": 5,
+          "overall_mean": 90.78703902957113,
+          "round_id": "cc5442dd-bc5d-418b-911b-7eb960cb0390",
+          "round_number": 15,
+          "run_dir": "artifacts/20260321_150037",
+          "settlement_mean": 95.69987513400713
+        }
+      ],
+      "settlement_delta": -0.27110273537427076,
+      "settlement_mean": 92.57779433203345
+    },
+    {
+      "num_scored_seeds": 15,
+      "overall_delta": 0.06061685947098283,
+      "overall_mean": 86.34755127913908,
+      "overrides": {
+        "observation_smoothing_sigma": 2.2,
+        "plains_settlement_gain": 0.5,
+        "settlement_focus_blend_high_activity": 0.35,
+        "settlement_intensity_blend": 0.22,
+        "settlement_sigma": 2.2
+      },
+      "runs": [
+        {
+          "num_scored_seeds": 5,
+          "overall_mean": 89.1768364032936,
+          "round_id": "7b4bda99-6165-4221-97cc-27880f5e6d95",
+          "round_number": 13,
+          "run_dir": "artifacts/20260321_093308",
+          "settlement_mean": 96.38607243347371
+        },
+        {
+          "num_scored_seeds": 5,
+          "overall_mean": 77.4569170495283,
+          "round_id": "d0a2c894-2162-4d49-86cf-435b9013f3b8",
+          "round_number": 14,
+          "run_dir": "artifacts/20260321_112939",
+          "settlement_mean": 85.34496914308069
+        },
+        {
+          "num_scored_seeds": 5,
+          "overall_mean": 92.40890038459534,
+          "round_id": "cc5442dd-bc5d-418b-911b-7eb960cb0390",
+          "round_number": 15,
+          "run_dir": "artifacts/20260321_150037",
+          "settlement_mean": 96.9879727375761
+        }
+      ],
+      "settlement_delta": 0.057441037302453424,
+      "settlement_mean": 92.90633810471017
+    },
+    {
+      "num_scored_seeds": 15,
+      "overall_delta": -0.504688689397355,
+      "overall_mean": 85.78224573027074,
+      "overrides": {
+        "observation_smoothing_sigma": 2.2,
+        "plains_settlement_gain": 0.5,
+        "settlement_focus_blend_high_activity": 0.35,
+        "settlement_intensity_blend": 0.32,
+        "settlement_sigma": 1.6
+      },
+      "runs": [
+        {
+          "num_scored_seeds": 5,
+          "overall_mean": 89.30301236763053,
+          "round_id": "7b4bda99-6165-4221-97cc-27880f5e6d95",
+          "round_number": 13,
+          "run_dir": "artifacts/20260321_093308",
+          "settlement_mean": 96.47600406808526
+        },
+        {
+          "num_scored_seeds": 5,
+          "overall_mean": 77.80865213787067,
+          "round_id": "d0a2c894-2162-4d49-86cf-435b9013f3b8",
+          "round_number": 14,
+          "run_dir": "artifacts/20260321_112939",
+          "settlement_mean": 85.45496257196713
+        },
+        {
+          "num_scored_seeds": 5,
+          "overall_mean": 90.23507268531105,
+          "round_id": "cc5442dd-bc5d-418b-911b-7eb960cb0390",
+          "round_number": 15,
+          "run_dir": "artifacts/20260321_150037",
+          "settlement_mean": 95.1870929352596
+        }
+      ],
+      "settlement_delta": -0.4762105423037326,
+      "settlement_mean": 92.37268652510399
+    },
+    {
+      "num_scored_seeds": 15,
+      "overall_delta": 0.0031974416476572287,
+      "overall_mean": 86.29013186131576,
+      "overrides": {
+        "observation_smoothing_sigma": 2.2,
+        "plains_settlement_gain": 0.5,
+        "settlement_focus_blend_high_activity": 0.35,
+        "settlement_intensity_blend": 0.32,
+        "settlement_sigma": 2.2
+      },
+      "runs": [
+        {
+          "num_scored_seeds": 5,
+          "overall_mean": 89.16976268752077,
+          "round_id": "7b4bda99-6165-4221-97cc-27880f5e6d95",
+          "round_number": 13,
+          "run_dir": "artifacts/20260321_093308",
+          "settlement_mean": 96.38743946139338
+        },
+        {
+          "num_scored_seeds": 5,
+          "overall_mean": 77.45998463495934,
+          "round_id": "d0a2c894-2162-4d49-86cf-435b9013f3b8",
+          "round_number": 14,
+          "run_dir": "artifacts/20260321_112939",
+          "settlement_mean": 85.30750489513878
+        },
+        {
+          "num_scored_seeds": 5,
+          "overall_mean": 92.24064826146716,
+          "round_id": "cc5442dd-bc5d-418b-911b-7eb960cb0390",
+          "round_number": 15,
+          "run_dir": "artifacts/20260321_150037",
+          "settlement_mean": 96.81404473588687
+        }
+      ],
+      "settlement_delta": -0.012567369934700423,
+      "settlement_mean": 92.83632969747302
+    },
+    {
+      "num_scored_seeds": 15,
+      "overall_delta": -0.6069430060599785,
+      "overall_mean": 85.67999141360812,
+      "overrides": {
+        "observation_smoothing_sigma": 2.2,
+        "plains_settlement_gain": 0.5,
+        "settlement_focus_blend_high_activity": 0.55,
+        "settlement_intensity_blend": 0.22,
+        "settlement_sigma": 1.6
+      },
+      "runs": [
+        {
+          "num_scored_seeds": 5,
+          "overall_mean": 89.35240580753066,
+          "round_id": "7b4bda99-6165-4221-97cc-27880f5e6d95",
+          "round_number": 13,
+          "run_dir": "artifacts/20260321_093308",
+          "settlement_mean": 96.5010505097735
+        },
+        {
+          "num_scored_seeds": 5,
+          "overall_mean": 77.76800031228568,
+          "round_id": "d0a2c894-2162-4d49-86cf-435b9013f3b8",
+          "round_number": 14,
+          "run_dir": "artifacts/20260321_112939",
+          "settlement_mean": 85.35311349037747
+        },
+        {
+          "num_scored_seeds": 5,
+          "overall_mean": 89.91956812100804,
+          "round_id": "cc5442dd-bc5d-418b-911b-7eb960cb0390",
+          "round_number": 15,
+          "run_dir": "artifacts/20260321_150037",
+          "settlement_mean": 94.77330966684295
+        }
+      ],
+      "settlement_delta": -0.6397391784097408,
+      "settlement_mean": 92.20915788899798
+    },
+    {
+      "num_scored_seeds": 15,
+      "overall_delta": -0.00840223507042026,
+      "overall_mean": 86.27853218459768,
+      "overrides": {
+        "observation_smoothing_sigma": 2.2,
+        "plains_settlement_gain": 0.5,
+        "settlement_focus_blend_high_activity": 0.55,
+        "settlement_intensity_blend": 0.22,
+        "settlement_sigma": 2.2
+      },
+      "runs": [
+        {
+          "num_scored_seeds": 5,
+          "overall_mean": 89.1768364032936,
+          "round_id": "7b4bda99-6165-4221-97cc-27880f5e6d95",
+          "round_number": 13,
+          "run_dir": "artifacts/20260321_093308",
+          "settlement_mean": 96.38607243347371
+        },
+        {
+          "num_scored_seeds": 5,
+          "overall_mean": 77.7447425904001,
+          "round_id": "d0a2c894-2162-4d49-86cf-435b9013f3b8",
+          "round_number": 14,
+          "run_dir": "artifacts/20260321_112939",
+          "settlement_mean": 85.58771623806874
+        },
+        {
+          "num_scored_seeds": 5,
+          "overall_mean": 91.91401756009941,
+          "round_id": "cc5442dd-bc5d-418b-911b-7eb960cb0390",
+          "round_number": 15,
+          "run_dir": "artifacts/20260321_150037",
+          "settlement_mean": 96.4654544555473
+        }
+      ],
+      "settlement_delta": -0.035816025044454136,
+      "settlement_mean": 92.81308104236327
+    },
+    {
+      "num_scored_seeds": 15,
+      "overall_delta": -0.8565092034126707,
+      "overall_mean": 85.43042521625543,
+      "overrides": {
+        "observation_smoothing_sigma": 2.2,
+        "plains_settlement_gain": 0.5,
+        "settlement_focus_blend_high_activity": 0.55,
+        "settlement_intensity_blend": 0.32,
+        "settlement_sigma": 1.6
+      },
+      "runs": [
+        {
+          "num_scored_seeds": 5,
+          "overall_mean": 89.30301236763053,
+          "round_id": "7b4bda99-6165-4221-97cc-27880f5e6d95",
+          "round_number": 13,
+          "run_dir": "artifacts/20260321_093308",
+          "settlement_mean": 96.47600406808526
+        },
+        {
+          "num_scored_seeds": 5,
+          "overall_mean": 77.68174911104775,
+          "round_id": "d0a2c894-2162-4d49-86cf-435b9013f3b8",
+          "round_number": 14,
+          "run_dir": "artifacts/20260321_112939",
+          "settlement_mean": 85.18762236676662
+        },
+        {
+          "num_scored_seeds": 5,
+          "overall_mean": 89.30651417008802,
+          "round_id": "cc5442dd-bc5d-418b-911b-7eb960cb0390",
+          "round_number": 15,
+          "run_dir": "artifacts/20260321_150037",
+          "settlement_mean": 94.19351793628083
+        }
+      ],
+      "settlement_delta": -0.8965156103634797,
+      "settlement_mean": 91.95238145704424
+    },
+    {
+      "num_scored_seeds": 15,
+      "overall_delta": -0.09138252477069386,
+      "overall_mean": 86.1955518948974,
+      "overrides": {
+        "observation_smoothing_sigma": 2.2,
+        "plains_settlement_gain": 0.5,
+        "settlement_focus_blend_high_activity": 0.55,
+        "settlement_intensity_blend": 0.32,
+        "settlement_sigma": 2.2
+      },
+      "runs": [
+        {
+          "num_scored_seeds": 5,
+          "overall_mean": 89.16976268752077,
+          "round_id": "7b4bda99-6165-4221-97cc-27880f5e6d95",
+          "round_number": 13,
+          "run_dir": "artifacts/20260321_093308",
+          "settlement_mean": 96.38743946139338
+        },
+        {
+          "num_scored_seeds": 5,
+          "overall_mean": 77.71481002911551,
+          "round_id": "d0a2c894-2162-4d49-86cf-435b9013f3b8",
+          "round_number": 14,
+          "run_dir": "artifacts/20260321_112939",
+          "settlement_mean": 85.51114634465895
+        },
+        {
+          "num_scored_seeds": 5,
+          "overall_mean": 91.70208296805599,
+          "round_id": "cc5442dd-bc5d-418b-911b-7eb960cb0390",
+          "round_number": 15,
+          "run_dir": "artifacts/20260321_150037",
+          "settlement_mean": 96.24393397866534
+        }
+      ],
+      "settlement_delta": -0.13472380583516497,
+      "settlement_mean": 92.71417326157255
+    },
+    {
+      "num_scored_seeds": 15,
+      "overall_delta": -0.34441170745405714,
+      "overall_mean": 85.94252271221404,
+      "overrides": {
+        "observation_smoothing_sigma": 2.2,
+        "plains_settlement_gain": 0.8,
+        "settlement_focus_blend_high_activity": 0.35,
+        "settlement_intensity_blend": 0.22,
+        "settlement_sigma": 1.6
+      },
+      "runs": [
+        {
+          "num_scored_seeds": 5,
+          "overall_mean": 89.23667872873426,
+          "round_id": "7b4bda99-6165-4221-97cc-27880f5e6d95",
+          "round_number": 13,
+          "run_dir": "artifacts/20260321_093308",
+          "settlement_mean": 96.38869615198821
+        },
+        {
+          "num_scored_seeds": 5,
+          "overall_mean": 77.82173171901684,
+          "round_id": "d0a2c894-2162-4d49-86cf-435b9013f3b8",
+          "round_number": 14,
+          "run_dir": "artifacts/20260321_112939",
+          "settlement_mean": 85.53245735231972
+        },
+        {
+          "num_scored_seeds": 5,
+          "overall_mean": 90.769157688891,
+          "round_id": "cc5442dd-bc5d-418b-911b-7eb960cb0390",
+          "round_number": 15,
+          "run_dir": "artifacts/20260321_150037",
+          "settlement_mean": 95.68471376615409
+        }
+      ],
+      "settlement_delta": -0.31360797725372436,
+      "settlement_mean": 92.535289090154
+    },
+    {
+      "num_scored_seeds": 15,
+      "overall_delta": 0.0,
+      "overall_mean": 86.2869344196681,
+      "overrides": {
+        "observation_smoothing_sigma": 2.2,
+        "plains_settlement_gain": 0.8,
+        "settlement_focus_blend_high_activity": 0.35,
+        "settlement_intensity_blend": 0.22,
+        "settlement_sigma": 2.2
+      },
+      "runs": [
+        {
+          "num_scored_seeds": 5,
+          "overall_mean": 89.02239799091564,
+          "round_id": "7b4bda99-6165-4221-97cc-27880f5e6d95",
+          "round_number": 13,
+          "run_dir": "artifacts/20260321_093308",
+          "settlement_mean": 96.23835271767108
+        },
+        {
+          "num_scored_seeds": 5,
+          "overall_mean": 77.4569170495283,
+          "round_id": "d0a2c894-2162-4d49-86cf-435b9013f3b8",
+          "round_number": 14,
+          "run_dir": "artifacts/20260321_112939",
+          "settlement_mean": 85.34496914308069
+        },
+        {
+          "num_scored_seeds": 5,
+          "overall_mean": 92.38148821856035,
+          "round_id": "cc5442dd-bc5d-418b-911b-7eb960cb0390",
+          "round_number": 15,
+          "run_dir": "artifacts/20260321_150037",
+          "settlement_mean": 96.96336934147135
+        }
+      ],
+      "settlement_delta": 0.0,
+      "settlement_mean": 92.84889706740772
+    },
+    {
+      "num_scored_seeds": 15,
+      "overall_delta": -0.5577237384877236,
+      "overall_mean": 85.72921068118038,
+      "overrides": {
+        "observation_smoothing_sigma": 2.2,
+        "plains_settlement_gain": 0.8,
+        "settlement_focus_blend_high_activity": 0.35,
+        "settlement_intensity_blend": 0.32,
+        "settlement_sigma": 1.6
+      },
+      "runs": [
+        {
+          "num_scored_seeds": 5,
+          "overall_mean": 89.17637368750583,
+          "round_id": "7b4bda99-6165-4221-97cc-27880f5e6d95",
+          "round_number": 13,
+          "run_dir": "artifacts/20260321_093308",
+          "settlement_mean": 96.34758088909084
+        },
+        {
+          "num_scored_seeds": 5,
+          "overall_mean": 77.80865213787067,
+          "round_id": "d0a2c894-2162-4d49-86cf-435b9013f3b8",
+          "round_number": 14,
+          "run_dir": "artifacts/20260321_112939",
+          "settlement_mean": 85.45496257196713
+        },
+        {
+          "num_scored_seeds": 5,
+          "overall_mean": 90.20260621816462,
+          "round_id": "cc5442dd-bc5d-418b-911b-7eb960cb0390",
+          "round_number": 15,
+          "run_dir": "artifacts/20260321_150037",
+          "settlement_mean": 95.15691162012726
+        }
+      ],
+      "settlement_delta": -0.5290787070126441,
+      "settlement_mean": 92.31981836039508
+    },
+    {
+      "num_scored_seeds": 15,
+      "overall_delta": -0.06115210568626139,
+      "overall_mean": 86.22578231398184,
+      "overrides": {
+        "observation_smoothing_sigma": 2.2,
+        "plains_settlement_gain": 0.8,
+        "settlement_focus_blend_high_activity": 0.35,
+        "settlement_intensity_blend": 0.32,
+        "settlement_sigma": 2.2
+      },
+      "runs": [
+        {
+          "num_scored_seeds": 5,
+          "overall_mean": 89.00659222049106,
+          "round_id": "7b4bda99-6165-4221-97cc-27880f5e6d95",
+          "round_number": 13,
+          "run_dir": "artifacts/20260321_093308",
+          "settlement_mean": 96.2284767364817
+        },
+        {
+          "num_scored_seeds": 5,
+          "overall_mean": 77.45998463495934,
+          "round_id": "d0a2c894-2162-4d49-86cf-435b9013f3b8",
+          "round_number": 14,
+          "run_dir": "artifacts/20260321_112939",
+          "settlement_mean": 85.30750489513878
+        },
+        {
+          "num_scored_seeds": 5,
+          "overall_mean": 92.21077008649507,
+          "round_id": "cc5442dd-bc5d-418b-911b-7eb960cb0390",
+          "round_number": 15,
+          "run_dir": "artifacts/20260321_150037",
+          "settlement_mean": 96.78765981539219
+        }
+      ],
+      "settlement_delta": -0.0743499184034988,
+      "settlement_mean": 92.77454714900422
+    },
+    {
+      "num_scored_seeds": 15,
+      "overall_delta": -0.6530600080865696,
+      "overall_mean": 85.63387441158153,
+      "overrides": {
+        "observation_smoothing_sigma": 2.2,
+        "plains_settlement_gain": 0.8,
+        "settlement_focus_blend_high_activity": 0.55,
+        "settlement_intensity_blend": 0.22,
+        "settlement_sigma": 1.6
+      },
+      "runs": [
+        {
+          "num_scored_seeds": 5,
+          "overall_mean": 89.23667872873426,
+          "round_id": "7b4bda99-6165-4221-97cc-27880f5e6d95",
+          "round_number": 13,
+          "run_dir": "artifacts/20260321_093308",
+          "settlement_mean": 96.38869615198821
+        },
+        {
+          "num_scored_seeds": 5,
+          "overall_mean": 77.76800031228568,
+          "round_id": "d0a2c894-2162-4d49-86cf-435b9013f3b8",
+          "round_number": 14,
+          "run_dir": "artifacts/20260321_112939",
+          "settlement_mean": 85.35311349037747
+        },
+        {
+          "num_scored_seeds": 5,
+          "overall_mean": 89.89694419372464,
+          "round_id": "cc5442dd-bc5d-418b-911b-7eb960cb0390",
+          "round_number": 15,
+          "run_dir": "artifacts/20260321_150037",
+          "settlement_mean": 94.7530626199828
+        }
+      ],
+      "settlement_delta": -0.6839396466248928,
+      "settlement_mean": 92.16495742078283
+    },
+    {
+      "num_scored_seeds": 15,
+      "overall_delta": -0.07002759265425595,
+      "overall_mean": 86.21690682701384,
+      "overrides": {
+        "observation_smoothing_sigma": 2.2,
+        "plains_settlement_gain": 0.8,
+        "settlement_focus_blend_high_activity": 0.55,
+        "settlement_intensity_blend": 0.22,
+        "settlement_sigma": 2.2
+      },
+      "runs": [
+        {
+          "num_scored_seeds": 5,
+          "overall_mean": 89.02239799091564,
+          "round_id": "7b4bda99-6165-4221-97cc-27880f5e6d95",
+          "round_number": 13,
+          "run_dir": "artifacts/20260321_093308",
+          "settlement_mean": 96.23835271767108
+        },
+        {
+          "num_scored_seeds": 5,
+          "overall_mean": 77.7447425904001,
+          "round_id": "d0a2c894-2162-4d49-86cf-435b9013f3b8",
+          "round_number": 14,
+          "run_dir": "artifacts/20260321_112939",
+          "settlement_mean": 85.58771623806874
+        },
+        {
+          "num_scored_seeds": 5,
+          "overall_mean": 91.88357989972577,
+          "round_id": "cc5442dd-bc5d-418b-911b-7eb960cb0390",
+          "round_number": 15,
+          "run_dir": "artifacts/20260321_150037",
+          "settlement_mean": 96.4377393449013
+        }
+      ],
+      "settlement_delta": -0.09429430052735199,
+      "settlement_mean": 92.75460276688037
+    },
+    {
+      "num_scored_seeds": 15,
+      "overall_delta": -0.910345110025716,
+      "overall_mean": 85.37658930964238,
+      "overrides": {
+        "observation_smoothing_sigma": 2.2,
+        "plains_settlement_gain": 0.8,
+        "settlement_focus_blend_high_activity": 0.55,
+        "settlement_intensity_blend": 0.32,
+        "settlement_sigma": 1.6
+      },
+      "runs": [
+        {
+          "num_scored_seeds": 5,
+          "overall_mean": 89.17637368750583,
+          "round_id": "7b4bda99-6165-4221-97cc-27880f5e6d95",
+          "round_number": 13,
+          "run_dir": "artifacts/20260321_093308",
+          "settlement_mean": 96.34758088909084
+        },
+        {
+          "num_scored_seeds": 5,
+          "overall_mean": 77.68174911104775,
+          "round_id": "d0a2c894-2162-4d49-86cf-435b9013f3b8",
+          "round_number": 14,
+          "run_dir": "artifacts/20260321_112939",
+          "settlement_mean": 85.18762236676662
+        },
+        {
+          "num_scored_seeds": 5,
+          "overall_mean": 89.27164513037353,
+          "round_id": "cc5442dd-bc5d-418b-911b-7eb960cb0390",
+          "round_number": 15,
+          "run_dir": "artifacts/20260321_150037",
+          "settlement_mean": 94.16111336699171
+        }
+      ],
+      "settlement_delta": -0.9501248597913445,
+      "settlement_mean": 91.89877220761637
+    },
+    {
+      "num_scored_seeds": 15,
+      "overall_delta": -0.1561932865437825,
+      "overall_mean": 86.13074113312432,
+      "overrides": {
+        "observation_smoothing_sigma": 2.2,
+        "plains_settlement_gain": 0.8,
+        "settlement_focus_blend_high_activity": 0.55,
+        "settlement_intensity_blend": 0.32,
+        "settlement_sigma": 2.2
+      },
+      "runs": [
+        {
+          "num_scored_seeds": 5,
+          "overall_mean": 89.00659222049106,
+          "round_id": "7b4bda99-6165-4221-97cc-27880f5e6d95",
+          "round_number": 13,
+          "run_dir": "artifacts/20260321_093308",
+          "settlement_mean": 96.2284767364817
+        },
+        {
+          "num_scored_seeds": 5,
+          "overall_mean": 77.71481002911551,
+          "round_id": "d0a2c894-2162-4d49-86cf-435b9013f3b8",
+          "round_number": 14,
+          "run_dir": "artifacts/20260321_112939",
+          "settlement_mean": 85.51114634465895
+        },
+        {
+          "num_scored_seeds": 5,
+          "overall_mean": 91.67082114976641,
+          "round_id": "cc5442dd-bc5d-418b-911b-7eb960cb0390",
+          "round_number": 15,
+          "run_dir": "artifacts/20260321_150037",
+          "settlement_mean": 96.21612812077645
+        }
+      ],
+      "settlement_delta": -0.19698000010203032,
+      "settlement_mean": 92.65191706730569
+    }
+  ],
+  "artifact_usage": {
+    "historical": true,
+    "learned": true,
+    "prior_blend_gate": true,
+    "residual": true
+  },
+  "baseline": {
+    "num_scored_seeds": 15,
+    "overall_mean": 86.2869344196681,
+    "overrides": {},
+    "settlement_mean": 92.84889706740772
+  },
+  "history_dir": "artifacts/history",
+  "num_candidates": 32,
+  "run_dirs": [
+    "artifacts/20260321_093308",
+    "artifacts/20260321_112939",
+    "artifacts/20260321_150037"
+  ],
+  "sweeps": {
+    "observation_smoothing_sigma": [
+      1.4,
+      2.2
+    ],
+    "plains_settlement_gain": [
+      0.5,
+      0.8
+    ],
+    "settlement_focus_blend_high_activity": [
+      0.35,
+      0.55
+    ],
+    "settlement_intensity_blend": [
+      0.22,
+      0.32
+    ],
+    "settlement_sigma": [
+      1.6,
+      2.2
+    ]
+  },
+  "top_by_overall": [
+    {
+      "num_scored_seeds": 15,
+      "overall_delta": 0.11538448826898673,
+      "overall_mean": 86.40231890793709,
+      "overrides": {
+        "observation_smoothing_sigma": 1.4,
+        "plains_settlement_gain": 0.5,
+        "settlement_focus_blend_high_activity": 0.35,
+        "settlement_intensity_blend": 0.22,
+        "settlement_sigma": 2.2
+      },
+      "runs": [
+        {
+          "num_scored_seeds": 5,
+          "overall_mean": 89.23190487665185,
+          "round_id": "7b4bda99-6165-4221-97cc-27880f5e6d95",
+          "round_number": 13,
+          "run_dir": "artifacts/20260321_093308",
+          "settlement_mean": 96.39719457819835
+        },
+        {
+          "num_scored_seeds": 5,
+          "overall_mean": 77.6724209294448,
+          "round_id": "d0a2c894-2162-4d49-86cf-435b9013f3b8",
+          "round_number": 14,
+          "run_dir": "artifacts/20260321_112939",
+          "settlement_mean": 85.47430713040626
+        },
+        {
+          "num_scored_seeds": 5,
+          "overall_mean": 92.30263091771458,
+          "round_id": "cc5442dd-bc5d-418b-911b-7eb960cb0390",
+          "round_number": 15,
+          "run_dir": "artifacts/20260321_150037",
+          "settlement_mean": 96.91524857935762
+        }
+      ],
+      "settlement_delta": 0.08001969524634944,
+      "settlement_mean": 92.92891676265407
+    },
+    {
+      "num_scored_seeds": 15,
+      "overall_delta": 0.06085952866170885,
+      "overall_mean": 86.34779394832981,
+      "overrides": {
+        "observation_smoothing_sigma": 1.4,
+        "plains_settlement_gain": 0.5,
+        "settlement_focus_blend_high_activity": 0.35,
+        "settlement_intensity_blend": 0.32,
+        "settlement_sigma": 2.2
+      },
+      "runs": [
+        {
+          "num_scored_seeds": 5,
+          "overall_mean": 89.22584707163907,
+          "round_id": "7b4bda99-6165-4221-97cc-27880f5e6d95",
+          "round_number": 13,
+          "run_dir": "artifacts/20260321_093308",
+          "settlement_mean": 96.40104657085547
+        },
+        {
+          "num_scored_seeds": 5,
+          "overall_mean": 77.66477692347698,
+          "round_id": "d0a2c894-2162-4d49-86cf-435b9013f3b8",
+          "round_number": 14,
+          "run_dir": "artifacts/20260321_112939",
+          "settlement_mean": 85.43349830508761
+        },
+        {
+          "num_scored_seeds": 5,
+          "overall_mean": 92.15275784987341,
+          "round_id": "cc5442dd-bc5d-418b-911b-7eb960cb0390",
+          "round_number": 15,
+          "run_dir": "artifacts/20260321_150037",
+          "settlement_mean": 96.7592576407052
+        }
+      ],
+      "settlement_delta": 0.01570377147506008,
+      "settlement_mean": 92.86460083888278
+    },
+    {
+      "num_scored_seeds": 15,
+      "overall_delta": 0.06061685947098283,
+      "overall_mean": 86.34755127913908,
+      "overrides": {
+        "observation_smoothing_sigma": 2.2,
+        "plains_settlement_gain": 0.5,
+        "settlement_focus_blend_high_activity": 0.35,
+        "settlement_intensity_blend": 0.22,
+        "settlement_sigma": 2.2
+      },
+      "runs": [
+        {
+          "num_scored_seeds": 5,
+          "overall_mean": 89.1768364032936,
+          "round_id": "7b4bda99-6165-4221-97cc-27880f5e6d95",
+          "round_number": 13,
+          "run_dir": "artifacts/20260321_093308",
+          "settlement_mean": 96.38607243347371
+        },
+        {
+          "num_scored_seeds": 5,
+          "overall_mean": 77.4569170495283,
+          "round_id": "d0a2c894-2162-4d49-86cf-435b9013f3b8",
+          "round_number": 14,
+          "run_dir": "artifacts/20260321_112939",
+          "settlement_mean": 85.34496914308069
+        },
+        {
+          "num_scored_seeds": 5,
+          "overall_mean": 92.40890038459534,
+          "round_id": "cc5442dd-bc5d-418b-911b-7eb960cb0390",
+          "round_number": 15,
+          "run_dir": "artifacts/20260321_150037",
+          "settlement_mean": 96.9879727375761
+        }
+      ],
+      "settlement_delta": 0.057441037302453424,
+      "settlement_mean": 92.90633810471017
+    },
+    {
+      "num_scored_seeds": 15,
+      "overall_delta": 0.05461094898430474,
+      "overall_mean": 86.3415453686524,
+      "overrides": {
+        "observation_smoothing_sigma": 1.4,
+        "plains_settlement_gain": 0.8,
+        "settlement_focus_blend_high_activity": 0.35,
+        "settlement_intensity_blend": 0.22,
+        "settlement_sigma": 2.2
+      },
+      "runs": [
+        {
+          "num_scored_seeds": 5,
+          "overall_mean": 89.07751345420857,
+          "round_id": "7b4bda99-6165-4221-97cc-27880f5e6d95",
+          "round_number": 13,
+          "run_dir": "artifacts/20260321_093308",
+          "settlement_mean": 96.24875145382087
+        },
+        {
+          "num_scored_seeds": 5,
+          "overall_mean": 77.6724209294448,
+          "round_id": "d0a2c894-2162-4d49-86cf-435b9013f3b8",
+          "round_number": 14,
+          "run_dir": "artifacts/20260321_112939",
+          "settlement_mean": 85.47430713040626
+        },
+        {
+          "num_scored_seeds": 5,
+          "overall_mean": 92.27470172230389,
+          "round_id": "cc5442dd-bc5d-418b-911b-7eb960cb0390",
+          "round_number": 15,
+          "run_dir": "artifacts/20260321_150037",
+          "settlement_mean": 96.89141305356532
+        }
+      ],
+      "settlement_delta": 0.022593478523077692,
+      "settlement_mean": 92.8714905459308
+    },
+    {
+      "num_scored_seeds": 15,
+      "overall_delta": 0.03361227516329279,
+      "overall_mean": 86.32054669483139,
+      "overrides": {
+        "observation_smoothing_sigma": 1.4,
+        "plains_settlement_gain": 0.5,
+        "settlement_focus_blend_high_activity": 0.55,
+        "settlement_intensity_blend": 0.22,
+        "settlement_sigma": 2.2
+      },
+      "runs": [
+        {
+          "num_scored_seeds": 5,
+          "overall_mean": 89.23190487665185,
+          "round_id": "7b4bda99-6165-4221-97cc-27880f5e6d95",
+          "round_number": 13,
+          "run_dir": "artifacts/20260321_093308",
+          "settlement_mean": 96.39719457819835
+        },
+        {
+          "num_scored_seeds": 5,
+          "overall_mean": 77.92054826707451,
+          "round_id": "d0a2c894-2162-4d49-86cf-435b9013f3b8",
+          "round_number": 14,
+          "run_dir": "artifacts/20260321_112939",
+          "settlement_mean": 85.67242159375019
+        },
+        {
+          "num_scored_seeds": 5,
+          "overall_mean": 91.80918694076782,
+          "round_id": "cc5442dd-bc5d-418b-911b-7eb960cb0390",
+          "round_number": 15,
+          "run_dir": "artifacts/20260321_150037",
+          "settlement_mean": 96.39484491811633
+        }
+      ],
+      "settlement_delta": -0.02741003738610459,
+      "settlement_mean": 92.82148703002161
+    },
+    {
+      "num_scored_seeds": 15,
+      "overall_delta": 0.0031974416476572287,
+      "overall_mean": 86.29013186131576,
+      "overrides": {
+        "observation_smoothing_sigma": 2.2,
+        "plains_settlement_gain": 0.5,
+        "settlement_focus_blend_high_activity": 0.35,
+        "settlement_intensity_blend": 0.32,
+        "settlement_sigma": 2.2
+      },
+      "runs": [
+        {
+          "num_scored_seeds": 5,
+          "overall_mean": 89.16976268752077,
+          "round_id": "7b4bda99-6165-4221-97cc-27880f5e6d95",
+          "round_number": 13,
+          "run_dir": "artifacts/20260321_093308",
+          "settlement_mean": 96.38743946139338
+        },
+        {
+          "num_scored_seeds": 5,
+          "overall_mean": 77.45998463495934,
+          "round_id": "d0a2c894-2162-4d49-86cf-435b9013f3b8",
+          "round_number": 14,
+          "run_dir": "artifacts/20260321_112939",
+          "settlement_mean": 85.30750489513878
+        },
+        {
+          "num_scored_seeds": 5,
+          "overall_mean": 92.24064826146716,
+          "round_id": "cc5442dd-bc5d-418b-911b-7eb960cb0390",
+          "round_number": 15,
+          "run_dir": "artifacts/20260321_150037",
+          "settlement_mean": 96.81404473588687
+        }
+      ],
+      "settlement_delta": -0.012567369934700423,
+      "settlement_mean": 92.83632969747302
+    },
+    {
+      "num_scored_seeds": 15,
+      "overall_delta": 0.0,
+      "overall_mean": 86.2869344196681,
+      "overrides": {
+        "observation_smoothing_sigma": 2.2,
+        "plains_settlement_gain": 0.8,
+        "settlement_focus_blend_high_activity": 0.35,
+        "settlement_intensity_blend": 0.22,
+        "settlement_sigma": 2.2
+      },
+      "runs": [
+        {
+          "num_scored_seeds": 5,
+          "overall_mean": 89.02239799091564,
+          "round_id": "7b4bda99-6165-4221-97cc-27880f5e6d95",
+          "round_number": 13,
+          "run_dir": "artifacts/20260321_093308",
+          "settlement_mean": 96.23835271767108
+        },
+        {
+          "num_scored_seeds": 5,
+          "overall_mean": 77.4569170495283,
+          "round_id": "d0a2c894-2162-4d49-86cf-435b9013f3b8",
+          "round_number": 14,
+          "run_dir": "artifacts/20260321_112939",
+          "settlement_mean": 85.34496914308069
+        },
+        {
+          "num_scored_seeds": 5,
+          "overall_mean": 92.38148821856035,
+          "round_id": "cc5442dd-bc5d-418b-911b-7eb960cb0390",
+          "round_number": 15,
+          "run_dir": "artifacts/20260321_150037",
+          "settlement_mean": 96.96336934147135
+        }
+      ],
+      "settlement_delta": 0.0,
+      "settlement_mean": 92.84889706740772
+    },
+    {
+      "num_scored_seeds": 15,
+      "overall_delta": -0.005085674762440817,
+      "overall_mean": 86.28184874490566,
+      "overrides": {
+        "observation_smoothing_sigma": 1.4,
+        "plains_settlement_gain": 0.8,
+        "settlement_focus_blend_high_activity": 0.35,
+        "settlement_intensity_blend": 0.32,
+        "settlement_sigma": 2.2
+      },
+      "runs": [
+        {
+          "num_scored_seeds": 5,
+          "overall_mean": 89.05965394719564,
+          "round_id": "7b4bda99-6165-4221-97cc-27880f5e6d95",
+          "round_number": 13,
+          "run_dir": "artifacts/20260321_093308",
+          "settlement_mean": 96.23930179576114
+        },
+        {
+          "num_scored_seeds": 5,
+          "overall_mean": 77.66477692347698,
+          "round_id": "d0a2c894-2162-4d49-86cf-435b9013f3b8",
+          "round_number": 14,
+          "run_dir": "artifacts/20260321_112939",
+          "settlement_mean": 85.43349830508761
+        },
+        {
+          "num_scored_seeds": 5,
+          "overall_mean": 92.12111536404441,
+          "round_id": "cc5442dd-bc5d-418b-911b-7eb960cb0390",
+          "round_number": 15,
+          "run_dir": "artifacts/20260321_150037",
+          "settlement_mean": 96.73157243245174
+        }
+      ],
+      "settlement_delta": -0.04743955630756602,
+      "settlement_mean": 92.80145751110015
+    },
+    {
+      "num_scored_seeds": 15,
+      "overall_delta": -0.00840223507042026,
+      "overall_mean": 86.27853218459768,
+      "overrides": {
+        "observation_smoothing_sigma": 2.2,
+        "plains_settlement_gain": 0.5,
+        "settlement_focus_blend_high_activity": 0.55,
+        "settlement_intensity_blend": 0.22,
+        "settlement_sigma": 2.2
+      },
+      "runs": [
+        {
+          "num_scored_seeds": 5,
+          "overall_mean": 89.1768364032936,
+          "round_id": "7b4bda99-6165-4221-97cc-27880f5e6d95",
+          "round_number": 13,
+          "run_dir": "artifacts/20260321_093308",
+          "settlement_mean": 96.38607243347371
+        },
+        {
+          "num_scored_seeds": 5,
+          "overall_mean": 77.7447425904001,
+          "round_id": "d0a2c894-2162-4d49-86cf-435b9013f3b8",
+          "round_number": 14,
+          "run_dir": "artifacts/20260321_112939",
+          "settlement_mean": 85.58771623806874
+        },
+        {
+          "num_scored_seeds": 5,
+          "overall_mean": 91.91401756009941,
+          "round_id": "cc5442dd-bc5d-418b-911b-7eb960cb0390",
+          "round_number": 15,
+          "run_dir": "artifacts/20260321_150037",
+          "settlement_mean": 96.4654544555473
+        }
+      ],
+      "settlement_delta": -0.035816025044454136,
+      "settlement_mean": 92.81308104236327
+    },
+    {
+      "num_scored_seeds": 15,
+      "overall_delta": -0.03011534338502031,
+      "overall_mean": 86.25681907628308,
+      "overrides": {
+        "observation_smoothing_sigma": 1.4,
+        "plains_settlement_gain": 0.8,
+        "settlement_focus_blend_high_activity": 0.55,
+        "settlement_intensity_blend": 0.22,
+        "settlement_sigma": 2.2
+      },
+      "runs": [
+        {
+          "num_scored_seeds": 5,
+          "overall_mean": 89.07751345420857,
+          "round_id": "7b4bda99-6165-4221-97cc-27880f5e6d95",
+          "round_number": 13,
+          "run_dir": "artifacts/20260321_093308",
+          "settlement_mean": 96.24875145382087
+        },
+        {
+          "num_scored_seeds": 5,
+          "overall_mean": 77.92054826707451,
+          "round_id": "d0a2c894-2162-4d49-86cf-435b9013f3b8",
+          "round_number": 14,
+          "run_dir": "artifacts/20260321_112939",
+          "settlement_mean": 85.67242159375019
+        },
+        {
+          "num_scored_seeds": 5,
+          "overall_mean": 91.77239550756615,
+          "round_id": "cc5442dd-bc5d-418b-911b-7eb960cb0390",
+          "round_number": 15,
+          "run_dir": "artifacts/20260321_150037",
+          "settlement_mean": 96.36238603749152
+        }
+      ],
+      "settlement_delta": -0.08771070572018402,
+      "settlement_mean": 92.76118636168754
+    }
+  ],
+  "top_by_settlement": [
+    {
+      "num_scored_seeds": 15,
+      "overall_delta": 0.11538448826898673,
+      "overall_mean": 86.40231890793709,
+      "overrides": {
+        "observation_smoothing_sigma": 1.4,
+        "plains_settlement_gain": 0.5,
+        "settlement_focus_blend_high_activity": 0.35,
+        "settlement_intensity_blend": 0.22,
+        "settlement_sigma": 2.2
+      },
+      "runs": [
+        {
+          "num_scored_seeds": 5,
+          "overall_mean": 89.23190487665185,
+          "round_id": "7b4bda99-6165-4221-97cc-27880f5e6d95",
+          "round_number": 13,
+          "run_dir": "artifacts/20260321_093308",
+          "settlement_mean": 96.39719457819835
+        },
+        {
+          "num_scored_seeds": 5,
+          "overall_mean": 77.6724209294448,
+          "round_id": "d0a2c894-2162-4d49-86cf-435b9013f3b8",
+          "round_number": 14,
+          "run_dir": "artifacts/20260321_112939",
+          "settlement_mean": 85.47430713040626
+        },
+        {
+          "num_scored_seeds": 5,
+          "overall_mean": 92.30263091771458,
+          "round_id": "cc5442dd-bc5d-418b-911b-7eb960cb0390",
+          "round_number": 15,
+          "run_dir": "artifacts/20260321_150037",
+          "settlement_mean": 96.91524857935762
+        }
+      ],
+      "settlement_delta": 0.08001969524634944,
+      "settlement_mean": 92.92891676265407
+    },
+    {
+      "num_scored_seeds": 15,
+      "overall_delta": 0.06061685947098283,
+      "overall_mean": 86.34755127913908,
+      "overrides": {
+        "observation_smoothing_sigma": 2.2,
+        "plains_settlement_gain": 0.5,
+        "settlement_focus_blend_high_activity": 0.35,
+        "settlement_intensity_blend": 0.22,
+        "settlement_sigma": 2.2
+      },
+      "runs": [
+        {
+          "num_scored_seeds": 5,
+          "overall_mean": 89.1768364032936,
+          "round_id": "7b4bda99-6165-4221-97cc-27880f5e6d95",
+          "round_number": 13,
+          "run_dir": "artifacts/20260321_093308",
+          "settlement_mean": 96.38607243347371
+        },
+        {
+          "num_scored_seeds": 5,
+          "overall_mean": 77.4569170495283,
+          "round_id": "d0a2c894-2162-4d49-86cf-435b9013f3b8",
+          "round_number": 14,
+          "run_dir": "artifacts/20260321_112939",
+          "settlement_mean": 85.34496914308069
+        },
+        {
+          "num_scored_seeds": 5,
+          "overall_mean": 92.40890038459534,
+          "round_id": "cc5442dd-bc5d-418b-911b-7eb960cb0390",
+          "round_number": 15,
+          "run_dir": "artifacts/20260321_150037",
+          "settlement_mean": 96.9879727375761
+        }
+      ],
+      "settlement_delta": 0.057441037302453424,
+      "settlement_mean": 92.90633810471017
+    },
+    {
+      "num_scored_seeds": 15,
+      "overall_delta": 0.05461094898430474,
+      "overall_mean": 86.3415453686524,
+      "overrides": {
+        "observation_smoothing_sigma": 1.4,
+        "plains_settlement_gain": 0.8,
+        "settlement_focus_blend_high_activity": 0.35,
+        "settlement_intensity_blend": 0.22,
+        "settlement_sigma": 2.2
+      },
+      "runs": [
+        {
+          "num_scored_seeds": 5,
+          "overall_mean": 89.07751345420857,
+          "round_id": "7b4bda99-6165-4221-97cc-27880f5e6d95",
+          "round_number": 13,
+          "run_dir": "artifacts/20260321_093308",
+          "settlement_mean": 96.24875145382087
+        },
+        {
+          "num_scored_seeds": 5,
+          "overall_mean": 77.6724209294448,
+          "round_id": "d0a2c894-2162-4d49-86cf-435b9013f3b8",
+          "round_number": 14,
+          "run_dir": "artifacts/20260321_112939",
+          "settlement_mean": 85.47430713040626
+        },
+        {
+          "num_scored_seeds": 5,
+          "overall_mean": 92.27470172230389,
+          "round_id": "cc5442dd-bc5d-418b-911b-7eb960cb0390",
+          "round_number": 15,
+          "run_dir": "artifacts/20260321_150037",
+          "settlement_mean": 96.89141305356532
+        }
+      ],
+      "settlement_delta": 0.022593478523077692,
+      "settlement_mean": 92.8714905459308
+    },
+    {
+      "num_scored_seeds": 15,
+      "overall_delta": 0.06085952866170885,
+      "overall_mean": 86.34779394832981,
+      "overrides": {
+        "observation_smoothing_sigma": 1.4,
+        "plains_settlement_gain": 0.5,
+        "settlement_focus_blend_high_activity": 0.35,
+        "settlement_intensity_blend": 0.32,
+        "settlement_sigma": 2.2
+      },
+      "runs": [
+        {
+          "num_scored_seeds": 5,
+          "overall_mean": 89.22584707163907,
+          "round_id": "7b4bda99-6165-4221-97cc-27880f5e6d95",
+          "round_number": 13,
+          "run_dir": "artifacts/20260321_093308",
+          "settlement_mean": 96.40104657085547
+        },
+        {
+          "num_scored_seeds": 5,
+          "overall_mean": 77.66477692347698,
+          "round_id": "d0a2c894-2162-4d49-86cf-435b9013f3b8",
+          "round_number": 14,
+          "run_dir": "artifacts/20260321_112939",
+          "settlement_mean": 85.43349830508761
+        },
+        {
+          "num_scored_seeds": 5,
+          "overall_mean": 92.15275784987341,
+          "round_id": "cc5442dd-bc5d-418b-911b-7eb960cb0390",
+          "round_number": 15,
+          "run_dir": "artifacts/20260321_150037",
+          "settlement_mean": 96.7592576407052
+        }
+      ],
+      "settlement_delta": 0.01570377147506008,
+      "settlement_mean": 92.86460083888278
+    },
+    {
+      "num_scored_seeds": 15,
+      "overall_delta": 0.0,
+      "overall_mean": 86.2869344196681,
+      "overrides": {
+        "observation_smoothing_sigma": 2.2,
+        "plains_settlement_gain": 0.8,
+        "settlement_focus_blend_high_activity": 0.35,
+        "settlement_intensity_blend": 0.22,
+        "settlement_sigma": 2.2
+      },
+      "runs": [
+        {
+          "num_scored_seeds": 5,
+          "overall_mean": 89.02239799091564,
+          "round_id": "7b4bda99-6165-4221-97cc-27880f5e6d95",
+          "round_number": 13,
+          "run_dir": "artifacts/20260321_093308",
+          "settlement_mean": 96.23835271767108
+        },
+        {
+          "num_scored_seeds": 5,
+          "overall_mean": 77.4569170495283,
+          "round_id": "d0a2c894-2162-4d49-86cf-435b9013f3b8",
+          "round_number": 14,
+          "run_dir": "artifacts/20260321_112939",
+          "settlement_mean": 85.34496914308069
+        },
+        {
+          "num_scored_seeds": 5,
+          "overall_mean": 92.38148821856035,
+          "round_id": "cc5442dd-bc5d-418b-911b-7eb960cb0390",
+          "round_number": 15,
+          "run_dir": "artifacts/20260321_150037",
+          "settlement_mean": 96.96336934147135
+        }
+      ],
+      "settlement_delta": 0.0,
+      "settlement_mean": 92.84889706740772
+    },
+    {
+      "num_scored_seeds": 15,
+      "overall_delta": 0.0031974416476572287,
+      "overall_mean": 86.29013186131576,
+      "overrides": {
+        "observation_smoothing_sigma": 2.2,
+        "plains_settlement_gain": 0.5,
+        "settlement_focus_blend_high_activity": 0.35,
+        "settlement_intensity_blend": 0.32,
+        "settlement_sigma": 2.2
+      },
+      "runs": [
+        {
+          "num_scored_seeds": 5,
+          "overall_mean": 89.16976268752077,
+          "round_id": "7b4bda99-6165-4221-97cc-27880f5e6d95",
+          "round_number": 13,
+          "run_dir": "artifacts/20260321_093308",
+          "settlement_mean": 96.38743946139338
+        },
+        {
+          "num_scored_seeds": 5,
+          "overall_mean": 77.45998463495934,
+          "round_id": "d0a2c894-2162-4d49-86cf-435b9013f3b8",
+          "round_number": 14,
+          "run_dir": "artifacts/20260321_112939",
+          "settlement_mean": 85.30750489513878
+        },
+        {
+          "num_scored_seeds": 5,
+          "overall_mean": 92.24064826146716,
+          "round_id": "cc5442dd-bc5d-418b-911b-7eb960cb0390",
+          "round_number": 15,
+          "run_dir": "artifacts/20260321_150037",
+          "settlement_mean": 96.81404473588687
+        }
+      ],
+      "settlement_delta": -0.012567369934700423,
+      "settlement_mean": 92.83632969747302
+    },
+    {
+      "num_scored_seeds": 15,
+      "overall_delta": 0.03361227516329279,
+      "overall_mean": 86.32054669483139,
+      "overrides": {
+        "observation_smoothing_sigma": 1.4,
+        "plains_settlement_gain": 0.5,
+        "settlement_focus_blend_high_activity": 0.55,
+        "settlement_intensity_blend": 0.22,
+        "settlement_sigma": 2.2
+      },
+      "runs": [
+        {
+          "num_scored_seeds": 5,
+          "overall_mean": 89.23190487665185,
+          "round_id": "7b4bda99-6165-4221-97cc-27880f5e6d95",
+          "round_number": 13,
+          "run_dir": "artifacts/20260321_093308",
+          "settlement_mean": 96.39719457819835
+        },
+        {
+          "num_scored_seeds": 5,
+          "overall_mean": 77.92054826707451,
+          "round_id": "d0a2c894-2162-4d49-86cf-435b9013f3b8",
+          "round_number": 14,
+          "run_dir": "artifacts/20260321_112939",
+          "settlement_mean": 85.67242159375019
+        },
+        {
+          "num_scored_seeds": 5,
+          "overall_mean": 91.80918694076782,
+          "round_id": "cc5442dd-bc5d-418b-911b-7eb960cb0390",
+          "round_number": 15,
+          "run_dir": "artifacts/20260321_150037",
+          "settlement_mean": 96.39484491811633
+        }
+      ],
+      "settlement_delta": -0.02741003738610459,
+      "settlement_mean": 92.82148703002161
+    },
+    {
+      "num_scored_seeds": 15,
+      "overall_delta": -0.00840223507042026,
+      "overall_mean": 86.27853218459768,
+      "overrides": {
+        "observation_smoothing_sigma": 2.2,
+        "plains_settlement_gain": 0.5,
+        "settlement_focus_blend_high_activity": 0.55,
+        "settlement_intensity_blend": 0.22,
+        "settlement_sigma": 2.2
+      },
+      "runs": [
+        {
+          "num_scored_seeds": 5,
+          "overall_mean": 89.1768364032936,
+          "round_id": "7b4bda99-6165-4221-97cc-27880f5e6d95",
+          "round_number": 13,
+          "run_dir": "artifacts/20260321_093308",
+          "settlement_mean": 96.38607243347371
+        },
+        {
+          "num_scored_seeds": 5,
+          "overall_mean": 77.7447425904001,
+          "round_id": "d0a2c894-2162-4d49-86cf-435b9013f3b8",
+          "round_number": 14,
+          "run_dir": "artifacts/20260321_112939",
+          "settlement_mean": 85.58771623806874
+        },
+        {
+          "num_scored_seeds": 5,
+          "overall_mean": 91.91401756009941,
+          "round_id": "cc5442dd-bc5d-418b-911b-7eb960cb0390",
+          "round_number": 15,
+          "run_dir": "artifacts/20260321_150037",
+          "settlement_mean": 96.4654544555473
+        }
+      ],
+      "settlement_delta": -0.035816025044454136,
+      "settlement_mean": 92.81308104236327
+    },
+    {
+      "num_scored_seeds": 15,
+      "overall_delta": -0.005085674762440817,
+      "overall_mean": 86.28184874490566,
+      "overrides": {
+        "observation_smoothing_sigma": 1.4,
+        "plains_settlement_gain": 0.8,
+        "settlement_focus_blend_high_activity": 0.35,
+        "settlement_intensity_blend": 0.32,
+        "settlement_sigma": 2.2
+      },
+      "runs": [
+        {
+          "num_scored_seeds": 5,
+          "overall_mean": 89.05965394719564,
+          "round_id": "7b4bda99-6165-4221-97cc-27880f5e6d95",
+          "round_number": 13,
+          "run_dir": "artifacts/20260321_093308",
+          "settlement_mean": 96.23930179576114
+        },
+        {
+          "num_scored_seeds": 5,
+          "overall_mean": 77.66477692347698,
+          "round_id": "d0a2c894-2162-4d49-86cf-435b9013f3b8",
+          "round_number": 14,
+          "run_dir": "artifacts/20260321_112939",
+          "settlement_mean": 85.43349830508761
+        },
+        {
+          "num_scored_seeds": 5,
+          "overall_mean": 92.12111536404441,
+          "round_id": "cc5442dd-bc5d-418b-911b-7eb960cb0390",
+          "round_number": 15,
+          "run_dir": "artifacts/20260321_150037",
+          "settlement_mean": 96.73157243245174
+        }
+      ],
+      "settlement_delta": -0.04743955630756602,
+      "settlement_mean": 92.80145751110015
+    },
+    {
+      "num_scored_seeds": 15,
+      "overall_delta": -0.06115210568626139,
+      "overall_mean": 86.22578231398184,
+      "overrides": {
+        "observation_smoothing_sigma": 2.2,
+        "plains_settlement_gain": 0.8,
+        "settlement_focus_blend_high_activity": 0.35,
+        "settlement_intensity_blend": 0.32,
+        "settlement_sigma": 2.2
+      },
+      "runs": [
+        {
+          "num_scored_seeds": 5,
+          "overall_mean": 89.00659222049106,
+          "round_id": "7b4bda99-6165-4221-97cc-27880f5e6d95",
+          "round_number": 13,
+          "run_dir": "artifacts/20260321_093308",
+          "settlement_mean": 96.2284767364817
+        },
+        {
+          "num_scored_seeds": 5,
+          "overall_mean": 77.45998463495934,
+          "round_id": "d0a2c894-2162-4d49-86cf-435b9013f3b8",
+          "round_number": 14,
+          "run_dir": "artifacts/20260321_112939",
+          "settlement_mean": 85.30750489513878
+        },
+        {
+          "num_scored_seeds": 5,
+          "overall_mean": 92.21077008649507,
+          "round_id": "cc5442dd-bc5d-418b-911b-7eb960cb0390",
+          "round_number": 15,
+          "run_dir": "artifacts/20260321_150037",
+          "settlement_mean": 96.78765981539219
+        }
+      ],
+      "settlement_delta": -0.0743499184034988,
+      "settlement_mean": 92.77454714900422
+    }
+  ]
+}

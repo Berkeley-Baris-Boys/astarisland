@@ -37,3 +37,22 @@ def weighted_kl_divergence(ground_truth: np.ndarray, prediction: np.ndarray) -> 
 def score_prediction(ground_truth: np.ndarray, prediction: np.ndarray) -> float:
     weighted_kl = weighted_kl_divergence(ground_truth, prediction)
     return float(max(0.0, min(100.0, 100.0 * math.exp(-3.0 * weighted_kl))))
+
+
+def collapse_probability_mass(probabilities: np.ndarray, class_ids: int | list[int] | tuple[int, ...]) -> np.ndarray:
+    probs = np.asarray(probabilities, dtype=np.float64)
+    if isinstance(class_ids, int):
+        class_ids = (class_ids,)
+    return np.sum(probs[..., list(class_ids)], axis=-1)
+
+
+def score_collapsed_prediction(
+    ground_truth: np.ndarray,
+    prediction: np.ndarray,
+    class_ids: int | list[int] | tuple[int, ...],
+) -> float:
+    gt_focus = np.clip(collapse_probability_mass(ground_truth, class_ids), 0.0, 1.0)
+    pred_focus = np.clip(collapse_probability_mass(prediction, class_ids), 0.0, 1.0)
+    gt_binary = np.stack([1.0 - gt_focus, gt_focus], axis=-1)
+    pred_binary = np.stack([1.0 - pred_focus, pred_focus], axis=-1)
+    return score_prediction(gt_binary, pred_binary)

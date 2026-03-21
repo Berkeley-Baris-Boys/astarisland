@@ -1,0 +1,4 @@
+{
+  "available": false,
+  "error": "Missing token. Set ASTAR_ISLAND_TOKEN or pass one in AstarConfig."
+}

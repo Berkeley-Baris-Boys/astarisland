@@ -64,7 +64,10 @@ def main() -> None:
 
     config = AstarConfig()
     detail = _round_detail_from_json(json.loads((args.run_dir / "round_detail.json").read_text()))
-    features = build_all_features(detail.initial_states)
+    features = build_all_features(
+        detail.initial_states,
+        settlement_sigma=config.predictor.settlement_sigma,
+    )
     aggregator = ObservationAggregator(detail, features)
     aggregator.class_counts = np.load(args.run_dir / "class_counts.npy")
     aggregator.observation_counts = np.load(args.run_dir / "observation_counts.npy")

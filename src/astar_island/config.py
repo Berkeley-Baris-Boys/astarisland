@@ -27,7 +27,7 @@ class PredictorConfig:
     direct_observation_strength: float = 18.0
     transfer_strength: float = 8.0
     local_kernel_sigma: float = 4.0
-    observation_smoothing_sigma: float = 2.2
+    observation_smoothing_sigma: float = 1.4
     observation_support_temperature: float = 0.85
     observation_repeat_bonus: float = 0.45
     observation_bucket_blend: float = 0.28
@@ -80,7 +80,7 @@ class PredictorConfig:
     forest_port_suppression_high_activity: float = 0.98
     forest_ruin_suppression_high_activity: float = 1.0
     plains_settlement_base: float = 0.9
-    plains_settlement_gain: float = 0.8
+    plains_settlement_gain: float = 0.5
     plains_settlement_power: float = 3.0
     plains_support_intensity_weight: float = 0.85
     plains_empty_base: float = 1.12
