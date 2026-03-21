@@ -1,0 +1,895 @@
+{
+  "config": {
+    "auth_mode": "bearer",
+    "base_url": "https://api.ainm.no/astar-island",
+    "cache": {
+      "directory": ".cache/astar_island",
+      "enabled": true
+    },
+    "history_dir": "artifacts/history",
+    "log_dir": "artifacts",
+    "max_retries": 5,
+    "planner": {
+      "candidate_stride": 4,
+      "max_queries": 50,
+      "max_window": 15,
+      "min_window": 5,
+      "overlap_penalty": 0.7,
+      "per_seed_soft_min": 7,
+      "phase1_queries": 20,
+      "phase2_queries": 22,
+      "phase3_queries": 8,
+      "repeat_bonus": 0.2,
+      "repeat_threshold": 0.75,
+      "repeated_view_window": 9
+    },
+    "predictor": {
+      "active_confidence_sharpen_power": 1.02,
+      "active_dominance_additive": 0.015,
+      "active_dominance_base_ratio": 0.32,
+      "active_dominance_initial_bonus": 0.18,
+      "active_dominance_sigma": 3.0,
+      "active_dominance_signal_scale": 0.18,
+      "active_dominance_support_gain": 0.95,
+      "coastal_port_support_gain": 1.2,
+      "confidence_sharpen_power": 1.15,
+      "direct_observation_strength": 18.0,
+      "feature_match_strength": 5.0,
+      "forest_empty_suppression": 0.55,
+      "forest_port_suppression": 0.88,
+      "forest_retention_boost": 1.5,
+      "forest_ruin_suppression": 0.97,
+      "forest_settlement_suppression": 0.92,
+      "historical_prior_path": "artifacts/historical_priors.json",
+      "historical_prior_strength": 6.0,
+      "initial_port_boost": 1.12,
+      "initial_port_empty_suppression": 0.95,
+      "initial_settlement_boost": 1.05,
+      "initial_settlement_empty_suppression": 0.97,
+      "learned_prior_blend": 0.25,
+      "learned_prior_path": "artifacts/learned_prior.json",
+      "local_kernel_sigma": 4.0,
+      "min_probability": 0.0025,
+      "observation_active_mass_blend": 0.24,
+      "observation_active_type_blend": 0.18,
+      "observation_bucket_blend": 0.28,
+      "observation_nonactive_blend": 0.62,
+      "observation_repeat_bonus": 0.45,
+      "observation_smoothing_sigma": 2.2,
+      "observation_support_temperature": 0.85,
+      "plains_empty_base": 1.12,
+      "plains_empty_support_slope": 0.18,
+      "plains_settlement_base": 0.9,
+      "plains_settlement_gain": 0.8,
+      "plains_settlement_power": 3.0,
+      "plains_support_intensity_weight": 0.85,
+      "port_focus_blend": 0.7,
+      "port_focus_min_blend": 0.3,
+      "port_focus_power": 1.0,
+      "port_focus_rate_ceiling": 0.045,
+      "port_focus_rate_floor": 0.015,
+      "port_support_border_weight": 0.18,
+      "port_support_frontier_weight": 0.22,
+      "port_support_initial_port_bonus": 0.25,
+      "port_support_initial_settlement_bonus": 0.1,
+      "port_support_intensity_weight": 0.5,
+      "port_support_predicted_active_weight": 0.1,
+      "prior_strength_dynamic": 9.0,
+      "prior_strength_static": 60.0,
+      "rare_class_min_support": 0.0001,
+      "residual_calibrator_active_observed_blend": 0.0,
+      "residual_calibrator_blend": 0.25,
+      "residual_calibrator_path": "artifacts/residual_calibrator.joblib",
+      "residual_calibrator_repeated_observed_blend": 0.0,
+      "residual_calibrator_single_observed_blend": 0.1,
+      "ruin_focus_blend": 0.8,
+      "ruin_focus_power": 1.0,
+      "ruin_support_conflict_weight": 0.2,
+      "ruin_support_density_weight": 0.1,
+      "ruin_support_forest_weight": 0.05,
+      "ruin_support_frontier_weight": 0.22,
+      "ruin_support_intensity_weight": 0.38,
+      "ruin_support_interior_weight": 0.1,
+      "ruin_support_predicted_ruin_weight": 0.05,
+      "ruin_support_predicted_settlement_weight": 0.1,
+      "settlement_intensity_blend": 0.22,
+      "settlement_sigma": 2.2,
+      "transfer_strength": 8.0
+    },
+    "request_timeout_s": 30.0,
+    "retry_backoff_s": 1.0,
+    "token": "<redacted>",
+    "user_agent": "astar-island-codex-baseline/0.1"
+  },
+  "historical_prior_metadata": {
+    "bucket_key_version": 2,
+    "num_rounds": 12,
+    "num_seeds": 60,
+    "rounds": [
+      {
+        "round_id": "795bfb1f-54bd-4f39-a526-9868b36f7ebd",
+        "round_number": 12
+      },
+      {
+        "round_id": "324fde07-1670-4202-b199-7aa92ecb40ee",
+        "round_number": 11
+      },
+      {
+        "round_id": "75e625c3-60cb-4392-af3e-c86a98bde8c2",
+        "round_number": 10
+      },
+      {
+        "round_id": "2a341ace-0f57-4309-9b89-e59fe0f09179",
+        "round_number": 9
+      },
+      {
+        "round_id": "c5cdf100-a876-4fb7-b5d8-757162c97989",
+        "round_number": 8
+      },
+      {
+        "round_id": "36e581f1-73f8-453f-ab98-cbe3052b701b",
+        "round_number": 7
+      },
+      {
+        "round_id": "ae78003a-4efe-425a-881a-d16a39bca0ad",
+        "round_number": 6
+      },
+      {
+        "round_id": "fd3c92ff-3178-4dc9-8d9b-acf389b3982b",
+        "round_number": 5
+      },
+      {
+        "round_id": "8e839974-b13b-407b-a5e7-fc749d877195",
+        "round_number": 4
+      },
+      {
+        "round_id": "f1dac9a9-5cf1-49a9-8f17-d6cb5d5ba5cb",
+        "round_number": 3
+      },
+      {
+        "round_id": "76909e29-f664-4b2f-b16b-61b7507277e9",
+        "round_number": 2
+      },
+      {
+        "round_id": "71451d74-be9f-471f-aacd-a41f3b68a9cd",
+        "round_number": 1
+      }
+    ],
+    "source": "archive"
+  },
+  "latent_summary": {
+    "forest_share_dynamic": 0.3586979058677172,
+    "mean_defense": 0.5269989126495106,
+    "mean_food": 0.5815128669807902,
+    "mean_population": 1.040632113084451,
+    "mean_wealth": 0.004701703515766583,
+    "observed_cells": 6520.0,
+    "port_share_given_active": 0.042116630669546434,
+    "ruin_share_given_active": 0.10184287099903007,
+    "settlement_rate": 0.27510398098633393
+  },
+  "learned_prior_metadata": {
+    "holdout_round_number": null,
+    "l2_active": 0.6,
+    "l2_active_type": 0.8,
+    "l2_forest": 0.6,
+    "num_rounds": 12,
+    "num_seeds": 60,
+    "rounds": [
+      {
+        "round_id": "71451d74-be9f-471f-aacd-a41f3b68a9cd",
+        "round_number": 1
+      },
+      {
+        "round_id": "76909e29-f664-4b2f-b16b-61b7507277e9",
+        "round_number": 2
+      },
+      {
+        "round_id": "f1dac9a9-5cf1-49a9-8f17-d6cb5d5ba5cb",
+        "round_number": 3
+      },
+      {
+        "round_id": "8e839974-b13b-407b-a5e7-fc749d877195",
+        "round_number": 4
+      },
+      {
+        "round_id": "fd3c92ff-3178-4dc9-8d9b-acf389b3982b",
+        "round_number": 5
+      },
+      {
+        "round_id": "ae78003a-4efe-425a-881a-d16a39bca0ad",
+        "round_number": 6
+      },
+      {
+        "round_id": "36e581f1-73f8-453f-ab98-cbe3052b701b",
+        "round_number": 7
+      },
+      {
+        "round_id": "c5cdf100-a876-4fb7-b5d8-757162c97989",
+        "round_number": 8
+      },
+      {
+        "round_id": "2a341ace-0f57-4309-9b89-e59fe0f09179",
+        "round_number": 9
+      },
+      {
+        "round_id": "75e625c3-60cb-4392-af3e-c86a98bde8c2",
+        "round_number": 10
+      },
+      {
+        "round_id": "324fde07-1670-4202-b199-7aa92ecb40ee",
+        "round_number": 11
+      },
+      {
+        "round_id": "795bfb1f-54bd-4f39-a526-9868b36f7ebd",
+        "round_number": 12
+      }
+    ],
+    "version": 1
+  },
+  "query_history": [
+    {
+      "phase": "recon",
+      "reason": "broad coverage of likely-active region",
+      "score": 3.913777777777778,
+      "seed_index": 3,
+      "viewport": {
+        "h": 15,
+        "w": 15,
+        "x": 4,
+        "y": 24
+      }
+    },
+    {
+      "phase": "recon",
+      "reason": "broad coverage of likely-active region",
+      "score": 3.8417777777777777,
+      "seed_index": 0,
+      "viewport": {
+        "h": 15,
+        "w": 15,
+        "x": 0,
+        "y": 4
+      }
+    },
+    {
+      "phase": "recon",
+      "reason": "broad coverage of likely-active region",
+      "score": 3.772444444444445,
+      "seed_index": 0,
+      "viewport": {
+        "h": 15,
+        "w": 15,
+        "x": 24,
+        "y": 12
+      }
+    },
+    {
+      "phase": "recon",
+      "reason": "broad coverage of likely-active region",
+      "score": 3.722666666666667,
+      "seed_index": 4,
+      "viewport": {
+        "h": 15,
+        "w": 15,
+        "x": 4,
+        "y": 12
+      }
+    },
+    {
+      "phase": "recon",
+      "reason": "broad coverage of likely-active region",
+      "score": 3.7120000000000006,
+      "seed_index": 2,
+      "viewport": {
+        "h": 15,
+        "w": 15,
+        "x": 8,
+        "y": 0
+      }
+    },
+    {
+      "phase": "recon",
+      "reason": "broad coverage of likely-active region",
+      "score": 3.7075555555555555,
+      "seed_index": 3,
+      "viewport": {
+        "h": 15,
+        "w": 15,
+        "x": 24,
+        "y": 24
+      }
+    },
+    {
+      "phase": "recon",
+      "reason": "broad coverage of likely-active region",
+      "score": 3.6782222222222227,
+      "seed_index": 1,
+      "viewport": {
+        "h": 15,
+        "w": 15,
+        "x": 16,
+        "y": 0
+      }
+    },
+    {
+      "phase": "recon",
+      "reason": "broad coverage of likely-active region",
+      "score": 3.5955555555555554,
+      "seed_index": 1,
+      "viewport": {
+        "h": 15,
+        "w": 15,
+        "x": 12,
+        "y": 24
+      }
+    },
+    {
+      "phase": "recon",
+      "reason": "broad coverage of likely-active region",
+      "score": 3.5680000000000005,
+      "seed_index": 4,
+      "viewport": {
+        "h": 15,
+        "w": 15,
+        "x": 24,
+        "y": 16
+      }
+    },
+    {
+      "phase": "recon",
+      "reason": "broad coverage of likely-active region",
+      "score": 3.5593566560824246,
+      "seed_index": 0,
+      "viewport": {
+        "h": 15,
+        "w": 15,
+        "x": 12,
+        "y": 24
+      }
+    },
+    {
+      "phase": "recon",
+      "reason": "broad coverage of likely-active region",
+      "score": 3.559111111111111,
+      "seed_index": 3,
+      "viewport": {
+        "h": 15,
+        "w": 15,
+        "x": 24,
+        "y": 4
+      }
+    },
+    {
+      "phase": "recon",
+      "reason": "broad coverage of likely-active region",
+      "score": 3.4622222222222216,
+      "seed_index": 1,
+      "viewport": {
+        "h": 15,
+        "w": 15,
+        "x": 0,
+        "y": 8
+      }
+    },
+    {
+      "phase": "recon",
+      "reason": "broad coverage of likely-active region",
+      "score": 3.4278011005268687,
+      "seed_index": 4,
+      "viewport": {
+        "h": 15,
+        "w": 15,
+        "x": 16,
+        "y": 0
+      }
+    },
+    {
+      "phase": "recon",
+      "reason": "broad coverage of likely-active region",
+      "score": 3.4142222222222216,
+      "seed_index": 2,
+      "viewport": {
+        "h": 15,
+        "w": 15,
+        "x": 4,
+        "y": 16
+      }
+    },
+    {
+      "phase": "recon",
+      "reason": "broad coverage of likely-active region",
+      "score": 3.4062222222222225,
+      "seed_index": 3,
+      "viewport": {
+        "h": 15,
+        "w": 15,
+        "x": 4,
+        "y": 4
+      }
+    },
+    {
+      "phase": "recon",
+      "reason": "broad coverage of likely-active region",
+      "score": 3.389333333333333,
+      "seed_index": 2,
+      "viewport": {
+        "h": 15,
+        "w": 15,
+        "x": 24,
+        "y": 24
+      }
+    },
+    {
+      "phase": "recon",
+      "reason": "broad coverage of likely-active region",
+      "score": 3.2897777777777772,
+      "seed_index": 2,
+      "viewport": {
+        "h": 15,
+        "w": 15,
+        "x": 24,
+        "y": 0
+      }
+    },
+    {
+      "phase": "recon",
+      "reason": "broad coverage of likely-active region",
+      "score": 3.0640018617134466,
+      "seed_index": 0,
+      "viewport": {
+        "h": 15,
+        "w": 15,
+        "x": 16,
+        "y": 0
+      }
+    },
+    {
+      "phase": "recon",
+      "reason": "broad coverage of likely-active region",
+      "score": 3.0229960829879428,
+      "seed_index": 4,
+      "viewport": {
+        "h": 15,
+        "w": 15,
+        "x": 12,
+        "y": 24
+      }
+    },
+    {
+      "phase": "recon",
+      "reason": "broad coverage of likely-active region",
+      "score": 2.9365726172670743,
+      "seed_index": 1,
+      "viewport": {
+        "h": 15,
+        "w": 15,
+        "x": 0,
+        "y": 24
+      }
+    },
+    {
+      "phase": "targeted",
+      "reason": "target high-value frontier/conflict cells",
+      "score": 2.5564707223404946,
+      "seed_index": 0,
+      "viewport": {
+        "h": 15,
+        "w": 15,
+        "x": 16,
+        "y": 16
+      }
+    },
+    {
+      "phase": "targeted",
+      "reason": "target high-value frontier/conflict cells",
+      "score": 2.40542453436095,
+      "seed_index": 3,
+      "viewport": {
+        "h": 15,
+        "w": 15,
+        "x": 8,
+        "y": 20
+      }
+    },
+    {
+      "phase": "targeted",
+      "reason": "target high-value frontier/conflict cells",
+      "score": 2.3124166666666666,
+      "seed_index": 0,
+      "viewport": {
+        "h": 15,
+        "w": 15,
+        "x": 8,
+        "y": 8
+      }
+    },
+    {
+      "phase": "targeted",
+      "reason": "target high-value frontier/conflict cells",
+      "score": 2.311745401030169,
+      "seed_index": 1,
+      "viewport": {
+        "h": 15,
+        "w": 15,
+        "x": 20,
+        "y": 8
+      }
+    },
+    {
+      "phase": "targeted",
+      "reason": "target high-value frontier/conflict cells",
+      "score": 2.2727350427350426,
+      "seed_index": 2,
+      "viewport": {
+        "h": 15,
+        "w": 15,
+        "x": 4,
+        "y": 0
+      }
+    },
+    {
+      "phase": "targeted",
+      "reason": "target high-value frontier/conflict cells",
+      "score": 2.252813840003239,
+      "seed_index": 0,
+      "viewport": {
+        "h": 15,
+        "w": 15,
+        "x": 24,
+        "y": 20
+      }
+    },
+    {
+      "phase": "targeted",
+      "reason": "target high-value frontier/conflict cells",
+      "score": 2.1313791695106086,
+      "seed_index": 3,
+      "viewport": {
+        "h": 15,
+        "w": 15,
+        "x": 16,
+        "y": 12
+      }
+    },
+    {
+      "phase": "targeted",
+      "reason": "target high-value frontier/conflict cells",
+      "score": 2.1183529938479477,
+      "seed_index": 4,
+      "viewport": {
+        "h": 15,
+        "w": 15,
+        "x": 8,
+        "y": 0
+      }
+    },
+    {
+      "phase": "targeted",
+      "reason": "target high-value frontier/conflict cells",
+      "score": 2.054706794160849,
+      "seed_index": 1,
+      "viewport": {
+        "h": 15,
+        "w": 15,
+        "x": 8,
+        "y": 0
+      }
+    },
+    {
+      "phase": "targeted",
+      "reason": "target high-value frontier/conflict cells",
+      "score": 1.9880605435156524,
+      "seed_index": 2,
+      "viewport": {
+        "h": 15,
+        "w": 15,
+        "x": 20,
+        "y": 8
+      }
+    },
+    {
+      "phase": "targeted",
+      "reason": "target high-value frontier/conflict cells",
+      "score": 1.9873268002071658,
+      "seed_index": 3,
+      "viewport": {
+        "h": 15,
+        "w": 15,
+        "x": 4,
+        "y": 24
+      }
+    },
+    {
+      "phase": "targeted",
+      "reason": "target high-value frontier/conflict cells",
+      "score": 1.9360117267663441,
+      "seed_index": 4,
+      "viewport": {
+        "h": 15,
+        "w": 15,
+        "x": 24,
+        "y": 8
+      }
+    },
+    {
+      "phase": "targeted",
+      "reason": "target high-value frontier/conflict cells",
+      "score": 1.8808815363882845,
+      "seed_index": 4,
+      "viewport": {
+        "h": 15,
+        "w": 15,
+        "x": 8,
+        "y": 12
+      }
+    },
+    {
+      "phase": "targeted",
+      "reason": "target high-value frontier/conflict cells",
+      "score": 1.8498060276175747,
+      "seed_index": 2,
+      "viewport": {
+        "h": 15,
+        "w": 15,
+        "x": 4,
+        "y": 4
+      }
+    },
+    {
+      "phase": "targeted",
+      "reason": "target high-value frontier/conflict cells",
+      "score": 1.7741616161616163,
+      "seed_index": 1,
+      "viewport": {
+        "h": 15,
+        "w": 15,
+        "x": 20,
+        "y": 24
+      }
+    },
+    {
+      "phase": "targeted",
+      "reason": "target high-value frontier/conflict cells",
+      "score": 1.7448575247992648,
+      "seed_index": 0,
+      "viewport": {
+        "h": 15,
+        "w": 15,
+        "x": 0,
+        "y": 4
+      }
+    },
+    {
+      "phase": "targeted",
+      "reason": "target high-value frontier/conflict cells",
+      "score": 1.5833333333333333,
+      "seed_index": 0,
+      "viewport": {
+        "h": 15,
+        "w": 15,
+        "x": 0,
+        "y": 24
+      }
+    },
+    {
+      "phase": "targeted",
+      "reason": "target high-value frontier/conflict cells",
+      "score": 1.567771891181049,
+      "seed_index": 3,
+      "viewport": {
+        "h": 15,
+        "w": 15,
+        "x": 24,
+        "y": 24
+      }
+    },
+    {
+      "phase": "targeted",
+      "reason": "target high-value frontier/conflict cells",
+      "score": 1.5181952538360293,
+      "seed_index": 0,
+      "viewport": {
+        "h": 15,
+        "w": 15,
+        "x": 20,
+        "y": 8
+      }
+    },
+    {
+      "phase": "targeted",
+      "reason": "target high-value frontier/conflict cells",
+      "score": 1.515620636464154,
+      "seed_index": 3,
+      "viewport": {
+        "h": 15,
+        "w": 15,
+        "x": 20,
+        "y": 0
+      }
+    },
+    {
+      "phase": "targeted",
+      "reason": "target high-value frontier/conflict cells",
+      "score": 1.496998058489666,
+      "seed_index": 0,
+      "viewport": {
+        "h": 15,
+        "w": 15,
+        "x": 20,
+        "y": 24
+      }
+    },
+    {
+      "phase": "targeted",
+      "reason": "target high-value frontier/conflict cells",
+      "score": 1.4129800899165064,
+      "seed_index": 3,
+      "viewport": {
+        "h": 15,
+        "w": 15,
+        "x": 0,
+        "y": 0
+      }
+    },
+    {
+      "phase": "calibration",
+      "reason": "repeat sample for uncertainty calibration",
+      "score": 1.1444444444444446,
+      "seed_index": 4,
+      "viewport": {
+        "h": 9,
+        "w": 9,
+        "x": 0,
+        "y": 30
+      }
+    },
+    {
+      "phase": "calibration",
+      "reason": "repeat sample for uncertainty calibration",
+      "score": 1.119840232389252,
+      "seed_index": 2,
+      "viewport": {
+        "h": 9,
+        "w": 9,
+        "x": 15,
+        "y": 30
+      }
+    },
+    {
+      "phase": "calibration",
+      "reason": "repeat sample for uncertainty calibration",
+      "score": 1.0570341659488949,
+      "seed_index": 2,
+      "viewport": {
+        "h": 9,
+        "w": 9,
+        "x": 0,
+        "y": 30
+      }
+    },
+    {
+      "phase": "calibration",
+      "reason": "repeat sample for uncertainty calibration",
+      "score": 1.0554320987654322,
+      "seed_index": 4,
+      "viewport": {
+        "h": 9,
+        "w": 9,
+        "x": 30,
+        "y": 30
+      }
+    },
+    {
+      "phase": "calibration",
+      "reason": "repeat sample for uncertainty calibration",
+      "score": 0.9714814814814816,
+      "seed_index": 4,
+      "viewport": {
+        "h": 9,
+        "w": 9,
+        "x": 0,
+        "y": 0
+      }
+    },
+    {
+      "phase": "calibration",
+      "reason": "repeat sample for uncertainty calibration",
+      "score": 0.9623168509260235,
+      "seed_index": 4,
+      "viewport": {
+        "h": 9,
+        "w": 9,
+        "x": 30,
+        "y": 0
+      }
+    },
+    {
+      "phase": "calibration",
+      "reason": "repeat sample for uncertainty calibration",
+      "score": 0.9601169590643276,
+      "seed_index": 0,
+      "viewport": {
+        "h": 9,
+        "w": 9,
+        "x": 30,
+        "y": 0
+      }
+    },
+    {
+      "phase": "calibration",
+      "reason": "repeat sample for uncertainty calibration",
+      "score": 0.8835737491877845,
+      "seed_index": 1,
+      "viewport": {
+        "h": 9,
+        "w": 9,
+        "x": 30,
+        "y": 0
+      }
+    }
+  ],
+  "residual_calibrator_metadata": {
+    "holdout_round_number": null,
+    "l2_regularization": 0.2,
+    "learning_rate": 0.05,
+    "max_depth": 4,
+    "max_iter": 300,
+    "min_samples_leaf": 300,
+    "num_rounds": 12,
+    "num_seeds": 60,
+    "rounds": [
+      {
+        "round_id": "71451d74-be9f-471f-aacd-a41f3b68a9cd",
+        "round_number": 1
+      },
+      {
+        "round_id": "76909e29-f664-4b2f-b16b-61b7507277e9",
+        "round_number": 2
+      },
+      {
+        "round_id": "f1dac9a9-5cf1-49a9-8f17-d6cb5d5ba5cb",
+        "round_number": 3
+      },
+      {
+        "round_id": "8e839974-b13b-407b-a5e7-fc749d877195",
+        "round_number": 4
+      },
+      {
+        "round_id": "fd3c92ff-3178-4dc9-8d9b-acf389b3982b",
+        "round_number": 5
+      },
+      {
+        "round_id": "ae78003a-4efe-425a-881a-d16a39bca0ad",
+        "round_number": 6
+      },
+      {
+        "round_id": "36e581f1-73f8-453f-ab98-cbe3052b701b",
+        "round_number": 7
+      },
+      {
+        "round_id": "c5cdf100-a876-4fb7-b5d8-757162c97989",
+        "round_number": 8
+      },
+      {
+        "round_id": "2a341ace-0f57-4309-9b89-e59fe0f09179",
+        "round_number": 9
+      },
+      {
+        "round_id": "75e625c3-60cb-4392-af3e-c86a98bde8c2",
+        "round_number": 10
+      },
+      {
+        "round_id": "324fde07-1670-4202-b199-7aa92ecb40ee",
+        "round_number": 11
+      },
+      {
+        "round_id": "795bfb1f-54bd-4f39-a526-9868b36f7ebd",
+        "round_number": 12
+      }
+    ],
+    "version": 1
+  },
+  "round_id": "d0a2c894-2162-4d49-86cf-435b9013f3b8",
+  "round_number": 14
+}

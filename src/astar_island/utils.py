@@ -85,12 +85,15 @@ def window_slices(x: int, y: int, w: int, h: int) -> tuple[slice, slice]:
 
 def entropy_from_counts(counts: np.ndarray) -> np.ndarray:
     totals = counts.sum(axis=-1, keepdims=True)
-    probs = np.divide(counts, np.maximum(totals, 1e-12), where=totals > 0)
-    probs = np.where(probs > 0, probs, 1.0)
-    return -np.sum((counts / np.maximum(totals, 1e-12)) * np.log(probs), axis=-1)
+    probs = np.zeros_like(counts, dtype=np.float64)
+    np.divide(counts, np.maximum(totals, 1e-12), out=probs, where=totals > 0)
+    safe_probs = np.where(probs > 0, probs, 1.0)
+    return -np.sum(probs * np.log(safe_probs), axis=-1)
 
 
 def to_jsonable(value: Any) -> Any:
+    if isinstance(value, Path):
+        return str(value)
     if isinstance(value, np.ndarray):
         return value.tolist()
     if isinstance(value, np.generic):

@@ -1,0 +1,13 @@
+{
+  "closes_at": "2026-03-21T11:59:55.745449+00:00",
+  "created_at": "2026-03-21T09:14:55.989431+00:00",
+  "event_date": "2026-03-21",
+  "id": "d0a2c894-2162-4d49-86cf-435b9013f3b8",
+  "map_height": 40,
+  "map_width": 40,
+  "prediction_window_minutes": 165,
+  "round_number": 14,
+  "round_weight": 1.9799,
+  "started_at": "2026-03-21T09:14:55.745449+00:00",
+  "status": "active"
+}

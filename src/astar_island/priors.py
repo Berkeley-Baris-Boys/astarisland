@@ -7,7 +7,7 @@ from typing import Any
 
 import numpy as np
 
-from .features import build_all_features, make_bucket_keys
+from .features import BUCKET_KEY_VERSION, build_all_features, make_bucket_keys
 from .history import build_historical_prior_from_archive
 from .types import NUM_CLASSES, RoundDetail
 from .utils import load_json, save_json
@@ -145,6 +145,7 @@ def build_historical_prior_artifact(api, round_ids: list[str] | None = None, max
         "num_rounds": len(used_rounds),
         "num_seeds": used_seeds,
         "rounds": used_rounds,
+        "bucket_key_version": BUCKET_KEY_VERSION,
     }
     artifact = HistoricalPriorArtifact(bucket_counts=bucket_counts, initial_class_counts=initial_class_counts, metadata=metadata)
     LOGGER.info("Built historical prior artifact from %s rounds and %s seeds", metadata["num_rounds"], used_seeds)

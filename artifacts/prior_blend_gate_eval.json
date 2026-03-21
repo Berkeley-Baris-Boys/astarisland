@@ -1,0 +1,3215 @@
+{
+  "history_dir": "artifacts/history",
+  "overall": {
+    "base_mean": 36.97591522753211,
+    "gated_mean": 72.143943143939,
+    "prior_mean": 70.07517450159523
+  },
+  "params": {
+    "l2_regularization": 0.2,
+    "learning_rate": 0.05,
+    "max_depth": 4,
+    "max_iter": 300,
+    "min_samples_leaf": 400
+  },
+  "rounds": [
+    {
+      "artifact_metadata": {
+        "historical_prior_metadata": {
+          "bucket_key_version": 2,
+          "num_rounds": 12,
+          "num_seeds": 60,
+          "rounds": [
+            {
+              "round_id": "795bfb1f-54bd-4f39-a526-9868b36f7ebd",
+              "round_number": 12
+            },
+            {
+              "round_id": "324fde07-1670-4202-b199-7aa92ecb40ee",
+              "round_number": 11
+            },
+            {
+              "round_id": "75e625c3-60cb-4392-af3e-c86a98bde8c2",
+              "round_number": 10
+            },
+            {
+              "round_id": "2a341ace-0f57-4309-9b89-e59fe0f09179",
+              "round_number": 9
+            },
+            {
+              "round_id": "c5cdf100-a876-4fb7-b5d8-757162c97989",
+              "round_number": 8
+            },
+            {
+              "round_id": "36e581f1-73f8-453f-ab98-cbe3052b701b",
+              "round_number": 7
+            },
+            {
+              "round_id": "ae78003a-4efe-425a-881a-d16a39bca0ad",
+              "round_number": 6
+            },
+            {
+              "round_id": "fd3c92ff-3178-4dc9-8d9b-acf389b3982b",
+              "round_number": 5
+            },
+            {
+              "round_id": "8e839974-b13b-407b-a5e7-fc749d877195",
+              "round_number": 4
+            },
+            {
+              "round_id": "f1dac9a9-5cf1-49a9-8f17-d6cb5d5ba5cb",
+              "round_number": 3
+            },
+            {
+              "round_id": "76909e29-f664-4b2f-b16b-61b7507277e9",
+              "round_number": 2
+            },
+            {
+              "round_id": "71451d74-be9f-471f-aacd-a41f3b68a9cd",
+              "round_number": 1
+            }
+          ],
+          "source": "archive"
+        },
+        "holdout_round_number": 1,
+        "l2_regularization": 0.2,
+        "learned_prior_metadata": {
+          "holdout_round_number": null,
+          "l2_active": 0.6,
+          "l2_active_type": 0.8,
+          "l2_forest": 0.6,
+          "num_rounds": 12,
+          "num_seeds": 60,
+          "rounds": [
+            {
+              "round_id": "71451d74-be9f-471f-aacd-a41f3b68a9cd",
+              "round_number": 1
+            },
+            {
+              "round_id": "76909e29-f664-4b2f-b16b-61b7507277e9",
+              "round_number": 2
+            },
+            {
+              "round_id": "f1dac9a9-5cf1-49a9-8f17-d6cb5d5ba5cb",
+              "round_number": 3
+            },
+            {
+              "round_id": "8e839974-b13b-407b-a5e7-fc749d877195",
+              "round_number": 4
+            },
+            {
+              "round_id": "fd3c92ff-3178-4dc9-8d9b-acf389b3982b",
+              "round_number": 5
+            },
+            {
+              "round_id": "ae78003a-4efe-425a-881a-d16a39bca0ad",
+              "round_number": 6
+            },
+            {
+              "round_id": "36e581f1-73f8-453f-ab98-cbe3052b701b",
+              "round_number": 7
+            },
+            {
+              "round_id": "c5cdf100-a876-4fb7-b5d8-757162c97989",
+              "round_number": 8
+            },
+            {
+              "round_id": "2a341ace-0f57-4309-9b89-e59fe0f09179",
+              "round_number": 9
+            },
+            {
+              "round_id": "75e625c3-60cb-4392-af3e-c86a98bde8c2",
+              "round_number": 10
+            },
+            {
+              "round_id": "324fde07-1670-4202-b199-7aa92ecb40ee",
+              "round_number": 11
+            },
+            {
+              "round_id": "795bfb1f-54bd-4f39-a526-9868b36f7ebd",
+              "round_number": 12
+            }
+          ],
+          "version": 1
+        },
+        "learning_rate": 0.05,
+        "max_depth": 4,
+        "max_iter": 300,
+        "min_samples_leaf": 400,
+        "num_rounds": 12,
+        "num_seeds": 60,
+        "rounds": [
+          {
+            "round_id": "76909e29-f664-4b2f-b16b-61b7507277e9",
+            "round_number": 2
+          },
+          {
+            "round_id": "f1dac9a9-5cf1-49a9-8f17-d6cb5d5ba5cb",
+            "round_number": 3
+          },
+          {
+            "round_id": "8e839974-b13b-407b-a5e7-fc749d877195",
+            "round_number": 4
+          },
+          {
+            "round_id": "fd3c92ff-3178-4dc9-8d9b-acf389b3982b",
+            "round_number": 5
+          },
+          {
+            "round_id": "ae78003a-4efe-425a-881a-d16a39bca0ad",
+            "round_number": 6
+          },
+          {
+            "round_id": "36e581f1-73f8-453f-ab98-cbe3052b701b",
+            "round_number": 7
+          },
+          {
+            "round_id": "c5cdf100-a876-4fb7-b5d8-757162c97989",
+            "round_number": 8
+          },
+          {
+            "round_id": "2a341ace-0f57-4309-9b89-e59fe0f09179",
+            "round_number": 9
+          },
+          {
+            "round_id": "75e625c3-60cb-4392-af3e-c86a98bde8c2",
+            "round_number": 10
+          },
+          {
+            "round_id": "324fde07-1670-4202-b199-7aa92ecb40ee",
+            "round_number": 11
+          },
+          {
+            "round_id": "795bfb1f-54bd-4f39-a526-9868b36f7ebd",
+            "round_number": 12
+          },
+          {
+            "round_id": "7b4bda99-6165-4221-97cc-27880f5e6d95",
+            "round_number": 13
+          }
+        ],
+        "version": 1
+      },
+      "base_mean": 0.11436831916207016,
+      "gated_mean": 79.88010164614386,
+      "num_seeds": 5,
+      "prior_mean": 80.86501206249503,
+      "round_id": "71451d74-be9f-471f-aacd-a41f3b68a9cd",
+      "round_number": 1,
+      "seeds": {
+        "0": {
+          "base_score": 0.09748232636005479,
+          "gate_summary": {
+            "alpha_max": 0.6268877143872827,
+            "alpha_mean": 0.07801760082959158,
+            "alpha_min": 0.0,
+            "strength": 1.0
+          },
+          "gated_score": 77.42118851474041,
+          "official_score": 0.0975,
+          "prior_score": 78.69429133399703
+        },
+        "1": {
+          "base_score": 0.1131560927255072,
+          "gate_summary": {
+            "alpha_max": 0.6283678843139882,
+            "alpha_mean": 0.054305014034776604,
+            "alpha_min": 0.0,
+            "strength": 1.0
+          },
+          "gated_score": 81.97404893788509,
+          "official_score": 0.1132,
+          "prior_score": 82.92491940172353
+        },
+        "2": {
+          "base_score": 0.10982577257033926,
+          "gate_summary": {
+            "alpha_max": 0.6335726353750408,
+            "alpha_mean": 0.06628856424722233,
+            "alpha_min": 0.0,
+            "strength": 1.0
+          },
+          "gated_score": 79.33455330201559,
+          "official_score": 0.1098,
+          "prior_score": 80.35015965213725
+        },
+        "3": {
+          "base_score": 0.13214566731011915,
+          "gate_summary": {
+            "alpha_max": 0.5892540344962829,
+            "alpha_mean": 0.048297213416758425,
+            "alpha_min": 0.0,
+            "strength": 1.0
+          },
+          "gated_score": 84.851898239809,
+          "official_score": 0.1321,
+          "prior_score": 85.56266664286727
+        },
+        "4": {
+          "base_score": 0.11923173684433043,
+          "gate_summary": {
+            "alpha_max": 0.6279961759955867,
+            "alpha_mean": 0.08116611822718842,
+            "alpha_min": 0.0,
+            "strength": 1.0
+          },
+          "gated_score": 75.8188192362692,
+          "official_score": 0.1192,
+          "prior_score": 76.79302328175001
+        }
+      }
+    },
+    {
+      "artifact_metadata": {
+        "historical_prior_metadata": {
+          "bucket_key_version": 2,
+          "num_rounds": 12,
+          "num_seeds": 60,
+          "rounds": [
+            {
+              "round_id": "795bfb1f-54bd-4f39-a526-9868b36f7ebd",
+              "round_number": 12
+            },
+            {
+              "round_id": "324fde07-1670-4202-b199-7aa92ecb40ee",
+              "round_number": 11
+            },
+            {
+              "round_id": "75e625c3-60cb-4392-af3e-c86a98bde8c2",
+              "round_number": 10
+            },
+            {
+              "round_id": "2a341ace-0f57-4309-9b89-e59fe0f09179",
+              "round_number": 9
+            },
+            {
+              "round_id": "c5cdf100-a876-4fb7-b5d8-757162c97989",
+              "round_number": 8
+            },
+            {
+              "round_id": "36e581f1-73f8-453f-ab98-cbe3052b701b",
+              "round_number": 7
+            },
+            {
+              "round_id": "ae78003a-4efe-425a-881a-d16a39bca0ad",
+              "round_number": 6
+            },
+            {
+              "round_id": "fd3c92ff-3178-4dc9-8d9b-acf389b3982b",
+              "round_number": 5
+            },
+            {
+              "round_id": "8e839974-b13b-407b-a5e7-fc749d877195",
+              "round_number": 4
+            },
+            {
+              "round_id": "f1dac9a9-5cf1-49a9-8f17-d6cb5d5ba5cb",
+              "round_number": 3
+            },
+            {
+              "round_id": "76909e29-f664-4b2f-b16b-61b7507277e9",
+              "round_number": 2
+            },
+            {
+              "round_id": "71451d74-be9f-471f-aacd-a41f3b68a9cd",
+              "round_number": 1
+            }
+          ],
+          "source": "archive"
+        },
+        "holdout_round_number": 2,
+        "l2_regularization": 0.2,
+        "learned_prior_metadata": {
+          "holdout_round_number": null,
+          "l2_active": 0.6,
+          "l2_active_type": 0.8,
+          "l2_forest": 0.6,
+          "num_rounds": 12,
+          "num_seeds": 60,
+          "rounds": [
+            {
+              "round_id": "71451d74-be9f-471f-aacd-a41f3b68a9cd",
+              "round_number": 1
+            },
+            {
+              "round_id": "76909e29-f664-4b2f-b16b-61b7507277e9",
+              "round_number": 2
+            },
+            {
+              "round_id": "f1dac9a9-5cf1-49a9-8f17-d6cb5d5ba5cb",
+              "round_number": 3
+            },
+            {
+              "round_id": "8e839974-b13b-407b-a5e7-fc749d877195",
+              "round_number": 4
+            },
+            {
+              "round_id": "fd3c92ff-3178-4dc9-8d9b-acf389b3982b",
+              "round_number": 5
+            },
+            {
+              "round_id": "ae78003a-4efe-425a-881a-d16a39bca0ad",
+              "round_number": 6
+            },
+            {
+              "round_id": "36e581f1-73f8-453f-ab98-cbe3052b701b",
+              "round_number": 7
+            },
+            {
+              "round_id": "c5cdf100-a876-4fb7-b5d8-757162c97989",
+              "round_number": 8
+            },
+            {
+              "round_id": "2a341ace-0f57-4309-9b89-e59fe0f09179",
+              "round_number": 9
+            },
+            {
+              "round_id": "75e625c3-60cb-4392-af3e-c86a98bde8c2",
+              "round_number": 10
+            },
+            {
+              "round_id": "324fde07-1670-4202-b199-7aa92ecb40ee",
+              "round_number": 11
+            },
+            {
+              "round_id": "795bfb1f-54bd-4f39-a526-9868b36f7ebd",
+              "round_number": 12
+            }
+          ],
+          "version": 1
+        },
+        "learning_rate": 0.05,
+        "max_depth": 4,
+        "max_iter": 300,
+        "min_samples_leaf": 400,
+        "num_rounds": 12,
+        "num_seeds": 60,
+        "rounds": [
+          {
+            "round_id": "71451d74-be9f-471f-aacd-a41f3b68a9cd",
+            "round_number": 1
+          },
+          {
+            "round_id": "f1dac9a9-5cf1-49a9-8f17-d6cb5d5ba5cb",
+            "round_number": 3
+          },
+          {
+            "round_id": "8e839974-b13b-407b-a5e7-fc749d877195",
+            "round_number": 4
+          },
+          {
+            "round_id": "fd3c92ff-3178-4dc9-8d9b-acf389b3982b",
+            "round_number": 5
+          },
+          {
+            "round_id": "ae78003a-4efe-425a-881a-d16a39bca0ad",
+            "round_number": 6
+          },
+          {
+            "round_id": "36e581f1-73f8-453f-ab98-cbe3052b701b",
+            "round_number": 7
+          },
+          {
+            "round_id": "c5cdf100-a876-4fb7-b5d8-757162c97989",
+            "round_number": 8
+          },
+          {
+            "round_id": "2a341ace-0f57-4309-9b89-e59fe0f09179",
+            "round_number": 9
+          },
+          {
+            "round_id": "75e625c3-60cb-4392-af3e-c86a98bde8c2",
+            "round_number": 10
+          },
+          {
+            "round_id": "324fde07-1670-4202-b199-7aa92ecb40ee",
+            "round_number": 11
+          },
+          {
+            "round_id": "795bfb1f-54bd-4f39-a526-9868b36f7ebd",
+            "round_number": 12
+          },
+          {
+            "round_id": "7b4bda99-6165-4221-97cc-27880f5e6d95",
+            "round_number": 13
+          }
+        ],
+        "version": 1
+      },
+      "base_mean": 0.15280551109321946,
+      "gated_mean": 85.59091956660487,
+      "num_seeds": 5,
+      "prior_mean": 84.95729794131857,
+      "round_id": "76909e29-f664-4b2f-b16b-61b7507277e9",
+      "round_number": 2,
+      "seeds": {
+        "0": {
+          "base_score": 0.17286436027650068,
+          "gate_summary": {
+            "alpha_max": 0.7594912414750228,
+            "alpha_mean": 0.14023905745942128,
+            "alpha_min": 0.0,
+            "strength": 1.0
+          },
+          "gated_score": 85.54702607262178,
+          "official_score": 0.1729,
+          "prior_score": 83.07871902928153
+        },
+        "1": {
+          "base_score": 0.1490459710904853,
+          "gate_summary": {
+            "alpha_max": 0.6771816410489375,
+            "alpha_mean": 0.12931771432745098,
+            "alpha_min": 0.0,
+            "strength": 1.0
+          },
+          "gated_score": 86.37416599697619,
+          "official_score": 0.149,
+          "prior_score": 86.62670883417076
+        },
+        "2": {
+          "base_score": 0.12006588745136783,
+          "gate_summary": {
+            "alpha_max": 0.7749699522269679,
+            "alpha_mean": 0.1369585836902799,
+            "alpha_min": 0.0,
+            "strength": 1.0
+          },
+          "gated_score": 84.73576784106237,
+          "official_score": 0.1201,
+          "prior_score": 84.69284101819655
+        },
+        "3": {
+          "base_score": 0.13682973458476896,
+          "gate_summary": {
+            "alpha_max": 0.7027772843204995,
+            "alpha_mean": 0.12609866967202304,
+            "alpha_min": 0.0,
+            "strength": 1.0
+          },
+          "gated_score": 84.93175002108165,
+          "official_score": 0.1368,
+          "prior_score": 85.380821330448
+        },
+        "4": {
+          "base_score": 0.1852216020629746,
+          "gate_summary": {
+            "alpha_max": 0.7639325381258112,
+            "alpha_mean": 0.1305501173202444,
+            "alpha_min": 0.0,
+            "strength": 1.0
+          },
+          "gated_score": 86.36588790128229,
+          "official_score": 0.1852,
+          "prior_score": 85.00739949449606
+        }
+      }
+    },
+    {
+      "artifact_metadata": {
+        "historical_prior_metadata": {
+          "bucket_key_version": 2,
+          "num_rounds": 12,
+          "num_seeds": 60,
+          "rounds": [
+            {
+              "round_id": "795bfb1f-54bd-4f39-a526-9868b36f7ebd",
+              "round_number": 12
+            },
+            {
+              "round_id": "324fde07-1670-4202-b199-7aa92ecb40ee",
+              "round_number": 11
+            },
+            {
+              "round_id": "75e625c3-60cb-4392-af3e-c86a98bde8c2",
+              "round_number": 10
+            },
+            {
+              "round_id": "2a341ace-0f57-4309-9b89-e59fe0f09179",
+              "round_number": 9
+            },
+            {
+              "round_id": "c5cdf100-a876-4fb7-b5d8-757162c97989",
+              "round_number": 8
+            },
+            {
+              "round_id": "36e581f1-73f8-453f-ab98-cbe3052b701b",
+              "round_number": 7
+            },
+            {
+              "round_id": "ae78003a-4efe-425a-881a-d16a39bca0ad",
+              "round_number": 6
+            },
+            {
+              "round_id": "fd3c92ff-3178-4dc9-8d9b-acf389b3982b",
+              "round_number": 5
+            },
+            {
+              "round_id": "8e839974-b13b-407b-a5e7-fc749d877195",
+              "round_number": 4
+            },
+            {
+              "round_id": "f1dac9a9-5cf1-49a9-8f17-d6cb5d5ba5cb",
+              "round_number": 3
+            },
+            {
+              "round_id": "76909e29-f664-4b2f-b16b-61b7507277e9",
+              "round_number": 2
+            },
+            {
+              "round_id": "71451d74-be9f-471f-aacd-a41f3b68a9cd",
+              "round_number": 1
+            }
+          ],
+          "source": "archive"
+        },
+        "holdout_round_number": 3,
+        "l2_regularization": 0.2,
+        "learned_prior_metadata": {
+          "holdout_round_number": null,
+          "l2_active": 0.6,
+          "l2_active_type": 0.8,
+          "l2_forest": 0.6,
+          "num_rounds": 12,
+          "num_seeds": 60,
+          "rounds": [
+            {
+              "round_id": "71451d74-be9f-471f-aacd-a41f3b68a9cd",
+              "round_number": 1
+            },
+            {
+              "round_id": "76909e29-f664-4b2f-b16b-61b7507277e9",
+              "round_number": 2
+            },
+            {
+              "round_id": "f1dac9a9-5cf1-49a9-8f17-d6cb5d5ba5cb",
+              "round_number": 3
+            },
+            {
+              "round_id": "8e839974-b13b-407b-a5e7-fc749d877195",
+              "round_number": 4
+            },
+            {
+              "round_id": "fd3c92ff-3178-4dc9-8d9b-acf389b3982b",
+              "round_number": 5
+            },
+            {
+              "round_id": "ae78003a-4efe-425a-881a-d16a39bca0ad",
+              "round_number": 6
+            },
+            {
+              "round_id": "36e581f1-73f8-453f-ab98-cbe3052b701b",
+              "round_number": 7
+            },
+            {
+              "round_id": "c5cdf100-a876-4fb7-b5d8-757162c97989",
+              "round_number": 8
+            },
+            {
+              "round_id": "2a341ace-0f57-4309-9b89-e59fe0f09179",
+              "round_number": 9
+            },
+            {
+              "round_id": "75e625c3-60cb-4392-af3e-c86a98bde8c2",
+              "round_number": 10
+            },
+            {
+              "round_id": "324fde07-1670-4202-b199-7aa92ecb40ee",
+              "round_number": 11
+            },
+            {
+              "round_id": "795bfb1f-54bd-4f39-a526-9868b36f7ebd",
+              "round_number": 12
+            }
+          ],
+          "version": 1
+        },
+        "learning_rate": 0.05,
+        "max_depth": 4,
+        "max_iter": 300,
+        "min_samples_leaf": 400,
+        "num_rounds": 12,
+        "num_seeds": 60,
+        "rounds": [
+          {
+            "round_id": "71451d74-be9f-471f-aacd-a41f3b68a9cd",
+            "round_number": 1
+          },
+          {
+            "round_id": "76909e29-f664-4b2f-b16b-61b7507277e9",
+            "round_number": 2
+          },
+          {
+            "round_id": "8e839974-b13b-407b-a5e7-fc749d877195",
+            "round_number": 4
+          },
+          {
+            "round_id": "fd3c92ff-3178-4dc9-8d9b-acf389b3982b",
+            "round_number": 5
+          },
+          {
+            "round_id": "ae78003a-4efe-425a-881a-d16a39bca0ad",
+            "round_number": 6
+          },
+          {
+            "round_id": "36e581f1-73f8-453f-ab98-cbe3052b701b",
+            "round_number": 7
+          },
+          {
+            "round_id": "c5cdf100-a876-4fb7-b5d8-757162c97989",
+            "round_number": 8
+          },
+          {
+            "round_id": "2a341ace-0f57-4309-9b89-e59fe0f09179",
+            "round_number": 9
+          },
+          {
+            "round_id": "75e625c3-60cb-4392-af3e-c86a98bde8c2",
+            "round_number": 10
+          },
+          {
+            "round_id": "324fde07-1670-4202-b199-7aa92ecb40ee",
+            "round_number": 11
+          },
+          {
+            "round_id": "795bfb1f-54bd-4f39-a526-9868b36f7ebd",
+            "round_number": 12
+          },
+          {
+            "round_id": "7b4bda99-6165-4221-97cc-27880f5e6d95",
+            "round_number": 13
+          }
+        ],
+        "version": 1
+      },
+      "base_mean": 23.142138521075445,
+      "gated_mean": 42.14392326182344,
+      "num_seeds": 5,
+      "prior_mean": 45.76346632643282,
+      "round_id": "f1dac9a9-5cf1-49a9-8f17-d6cb5d5ba5cb",
+      "round_number": 3,
+      "seeds": {
+        "0": {
+          "base_score": 24.26292910970217,
+          "gate_summary": {
+            "alpha_max": 1.0,
+            "alpha_mean": 0.44679533251203474,
+            "alpha_min": 0.013091356161653911,
+            "strength": 1.0
+          },
+          "gated_score": 43.16359552036645,
+          "official_score": 24.2629,
+          "prior_score": 46.072570597227696
+        },
+        "1": {
+          "base_score": 21.212506115965418,
+          "gate_summary": {
+            "alpha_max": 1.0,
+            "alpha_mean": 0.3983468840974531,
+            "alpha_min": 0.0,
+            "strength": 1.0
+          },
+          "gated_score": 41.490186240346546,
+          "official_score": 21.2125,
+          "prior_score": 46.037175978153286
+        },
+        "2": {
+          "base_score": 23.439413080089853,
+          "gate_summary": {
+            "alpha_max": 1.0,
+            "alpha_mean": 0.4673978055784413,
+            "alpha_min": 0.04098088217488205,
+            "strength": 1.0
+          },
+          "gated_score": 41.79675339684877,
+          "official_score": 23.4394,
+          "prior_score": 45.49413335342636
+        },
+        "3": {
+          "base_score": 23.193059097382246,
+          "gate_summary": {
+            "alpha_max": 1.0,
+            "alpha_mean": 0.4771127587090673,
+            "alpha_min": 0.0,
+            "strength": 1.0
+          },
+          "gated_score": 42.80129917692534,
+          "official_score": 23.1931,
+          "prior_score": 46.99869209561389
+        },
+        "4": {
+          "base_score": 23.602785202237527,
+          "gate_summary": {
+            "alpha_max": 0.9990337643967059,
+            "alpha_mean": 0.4065177625928948,
+            "alpha_min": 0.0,
+            "strength": 1.0
+          },
+          "gated_score": 41.46778197463007,
+          "official_score": 23.6028,
+          "prior_score": 44.21475960774284
+        }
+      }
+    },
+    {
+      "artifact_metadata": {
+        "historical_prior_metadata": {
+          "bucket_key_version": 2,
+          "num_rounds": 12,
+          "num_seeds": 60,
+          "rounds": [
+            {
+              "round_id": "795bfb1f-54bd-4f39-a526-9868b36f7ebd",
+              "round_number": 12
+            },
+            {
+              "round_id": "324fde07-1670-4202-b199-7aa92ecb40ee",
+              "round_number": 11
+            },
+            {
+              "round_id": "75e625c3-60cb-4392-af3e-c86a98bde8c2",
+              "round_number": 10
+            },
+            {
+              "round_id": "2a341ace-0f57-4309-9b89-e59fe0f09179",
+              "round_number": 9
+            },
+            {
+              "round_id": "c5cdf100-a876-4fb7-b5d8-757162c97989",
+              "round_number": 8
+            },
+            {
+              "round_id": "36e581f1-73f8-453f-ab98-cbe3052b701b",
+              "round_number": 7
+            },
+            {
+              "round_id": "ae78003a-4efe-425a-881a-d16a39bca0ad",
+              "round_number": 6
+            },
+            {
+              "round_id": "fd3c92ff-3178-4dc9-8d9b-acf389b3982b",
+              "round_number": 5
+            },
+            {
+              "round_id": "8e839974-b13b-407b-a5e7-fc749d877195",
+              "round_number": 4
+            },
+            {
+              "round_id": "f1dac9a9-5cf1-49a9-8f17-d6cb5d5ba5cb",
+              "round_number": 3
+            },
+            {
+              "round_id": "76909e29-f664-4b2f-b16b-61b7507277e9",
+              "round_number": 2
+            },
+            {
+              "round_id": "71451d74-be9f-471f-aacd-a41f3b68a9cd",
+              "round_number": 1
+            }
+          ],
+          "source": "archive"
+        },
+        "holdout_round_number": 4,
+        "l2_regularization": 0.2,
+        "learned_prior_metadata": {
+          "holdout_round_number": null,
+          "l2_active": 0.6,
+          "l2_active_type": 0.8,
+          "l2_forest": 0.6,
+          "num_rounds": 12,
+          "num_seeds": 60,
+          "rounds": [
+            {
+              "round_id": "71451d74-be9f-471f-aacd-a41f3b68a9cd",
+              "round_number": 1
+            },
+            {
+              "round_id": "76909e29-f664-4b2f-b16b-61b7507277e9",
+              "round_number": 2
+            },
+            {
+              "round_id": "f1dac9a9-5cf1-49a9-8f17-d6cb5d5ba5cb",
+              "round_number": 3
+            },
+            {
+              "round_id": "8e839974-b13b-407b-a5e7-fc749d877195",
+              "round_number": 4
+            },
+            {
+              "round_id": "fd3c92ff-3178-4dc9-8d9b-acf389b3982b",
+              "round_number": 5
+            },
+            {
+              "round_id": "ae78003a-4efe-425a-881a-d16a39bca0ad",
+              "round_number": 6
+            },
+            {
+              "round_id": "36e581f1-73f8-453f-ab98-cbe3052b701b",
+              "round_number": 7
+            },
+            {
+              "round_id": "c5cdf100-a876-4fb7-b5d8-757162c97989",
+              "round_number": 8
+            },
+            {
+              "round_id": "2a341ace-0f57-4309-9b89-e59fe0f09179",
+              "round_number": 9
+            },
+            {
+              "round_id": "75e625c3-60cb-4392-af3e-c86a98bde8c2",
+              "round_number": 10
+            },
+            {
+              "round_id": "324fde07-1670-4202-b199-7aa92ecb40ee",
+              "round_number": 11
+            },
+            {
+              "round_id": "795bfb1f-54bd-4f39-a526-9868b36f7ebd",
+              "round_number": 12
+            }
+          ],
+          "version": 1
+        },
+        "learning_rate": 0.05,
+        "max_depth": 4,
+        "max_iter": 300,
+        "min_samples_leaf": 400,
+        "num_rounds": 12,
+        "num_seeds": 60,
+        "rounds": [
+          {
+            "round_id": "71451d74-be9f-471f-aacd-a41f3b68a9cd",
+            "round_number": 1
+          },
+          {
+            "round_id": "76909e29-f664-4b2f-b16b-61b7507277e9",
+            "round_number": 2
+          },
+          {
+            "round_id": "f1dac9a9-5cf1-49a9-8f17-d6cb5d5ba5cb",
+            "round_number": 3
+          },
+          {
+            "round_id": "fd3c92ff-3178-4dc9-8d9b-acf389b3982b",
+            "round_number": 5
+          },
+          {
+            "round_id": "ae78003a-4efe-425a-881a-d16a39bca0ad",
+            "round_number": 6
+          },
+          {
+            "round_id": "36e581f1-73f8-453f-ab98-cbe3052b701b",
+            "round_number": 7
+          },
+          {
+            "round_id": "c5cdf100-a876-4fb7-b5d8-757162c97989",
+            "round_number": 8
+          },
+          {
+            "round_id": "2a341ace-0f57-4309-9b89-e59fe0f09179",
+            "round_number": 9
+          },
+          {
+            "round_id": "75e625c3-60cb-4392-af3e-c86a98bde8c2",
+            "round_number": 10
+          },
+          {
+            "round_id": "324fde07-1670-4202-b199-7aa92ecb40ee",
+            "round_number": 11
+          },
+          {
+            "round_id": "795bfb1f-54bd-4f39-a526-9868b36f7ebd",
+            "round_number": 12
+          },
+          {
+            "round_id": "7b4bda99-6165-4221-97cc-27880f5e6d95",
+            "round_number": 13
+          }
+        ],
+        "version": 1
+      },
+      "base_mean": 16.596902672332753,
+      "gated_mean": 80.85535458066404,
+      "num_seeds": 5,
+      "prior_mean": 86.72915036020177,
+      "round_id": "8e839974-b13b-407b-a5e7-fc749d877195",
+      "round_number": 4,
+      "seeds": {
+        "0": {
+          "base_score": 13.282027675817302,
+          "gate_summary": {
+            "alpha_max": 1.0,
+            "alpha_mean": 0.34888906563706557,
+            "alpha_min": 0.0,
+            "strength": 1.0
+          },
+          "gated_score": 80.0263240283806,
+          "official_score": 13.282,
+          "prior_score": 85.23668991227011
+        },
+        "1": {
+          "base_score": 16.720473631145133,
+          "gate_summary": {
+            "alpha_max": 1.0,
+            "alpha_mean": 0.28907360142967364,
+            "alpha_min": 0.0,
+            "strength": 1.0
+          },
+          "gated_score": 81.81298760721697,
+          "official_score": 16.7205,
+          "prior_score": 88.181548403441
+        },
+        "2": {
+          "base_score": 18.731128112733582,
+          "gate_summary": {
+            "alpha_max": 1.0,
+            "alpha_mean": 0.3601329160921587,
+            "alpha_min": 0.0,
+            "strength": 1.0
+          },
+          "gated_score": 80.91456087020154,
+          "official_score": 18.7311,
+          "prior_score": 86.9450723306334
+        },
+        "3": {
+          "base_score": 18.949909789418825,
+          "gate_summary": {
+            "alpha_max": 1.0,
+            "alpha_mean": 0.35651252353790924,
+            "alpha_min": 0.0,
+            "strength": 1.0
+          },
+          "gated_score": 80.34816429329086,
+          "official_score": 18.9499,
+          "prior_score": 86.13222996346146
+        },
+        "4": {
+          "base_score": 15.300974152548926,
+          "gate_summary": {
+            "alpha_max": 1.0,
+            "alpha_mean": 0.3082334453847466,
+            "alpha_min": 0.0,
+            "strength": 1.0
+          },
+          "gated_score": 81.17473610423022,
+          "official_score": 15.301,
+          "prior_score": 87.15021119120283
+        }
+      }
+    },
+    {
+      "artifact_metadata": {
+        "historical_prior_metadata": {
+          "bucket_key_version": 2,
+          "num_rounds": 12,
+          "num_seeds": 60,
+          "rounds": [
+            {
+              "round_id": "795bfb1f-54bd-4f39-a526-9868b36f7ebd",
+              "round_number": 12
+            },
+            {
+              "round_id": "324fde07-1670-4202-b199-7aa92ecb40ee",
+              "round_number": 11
+            },
+            {
+              "round_id": "75e625c3-60cb-4392-af3e-c86a98bde8c2",
+              "round_number": 10
+            },
+            {
+              "round_id": "2a341ace-0f57-4309-9b89-e59fe0f09179",
+              "round_number": 9
+            },
+            {
+              "round_id": "c5cdf100-a876-4fb7-b5d8-757162c97989",
+              "round_number": 8
+            },
+            {
+              "round_id": "36e581f1-73f8-453f-ab98-cbe3052b701b",
+              "round_number": 7
+            },
+            {
+              "round_id": "ae78003a-4efe-425a-881a-d16a39bca0ad",
+              "round_number": 6
+            },
+            {
+              "round_id": "fd3c92ff-3178-4dc9-8d9b-acf389b3982b",
+              "round_number": 5
+            },
+            {
+              "round_id": "8e839974-b13b-407b-a5e7-fc749d877195",
+              "round_number": 4
+            },
+            {
+              "round_id": "f1dac9a9-5cf1-49a9-8f17-d6cb5d5ba5cb",
+              "round_number": 3
+            },
+            {
+              "round_id": "76909e29-f664-4b2f-b16b-61b7507277e9",
+              "round_number": 2
+            },
+            {
+              "round_id": "71451d74-be9f-471f-aacd-a41f3b68a9cd",
+              "round_number": 1
+            }
+          ],
+          "source": "archive"
+        },
+        "holdout_round_number": 5,
+        "l2_regularization": 0.2,
+        "learned_prior_metadata": {
+          "holdout_round_number": null,
+          "l2_active": 0.6,
+          "l2_active_type": 0.8,
+          "l2_forest": 0.6,
+          "num_rounds": 12,
+          "num_seeds": 60,
+          "rounds": [
+            {
+              "round_id": "71451d74-be9f-471f-aacd-a41f3b68a9cd",
+              "round_number": 1
+            },
+            {
+              "round_id": "76909e29-f664-4b2f-b16b-61b7507277e9",
+              "round_number": 2
+            },
+            {
+              "round_id": "f1dac9a9-5cf1-49a9-8f17-d6cb5d5ba5cb",
+              "round_number": 3
+            },
+            {
+              "round_id": "8e839974-b13b-407b-a5e7-fc749d877195",
+              "round_number": 4
+            },
+            {
+              "round_id": "fd3c92ff-3178-4dc9-8d9b-acf389b3982b",
+              "round_number": 5
+            },
+            {
+              "round_id": "ae78003a-4efe-425a-881a-d16a39bca0ad",
+              "round_number": 6
+            },
+            {
+              "round_id": "36e581f1-73f8-453f-ab98-cbe3052b701b",
+              "round_number": 7
+            },
+            {
+              "round_id": "c5cdf100-a876-4fb7-b5d8-757162c97989",
+              "round_number": 8
+            },
+            {
+              "round_id": "2a341ace-0f57-4309-9b89-e59fe0f09179",
+              "round_number": 9
+            },
+            {
+              "round_id": "75e625c3-60cb-4392-af3e-c86a98bde8c2",
+              "round_number": 10
+            },
+            {
+              "round_id": "324fde07-1670-4202-b199-7aa92ecb40ee",
+              "round_number": 11
+            },
+            {
+              "round_id": "795bfb1f-54bd-4f39-a526-9868b36f7ebd",
+              "round_number": 12
+            }
+          ],
+          "version": 1
+        },
+        "learning_rate": 0.05,
+        "max_depth": 4,
+        "max_iter": 300,
+        "min_samples_leaf": 400,
+        "num_rounds": 12,
+        "num_seeds": 60,
+        "rounds": [
+          {
+            "round_id": "71451d74-be9f-471f-aacd-a41f3b68a9cd",
+            "round_number": 1
+          },
+          {
+            "round_id": "76909e29-f664-4b2f-b16b-61b7507277e9",
+            "round_number": 2
+          },
+          {
+            "round_id": "f1dac9a9-5cf1-49a9-8f17-d6cb5d5ba5cb",
+            "round_number": 3
+          },
+          {
+            "round_id": "8e839974-b13b-407b-a5e7-fc749d877195",
+            "round_number": 4
+          },
+          {
+            "round_id": "ae78003a-4efe-425a-881a-d16a39bca0ad",
+            "round_number": 6
+          },
+          {
+            "round_id": "36e581f1-73f8-453f-ab98-cbe3052b701b",
+            "round_number": 7
+          },
+          {
+            "round_id": "c5cdf100-a876-4fb7-b5d8-757162c97989",
+            "round_number": 8
+          },
+          {
+            "round_id": "2a341ace-0f57-4309-9b89-e59fe0f09179",
+            "round_number": 9
+          },
+          {
+            "round_id": "75e625c3-60cb-4392-af3e-c86a98bde8c2",
+            "round_number": 10
+          },
+          {
+            "round_id": "324fde07-1670-4202-b199-7aa92ecb40ee",
+            "round_number": 11
+          },
+          {
+            "round_id": "795bfb1f-54bd-4f39-a526-9868b36f7ebd",
+            "round_number": 12
+          },
+          {
+            "round_id": "7b4bda99-6165-4221-97cc-27880f5e6d95",
+            "round_number": 13
+          }
+        ],
+        "version": 1
+      },
+      "base_mean": 43.02832647599036,
+      "gated_mean": 78.26679671919032,
+      "num_seeds": 5,
+      "prior_mean": 79.79899856275188,
+      "round_id": "fd3c92ff-3178-4dc9-8d9b-acf389b3982b",
+      "round_number": 5,
+      "seeds": {
+        "0": {
+          "base_score": 49.48155348275942,
+          "gate_summary": {
+            "alpha_max": 1.0,
+            "alpha_mean": 0.39801849696331404,
+            "alpha_min": 0.0,
+            "strength": 1.0
+          },
+          "gated_score": 77.81413765594884,
+          "official_score": 49.4816,
+          "prior_score": 78.93702898477594
+        },
+        "1": {
+          "base_score": 45.98384704408738,
+          "gate_summary": {
+            "alpha_max": 1.0,
+            "alpha_mean": 0.41109014552629963,
+            "alpha_min": 0.0,
+            "strength": 1.0
+          },
+          "gated_score": 77.92363556305745,
+          "official_score": 45.9838,
+          "prior_score": 76.43241102027415
+        },
+        "2": {
+          "base_score": 41.30163380046608,
+          "gate_summary": {
+            "alpha_max": 1.0,
+            "alpha_mean": 0.4478689028914634,
+            "alpha_min": 0.0,
+            "strength": 1.0
+          },
+          "gated_score": 78.12194801266565,
+          "official_score": 41.3016,
+          "prior_score": 80.61301588338446
+        },
+        "3": {
+          "base_score": 43.86293445424164,
+          "gate_summary": {
+            "alpha_max": 1.0,
+            "alpha_mean": 0.43503642628887407,
+            "alpha_min": 0.0,
+            "strength": 1.0
+          },
+          "gated_score": 79.34914049897343,
+          "official_score": 43.8629,
+          "prior_score": 81.34493670199362
+        },
+        "4": {
+          "base_score": 34.511663598397256,
+          "gate_summary": {
+            "alpha_max": 1.0,
+            "alpha_mean": 0.3748506193467367,
+            "alpha_min": 0.0,
+            "strength": 1.0
+          },
+          "gated_score": 78.12512186530623,
+          "official_score": 34.5117,
+          "prior_score": 81.6676002233312
+        }
+      }
+    },
+    {
+      "artifact_metadata": {
+        "historical_prior_metadata": {
+          "bucket_key_version": 2,
+          "num_rounds": 12,
+          "num_seeds": 60,
+          "rounds": [
+            {
+              "round_id": "795bfb1f-54bd-4f39-a526-9868b36f7ebd",
+              "round_number": 12
+            },
+            {
+              "round_id": "324fde07-1670-4202-b199-7aa92ecb40ee",
+              "round_number": 11
+            },
+            {
+              "round_id": "75e625c3-60cb-4392-af3e-c86a98bde8c2",
+              "round_number": 10
+            },
+            {
+              "round_id": "2a341ace-0f57-4309-9b89-e59fe0f09179",
+              "round_number": 9
+            },
+            {
+              "round_id": "c5cdf100-a876-4fb7-b5d8-757162c97989",
+              "round_number": 8
+            },
+            {
+              "round_id": "36e581f1-73f8-453f-ab98-cbe3052b701b",
+              "round_number": 7
+            },
+            {
+              "round_id": "ae78003a-4efe-425a-881a-d16a39bca0ad",
+              "round_number": 6
+            },
+            {
+              "round_id": "fd3c92ff-3178-4dc9-8d9b-acf389b3982b",
+              "round_number": 5
+            },
+            {
+              "round_id": "8e839974-b13b-407b-a5e7-fc749d877195",
+              "round_number": 4
+            },
+            {
+              "round_id": "f1dac9a9-5cf1-49a9-8f17-d6cb5d5ba5cb",
+              "round_number": 3
+            },
+            {
+              "round_id": "76909e29-f664-4b2f-b16b-61b7507277e9",
+              "round_number": 2
+            },
+            {
+              "round_id": "71451d74-be9f-471f-aacd-a41f3b68a9cd",
+              "round_number": 1
+            }
+          ],
+          "source": "archive"
+        },
+        "holdout_round_number": 6,
+        "l2_regularization": 0.2,
+        "learned_prior_metadata": {
+          "holdout_round_number": null,
+          "l2_active": 0.6,
+          "l2_active_type": 0.8,
+          "l2_forest": 0.6,
+          "num_rounds": 12,
+          "num_seeds": 60,
+          "rounds": [
+            {
+              "round_id": "71451d74-be9f-471f-aacd-a41f3b68a9cd",
+              "round_number": 1
+            },
+            {
+              "round_id": "76909e29-f664-4b2f-b16b-61b7507277e9",
+              "round_number": 2
+            },
+            {
+              "round_id": "f1dac9a9-5cf1-49a9-8f17-d6cb5d5ba5cb",
+              "round_number": 3
+            },
+            {
+              "round_id": "8e839974-b13b-407b-a5e7-fc749d877195",
+              "round_number": 4
+            },
+            {
+              "round_id": "fd3c92ff-3178-4dc9-8d9b-acf389b3982b",
+              "round_number": 5
+            },
+            {
+              "round_id": "ae78003a-4efe-425a-881a-d16a39bca0ad",
+              "round_number": 6
+            },
+            {
+              "round_id": "36e581f1-73f8-453f-ab98-cbe3052b701b",
+              "round_number": 7
+            },
+            {
+              "round_id": "c5cdf100-a876-4fb7-b5d8-757162c97989",
+              "round_number": 8
+            },
+            {
+              "round_id": "2a341ace-0f57-4309-9b89-e59fe0f09179",
+              "round_number": 9
+            },
+            {
+              "round_id": "75e625c3-60cb-4392-af3e-c86a98bde8c2",
+              "round_number": 10
+            },
+            {
+              "round_id": "324fde07-1670-4202-b199-7aa92ecb40ee",
+              "round_number": 11
+            },
+            {
+              "round_id": "795bfb1f-54bd-4f39-a526-9868b36f7ebd",
+              "round_number": 12
+            }
+          ],
+          "version": 1
+        },
+        "learning_rate": 0.05,
+        "max_depth": 4,
+        "max_iter": 300,
+        "min_samples_leaf": 400,
+        "num_rounds": 12,
+        "num_seeds": 60,
+        "rounds": [
+          {
+            "round_id": "71451d74-be9f-471f-aacd-a41f3b68a9cd",
+            "round_number": 1
+          },
+          {
+            "round_id": "76909e29-f664-4b2f-b16b-61b7507277e9",
+            "round_number": 2
+          },
+          {
+            "round_id": "f1dac9a9-5cf1-49a9-8f17-d6cb5d5ba5cb",
+            "round_number": 3
+          },
+          {
+            "round_id": "8e839974-b13b-407b-a5e7-fc749d877195",
+            "round_number": 4
+          },
+          {
+            "round_id": "fd3c92ff-3178-4dc9-8d9b-acf389b3982b",
+            "round_number": 5
+          },
+          {
+            "round_id": "36e581f1-73f8-453f-ab98-cbe3052b701b",
+            "round_number": 7
+          },
+          {
+            "round_id": "c5cdf100-a876-4fb7-b5d8-757162c97989",
+            "round_number": 8
+          },
+          {
+            "round_id": "2a341ace-0f57-4309-9b89-e59fe0f09179",
+            "round_number": 9
+          },
+          {
+            "round_id": "75e625c3-60cb-4392-af3e-c86a98bde8c2",
+            "round_number": 10
+          },
+          {
+            "round_id": "324fde07-1670-4202-b199-7aa92ecb40ee",
+            "round_number": 11
+          },
+          {
+            "round_id": "795bfb1f-54bd-4f39-a526-9868b36f7ebd",
+            "round_number": 12
+          },
+          {
+            "round_id": "7b4bda99-6165-4221-97cc-27880f5e6d95",
+            "round_number": 13
+          }
+        ],
+        "version": 1
+      },
+      "base_mean": 49.82251715778426,
+      "gated_mean": 75.35458019836395,
+      "num_seeds": 5,
+      "prior_mean": 70.58260136043695,
+      "round_id": "ae78003a-4efe-425a-881a-d16a39bca0ad",
+      "round_number": 6,
+      "seeds": {
+        "0": {
+          "base_score": 49.838865132799086,
+          "gate_summary": {
+            "alpha_max": 1.0,
+            "alpha_mean": 0.27843587633870487,
+            "alpha_min": 0.0,
+            "strength": 1.0
+          },
+          "gated_score": 74.6340724946859,
+          "official_score": 49.8389,
+          "prior_score": 69.98518045702741
+        },
+        "1": {
+          "base_score": 50.65317502489803,
+          "gate_summary": {
+            "alpha_max": 1.0,
+            "alpha_mean": 0.3056940165975941,
+            "alpha_min": 0.0,
+            "strength": 1.0
+          },
+          "gated_score": 74.76616974722161,
+          "official_score": 50.6532,
+          "prior_score": 69.77980306253764
+        },
+        "2": {
+          "base_score": 50.581993849775166,
+          "gate_summary": {
+            "alpha_max": 1.0,
+            "alpha_mean": 0.31265612291676154,
+            "alpha_min": 0.0,
+            "strength": 1.0
+          },
+          "gated_score": 75.71039419483759,
+          "official_score": 50.582,
+          "prior_score": 71.59484179788967
+        },
+        "3": {
+          "base_score": 48.96165210084468,
+          "gate_summary": {
+            "alpha_max": 1.0,
+            "alpha_mean": 0.2852995001071336,
+            "alpha_min": 0.0,
+            "strength": 1.0
+          },
+          "gated_score": 76.80839719475033,
+          "official_score": 48.9617,
+          "prior_score": 72.01972955560167
+        },
+        "4": {
+          "base_score": 49.076899680604356,
+          "gate_summary": {
+            "alpha_max": 1.0,
+            "alpha_mean": 0.28412038769055575,
+            "alpha_min": 0.0,
+            "strength": 1.0
+          },
+          "gated_score": 74.8538673603243,
+          "official_score": 49.0769,
+          "prior_score": 69.53345192912838
+        }
+      }
+    },
+    {
+      "artifact_metadata": {
+        "historical_prior_metadata": {
+          "bucket_key_version": 2,
+          "num_rounds": 12,
+          "num_seeds": 60,
+          "rounds": [
+            {
+              "round_id": "795bfb1f-54bd-4f39-a526-9868b36f7ebd",
+              "round_number": 12
+            },
+            {
+              "round_id": "324fde07-1670-4202-b199-7aa92ecb40ee",
+              "round_number": 11
+            },
+            {
+              "round_id": "75e625c3-60cb-4392-af3e-c86a98bde8c2",
+              "round_number": 10
+            },
+            {
+              "round_id": "2a341ace-0f57-4309-9b89-e59fe0f09179",
+              "round_number": 9
+            },
+            {
+              "round_id": "c5cdf100-a876-4fb7-b5d8-757162c97989",
+              "round_number": 8
+            },
+            {
+              "round_id": "36e581f1-73f8-453f-ab98-cbe3052b701b",
+              "round_number": 7
+            },
+            {
+              "round_id": "ae78003a-4efe-425a-881a-d16a39bca0ad",
+              "round_number": 6
+            },
+            {
+              "round_id": "fd3c92ff-3178-4dc9-8d9b-acf389b3982b",
+              "round_number": 5
+            },
+            {
+              "round_id": "8e839974-b13b-407b-a5e7-fc749d877195",
+              "round_number": 4
+            },
+            {
+              "round_id": "f1dac9a9-5cf1-49a9-8f17-d6cb5d5ba5cb",
+              "round_number": 3
+            },
+            {
+              "round_id": "76909e29-f664-4b2f-b16b-61b7507277e9",
+              "round_number": 2
+            },
+            {
+              "round_id": "71451d74-be9f-471f-aacd-a41f3b68a9cd",
+              "round_number": 1
+            }
+          ],
+          "source": "archive"
+        },
+        "holdout_round_number": 7,
+        "l2_regularization": 0.2,
+        "learned_prior_metadata": {
+          "holdout_round_number": null,
+          "l2_active": 0.6,
+          "l2_active_type": 0.8,
+          "l2_forest": 0.6,
+          "num_rounds": 12,
+          "num_seeds": 60,
+          "rounds": [
+            {
+              "round_id": "71451d74-be9f-471f-aacd-a41f3b68a9cd",
+              "round_number": 1
+            },
+            {
+              "round_id": "76909e29-f664-4b2f-b16b-61b7507277e9",
+              "round_number": 2
+            },
+            {
+              "round_id": "f1dac9a9-5cf1-49a9-8f17-d6cb5d5ba5cb",
+              "round_number": 3
+            },
+            {
+              "round_id": "8e839974-b13b-407b-a5e7-fc749d877195",
+              "round_number": 4
+            },
+            {
+              "round_id": "fd3c92ff-3178-4dc9-8d9b-acf389b3982b",
+              "round_number": 5
+            },
+            {
+              "round_id": "ae78003a-4efe-425a-881a-d16a39bca0ad",
+              "round_number": 6
+            },
+            {
+              "round_id": "36e581f1-73f8-453f-ab98-cbe3052b701b",
+              "round_number": 7
+            },
+            {
+              "round_id": "c5cdf100-a876-4fb7-b5d8-757162c97989",
+              "round_number": 8
+            },
+            {
+              "round_id": "2a341ace-0f57-4309-9b89-e59fe0f09179",
+              "round_number": 9
+            },
+            {
+              "round_id": "75e625c3-60cb-4392-af3e-c86a98bde8c2",
+              "round_number": 10
+            },
+            {
+              "round_id": "324fde07-1670-4202-b199-7aa92ecb40ee",
+              "round_number": 11
+            },
+            {
+              "round_id": "795bfb1f-54bd-4f39-a526-9868b36f7ebd",
+              "round_number": 12
+            }
+          ],
+          "version": 1
+        },
+        "learning_rate": 0.05,
+        "max_depth": 4,
+        "max_iter": 300,
+        "min_samples_leaf": 400,
+        "num_rounds": 12,
+        "num_seeds": 60,
+        "rounds": [
+          {
+            "round_id": "71451d74-be9f-471f-aacd-a41f3b68a9cd",
+            "round_number": 1
+          },
+          {
+            "round_id": "76909e29-f664-4b2f-b16b-61b7507277e9",
+            "round_number": 2
+          },
+          {
+            "round_id": "f1dac9a9-5cf1-49a9-8f17-d6cb5d5ba5cb",
+            "round_number": 3
+          },
+          {
+            "round_id": "8e839974-b13b-407b-a5e7-fc749d877195",
+            "round_number": 4
+          },
+          {
+            "round_id": "fd3c92ff-3178-4dc9-8d9b-acf389b3982b",
+            "round_number": 5
+          },
+          {
+            "round_id": "ae78003a-4efe-425a-881a-d16a39bca0ad",
+            "round_number": 6
+          },
+          {
+            "round_id": "c5cdf100-a876-4fb7-b5d8-757162c97989",
+            "round_number": 8
+          },
+          {
+            "round_id": "2a341ace-0f57-4309-9b89-e59fe0f09179",
+            "round_number": 9
+          },
+          {
+            "round_id": "75e625c3-60cb-4392-af3e-c86a98bde8c2",
+            "round_number": 10
+          },
+          {
+            "round_id": "324fde07-1670-4202-b199-7aa92ecb40ee",
+            "round_number": 11
+          },
+          {
+            "round_id": "795bfb1f-54bd-4f39-a526-9868b36f7ebd",
+            "round_number": 12
+          },
+          {
+            "round_id": "7b4bda99-6165-4221-97cc-27880f5e6d95",
+            "round_number": 13
+          }
+        ],
+        "version": 1
+      },
+      "base_mean": 38.92913453252981,
+      "gated_mean": 61.02270395306856,
+      "num_seeds": 5,
+      "prior_mean": 57.22271569656853,
+      "round_id": "36e581f1-73f8-453f-ab98-cbe3052b701b",
+      "round_number": 7,
+      "seeds": {
+        "0": {
+          "base_score": 35.37953351484147,
+          "gate_summary": {
+            "alpha_max": 1.0,
+            "alpha_mean": 0.3378359848507436,
+            "alpha_min": 0.026453387027634667,
+            "strength": 1.0
+          },
+          "gated_score": 57.74836346837269,
+          "official_score": 35.3795,
+          "prior_score": 53.57033512533659
+        },
+        "1": {
+          "base_score": 41.50079537846712,
+          "gate_summary": {
+            "alpha_max": 1.0,
+            "alpha_mean": 0.3341465515000006,
+            "alpha_min": 0.019584887868844603,
+            "strength": 1.0
+          },
+          "gated_score": 62.9661003437535,
+          "official_score": 41.5008,
+          "prior_score": 57.74238892699509
+        },
+        "2": {
+          "base_score": 39.67079637258154,
+          "gate_summary": {
+            "alpha_max": 1.0,
+            "alpha_mean": 0.33002774893235687,
+            "alpha_min": 0.011897354933964488,
+            "strength": 1.0
+          },
+          "gated_score": 61.98288280781416,
+          "official_score": 39.6708,
+          "prior_score": 58.93697432393351
+        },
+        "3": {
+          "base_score": 41.89015717008016,
+          "gate_summary": {
+            "alpha_max": 1.0,
+            "alpha_mean": 0.38442477302334427,
+            "alpha_min": 0.0016960430461807618,
+            "strength": 1.0
+          },
+          "gated_score": 61.172567110916376,
+          "official_score": 41.8902,
+          "prior_score": 55.60417201775142
+        },
+        "4": {
+          "base_score": 36.204390226678754,
+          "gate_summary": {
+            "alpha_max": 1.0,
+            "alpha_mean": 0.33514819304851096,
+            "alpha_min": 0.017687400564318057,
+            "strength": 1.0
+          },
+          "gated_score": 61.2436060344861,
+          "official_score": 36.2044,
+          "prior_score": 60.25970808882599
+        }
+      }
+    },
+    {
+      "artifact_metadata": {
+        "historical_prior_metadata": {
+          "bucket_key_version": 2,
+          "num_rounds": 12,
+          "num_seeds": 60,
+          "rounds": [
+            {
+              "round_id": "795bfb1f-54bd-4f39-a526-9868b36f7ebd",
+              "round_number": 12
+            },
+            {
+              "round_id": "324fde07-1670-4202-b199-7aa92ecb40ee",
+              "round_number": 11
+            },
+            {
+              "round_id": "75e625c3-60cb-4392-af3e-c86a98bde8c2",
+              "round_number": 10
+            },
+            {
+              "round_id": "2a341ace-0f57-4309-9b89-e59fe0f09179",
+              "round_number": 9
+            },
+            {
+              "round_id": "c5cdf100-a876-4fb7-b5d8-757162c97989",
+              "round_number": 8
+            },
+            {
+              "round_id": "36e581f1-73f8-453f-ab98-cbe3052b701b",
+              "round_number": 7
+            },
+            {
+              "round_id": "ae78003a-4efe-425a-881a-d16a39bca0ad",
+              "round_number": 6
+            },
+            {
+              "round_id": "fd3c92ff-3178-4dc9-8d9b-acf389b3982b",
+              "round_number": 5
+            },
+            {
+              "round_id": "8e839974-b13b-407b-a5e7-fc749d877195",
+              "round_number": 4
+            },
+            {
+              "round_id": "f1dac9a9-5cf1-49a9-8f17-d6cb5d5ba5cb",
+              "round_number": 3
+            },
+            {
+              "round_id": "76909e29-f664-4b2f-b16b-61b7507277e9",
+              "round_number": 2
+            },
+            {
+              "round_id": "71451d74-be9f-471f-aacd-a41f3b68a9cd",
+              "round_number": 1
+            }
+          ],
+          "source": "archive"
+        },
+        "holdout_round_number": 8,
+        "l2_regularization": 0.2,
+        "learned_prior_metadata": {
+          "holdout_round_number": null,
+          "l2_active": 0.6,
+          "l2_active_type": 0.8,
+          "l2_forest": 0.6,
+          "num_rounds": 12,
+          "num_seeds": 60,
+          "rounds": [
+            {
+              "round_id": "71451d74-be9f-471f-aacd-a41f3b68a9cd",
+              "round_number": 1
+            },
+            {
+              "round_id": "76909e29-f664-4b2f-b16b-61b7507277e9",
+              "round_number": 2
+            },
+            {
+              "round_id": "f1dac9a9-5cf1-49a9-8f17-d6cb5d5ba5cb",
+              "round_number": 3
+            },
+            {
+              "round_id": "8e839974-b13b-407b-a5e7-fc749d877195",
+              "round_number": 4
+            },
+            {
+              "round_id": "fd3c92ff-3178-4dc9-8d9b-acf389b3982b",
+              "round_number": 5
+            },
+            {
+              "round_id": "ae78003a-4efe-425a-881a-d16a39bca0ad",
+              "round_number": 6
+            },
+            {
+              "round_id": "36e581f1-73f8-453f-ab98-cbe3052b701b",
+              "round_number": 7
+            },
+            {
+              "round_id": "c5cdf100-a876-4fb7-b5d8-757162c97989",
+              "round_number": 8
+            },
+            {
+              "round_id": "2a341ace-0f57-4309-9b89-e59fe0f09179",
+              "round_number": 9
+            },
+            {
+              "round_id": "75e625c3-60cb-4392-af3e-c86a98bde8c2",
+              "round_number": 10
+            },
+            {
+              "round_id": "324fde07-1670-4202-b199-7aa92ecb40ee",
+              "round_number": 11
+            },
+            {
+              "round_id": "795bfb1f-54bd-4f39-a526-9868b36f7ebd",
+              "round_number": 12
+            }
+          ],
+          "version": 1
+        },
+        "learning_rate": 0.05,
+        "max_depth": 4,
+        "max_iter": 300,
+        "min_samples_leaf": 400,
+        "num_rounds": 12,
+        "num_seeds": 60,
+        "rounds": [
+          {
+            "round_id": "71451d74-be9f-471f-aacd-a41f3b68a9cd",
+            "round_number": 1
+          },
+          {
+            "round_id": "76909e29-f664-4b2f-b16b-61b7507277e9",
+            "round_number": 2
+          },
+          {
+            "round_id": "f1dac9a9-5cf1-49a9-8f17-d6cb5d5ba5cb",
+            "round_number": 3
+          },
+          {
+            "round_id": "8e839974-b13b-407b-a5e7-fc749d877195",
+            "round_number": 4
+          },
+          {
+            "round_id": "fd3c92ff-3178-4dc9-8d9b-acf389b3982b",
+            "round_number": 5
+          },
+          {
+            "round_id": "ae78003a-4efe-425a-881a-d16a39bca0ad",
+            "round_number": 6
+          },
+          {
+            "round_id": "36e581f1-73f8-453f-ab98-cbe3052b701b",
+            "round_number": 7
+          },
+          {
+            "round_id": "2a341ace-0f57-4309-9b89-e59fe0f09179",
+            "round_number": 9
+          },
+          {
+            "round_id": "75e625c3-60cb-4392-af3e-c86a98bde8c2",
+            "round_number": 10
+          },
+          {
+            "round_id": "324fde07-1670-4202-b199-7aa92ecb40ee",
+            "round_number": 11
+          },
+          {
+            "round_id": "795bfb1f-54bd-4f39-a526-9868b36f7ebd",
+            "round_number": 12
+          },
+          {
+            "round_id": "7b4bda99-6165-4221-97cc-27880f5e6d95",
+            "round_number": 13
+          }
+        ],
+        "version": 1
+      },
+      "base_mean": 51.41796692799088,
+      "gated_mean": 69.97139693116324,
+      "num_seeds": 5,
+      "prior_mean": 66.62550571285279,
+      "round_id": "c5cdf100-a876-4fb7-b5d8-757162c97989",
+      "round_number": 8,
+      "seeds": {
+        "0": {
+          "base_score": 53.918580309642394,
+          "gate_summary": {
+            "alpha_max": 1.0,
+            "alpha_mean": 0.3711788738531452,
+            "alpha_min": 0.0,
+            "strength": 1.0
+          },
+          "gated_score": 72.74337114443796,
+          "official_score": 53.9186,
+          "prior_score": 69.04905063019693
+        },
+        "1": {
+          "base_score": 48.671997727920086,
+          "gate_summary": {
+            "alpha_max": 1.0,
+            "alpha_mean": 0.4294472350795489,
+            "alpha_min": 0.0,
+            "strength": 1.0
+          },
+          "gated_score": 65.3686493956647,
+          "official_score": 48.672,
+          "prior_score": 62.34204374200804
+        },
+        "2": {
+          "base_score": 54.72583271220457,
+          "gate_summary": {
+            "alpha_max": 1.0,
+            "alpha_mean": 0.3334032108669849,
+            "alpha_min": 0.0,
+            "strength": 1.0
+          },
+          "gated_score": 73.97379137100752,
+          "official_score": 54.7258,
+          "prior_score": 70.52995635110545
+        },
+        "3": {
+          "base_score": 50.025034079503946,
+          "gate_summary": {
+            "alpha_max": 1.0,
+            "alpha_mean": 0.4281980657818801,
+            "alpha_min": 0.0,
+            "strength": 1.0
+          },
+          "gated_score": 68.9362630919187,
+          "official_score": 50.025,
+          "prior_score": 65.76888941958315
+        },
+        "4": {
+          "base_score": 49.7483898106834,
+          "gate_summary": {
+            "alpha_max": 1.0,
+            "alpha_mean": 0.44021268522729146,
+            "alpha_min": 0.0,
+            "strength": 1.0
+          },
+          "gated_score": 68.83490965278733,
+          "official_score": 49.7484,
+          "prior_score": 65.43758842137034
+        }
+      }
+    },
+    {
+      "artifact_metadata": {
+        "historical_prior_metadata": {
+          "bucket_key_version": 2,
+          "num_rounds": 12,
+          "num_seeds": 60,
+          "rounds": [
+            {
+              "round_id": "795bfb1f-54bd-4f39-a526-9868b36f7ebd",
+              "round_number": 12
+            },
+            {
+              "round_id": "324fde07-1670-4202-b199-7aa92ecb40ee",
+              "round_number": 11
+            },
+            {
+              "round_id": "75e625c3-60cb-4392-af3e-c86a98bde8c2",
+              "round_number": 10
+            },
+            {
+              "round_id": "2a341ace-0f57-4309-9b89-e59fe0f09179",
+              "round_number": 9
+            },
+            {
+              "round_id": "c5cdf100-a876-4fb7-b5d8-757162c97989",
+              "round_number": 8
+            },
+            {
+              "round_id": "36e581f1-73f8-453f-ab98-cbe3052b701b",
+              "round_number": 7
+            },
+            {
+              "round_id": "ae78003a-4efe-425a-881a-d16a39bca0ad",
+              "round_number": 6
+            },
+            {
+              "round_id": "fd3c92ff-3178-4dc9-8d9b-acf389b3982b",
+              "round_number": 5
+            },
+            {
+              "round_id": "8e839974-b13b-407b-a5e7-fc749d877195",
+              "round_number": 4
+            },
+            {
+              "round_id": "f1dac9a9-5cf1-49a9-8f17-d6cb5d5ba5cb",
+              "round_number": 3
+            },
+            {
+              "round_id": "76909e29-f664-4b2f-b16b-61b7507277e9",
+              "round_number": 2
+            },
+            {
+              "round_id": "71451d74-be9f-471f-aacd-a41f3b68a9cd",
+              "round_number": 1
+            }
+          ],
+          "source": "archive"
+        },
+        "holdout_round_number": 9,
+        "l2_regularization": 0.2,
+        "learned_prior_metadata": {
+          "holdout_round_number": null,
+          "l2_active": 0.6,
+          "l2_active_type": 0.8,
+          "l2_forest": 0.6,
+          "num_rounds": 12,
+          "num_seeds": 60,
+          "rounds": [
+            {
+              "round_id": "71451d74-be9f-471f-aacd-a41f3b68a9cd",
+              "round_number": 1
+            },
+            {
+              "round_id": "76909e29-f664-4b2f-b16b-61b7507277e9",
+              "round_number": 2
+            },
+            {
+              "round_id": "f1dac9a9-5cf1-49a9-8f17-d6cb5d5ba5cb",
+              "round_number": 3
+            },
+            {
+              "round_id": "8e839974-b13b-407b-a5e7-fc749d877195",
+              "round_number": 4
+            },
+            {
+              "round_id": "fd3c92ff-3178-4dc9-8d9b-acf389b3982b",
+              "round_number": 5
+            },
+            {
+              "round_id": "ae78003a-4efe-425a-881a-d16a39bca0ad",
+              "round_number": 6
+            },
+            {
+              "round_id": "36e581f1-73f8-453f-ab98-cbe3052b701b",
+              "round_number": 7
+            },
+            {
+              "round_id": "c5cdf100-a876-4fb7-b5d8-757162c97989",
+              "round_number": 8
+            },
+            {
+              "round_id": "2a341ace-0f57-4309-9b89-e59fe0f09179",
+              "round_number": 9
+            },
+            {
+              "round_id": "75e625c3-60cb-4392-af3e-c86a98bde8c2",
+              "round_number": 10
+            },
+            {
+              "round_id": "324fde07-1670-4202-b199-7aa92ecb40ee",
+              "round_number": 11
+            },
+            {
+              "round_id": "795bfb1f-54bd-4f39-a526-9868b36f7ebd",
+              "round_number": 12
+            }
+          ],
+          "version": 1
+        },
+        "learning_rate": 0.05,
+        "max_depth": 4,
+        "max_iter": 300,
+        "min_samples_leaf": 400,
+        "num_rounds": 12,
+        "num_seeds": 60,
+        "rounds": [
+          {
+            "round_id": "71451d74-be9f-471f-aacd-a41f3b68a9cd",
+            "round_number": 1
+          },
+          {
+            "round_id": "76909e29-f664-4b2f-b16b-61b7507277e9",
+            "round_number": 2
+          },
+          {
+            "round_id": "f1dac9a9-5cf1-49a9-8f17-d6cb5d5ba5cb",
+            "round_number": 3
+          },
+          {
+            "round_id": "8e839974-b13b-407b-a5e7-fc749d877195",
+            "round_number": 4
+          },
+          {
+            "round_id": "fd3c92ff-3178-4dc9-8d9b-acf389b3982b",
+            "round_number": 5
+          },
+          {
+            "round_id": "ae78003a-4efe-425a-881a-d16a39bca0ad",
+            "round_number": 6
+          },
+          {
+            "round_id": "36e581f1-73f8-453f-ab98-cbe3052b701b",
+            "round_number": 7
+          },
+          {
+            "round_id": "c5cdf100-a876-4fb7-b5d8-757162c97989",
+            "round_number": 8
+          },
+          {
+            "round_id": "75e625c3-60cb-4392-af3e-c86a98bde8c2",
+            "round_number": 10
+          },
+          {
+            "round_id": "324fde07-1670-4202-b199-7aa92ecb40ee",
+            "round_number": 11
+          },
+          {
+            "round_id": "795bfb1f-54bd-4f39-a526-9868b36f7ebd",
+            "round_number": 12
+          },
+          {
+            "round_id": "7b4bda99-6165-4221-97cc-27880f5e6d95",
+            "round_number": 13
+          }
+        ],
+        "version": 1
+      },
+      "base_mean": 49.838926856598505,
+      "gated_mean": 88.86334997635467,
+      "num_seeds": 5,
+      "prior_mean": 90.80620997378142,
+      "round_id": "2a341ace-0f57-4309-9b89-e59fe0f09179",
+      "round_number": 9,
+      "seeds": {
+        "0": {
+          "base_score": 47.88991325992934,
+          "gate_summary": {
+            "alpha_max": 1.0,
+            "alpha_mean": 0.34245368939602167,
+            "alpha_min": 0.0,
+            "strength": 1.0
+          },
+          "gated_score": 88.24116696826637,
+          "official_score": 47.8899,
+          "prior_score": 90.40292369367364
+        },
+        "1": {
+          "base_score": 53.863635951615215,
+          "gate_summary": {
+            "alpha_max": 1.0,
+            "alpha_mean": 0.35626030335855313,
+            "alpha_min": 0.0,
+            "strength": 1.0
+          },
+          "gated_score": 89.23939426286236,
+          "official_score": 53.8636,
+          "prior_score": 90.76572106729486
+        },
+        "2": {
+          "base_score": 50.328674878698635,
+          "gate_summary": {
+            "alpha_max": 1.0,
+            "alpha_mean": 0.3245583437928655,
+            "alpha_min": 0.0,
+            "strength": 1.0
+          },
+          "gated_score": 89.84156855968673,
+          "official_score": 50.3287,
+          "prior_score": 90.86201667916612
+        },
+        "3": {
+          "base_score": 50.19244262380068,
+          "gate_summary": {
+            "alpha_max": 1.0,
+            "alpha_mean": 0.3403470308180665,
+            "alpha_min": 0.0,
+            "strength": 1.0
+          },
+          "gated_score": 88.70793612661362,
+          "official_score": 50.1924,
+          "prior_score": 91.23297584043921
+        },
+        "4": {
+          "base_score": 46.919967568948664,
+          "gate_summary": {
+            "alpha_max": 1.0,
+            "alpha_mean": 0.3337288471148654,
+            "alpha_min": 0.0,
+            "strength": 1.0
+          },
+          "gated_score": 88.28668396434432,
+          "official_score": 46.92,
+          "prior_score": 90.76741258833326
+        }
+      }
+    },
+    {
+      "artifact_metadata": {
+        "historical_prior_metadata": {
+          "bucket_key_version": 2,
+          "num_rounds": 12,
+          "num_seeds": 60,
+          "rounds": [
+            {
+              "round_id": "795bfb1f-54bd-4f39-a526-9868b36f7ebd",
+              "round_number": 12
+            },
+            {
+              "round_id": "324fde07-1670-4202-b199-7aa92ecb40ee",
+              "round_number": 11
+            },
+            {
+              "round_id": "75e625c3-60cb-4392-af3e-c86a98bde8c2",
+              "round_number": 10
+            },
+            {
+              "round_id": "2a341ace-0f57-4309-9b89-e59fe0f09179",
+              "round_number": 9
+            },
+            {
+              "round_id": "c5cdf100-a876-4fb7-b5d8-757162c97989",
+              "round_number": 8
+            },
+            {
+              "round_id": "36e581f1-73f8-453f-ab98-cbe3052b701b",
+              "round_number": 7
+            },
+            {
+              "round_id": "ae78003a-4efe-425a-881a-d16a39bca0ad",
+              "round_number": 6
+            },
+            {
+              "round_id": "fd3c92ff-3178-4dc9-8d9b-acf389b3982b",
+              "round_number": 5
+            },
+            {
+              "round_id": "8e839974-b13b-407b-a5e7-fc749d877195",
+              "round_number": 4
+            },
+            {
+              "round_id": "f1dac9a9-5cf1-49a9-8f17-d6cb5d5ba5cb",
+              "round_number": 3
+            },
+            {
+              "round_id": "76909e29-f664-4b2f-b16b-61b7507277e9",
+              "round_number": 2
+            },
+            {
+              "round_id": "71451d74-be9f-471f-aacd-a41f3b68a9cd",
+              "round_number": 1
+            }
+          ],
+          "source": "archive"
+        },
+        "holdout_round_number": 10,
+        "l2_regularization": 0.2,
+        "learned_prior_metadata": {
+          "holdout_round_number": null,
+          "l2_active": 0.6,
+          "l2_active_type": 0.8,
+          "l2_forest": 0.6,
+          "num_rounds": 12,
+          "num_seeds": 60,
+          "rounds": [
+            {
+              "round_id": "71451d74-be9f-471f-aacd-a41f3b68a9cd",
+              "round_number": 1
+            },
+            {
+              "round_id": "76909e29-f664-4b2f-b16b-61b7507277e9",
+              "round_number": 2
+            },
+            {
+              "round_id": "f1dac9a9-5cf1-49a9-8f17-d6cb5d5ba5cb",
+              "round_number": 3
+            },
+            {
+              "round_id": "8e839974-b13b-407b-a5e7-fc749d877195",
+              "round_number": 4
+            },
+            {
+              "round_id": "fd3c92ff-3178-4dc9-8d9b-acf389b3982b",
+              "round_number": 5
+            },
+            {
+              "round_id": "ae78003a-4efe-425a-881a-d16a39bca0ad",
+              "round_number": 6
+            },
+            {
+              "round_id": "36e581f1-73f8-453f-ab98-cbe3052b701b",
+              "round_number": 7
+            },
+            {
+              "round_id": "c5cdf100-a876-4fb7-b5d8-757162c97989",
+              "round_number": 8
+            },
+            {
+              "round_id": "2a341ace-0f57-4309-9b89-e59fe0f09179",
+              "round_number": 9
+            },
+            {
+              "round_id": "75e625c3-60cb-4392-af3e-c86a98bde8c2",
+              "round_number": 10
+            },
+            {
+              "round_id": "324fde07-1670-4202-b199-7aa92ecb40ee",
+              "round_number": 11
+            },
+            {
+              "round_id": "795bfb1f-54bd-4f39-a526-9868b36f7ebd",
+              "round_number": 12
+            }
+          ],
+          "version": 1
+        },
+        "learning_rate": 0.05,
+        "max_depth": 4,
+        "max_iter": 300,
+        "min_samples_leaf": 400,
+        "num_rounds": 12,
+        "num_seeds": 60,
+        "rounds": [
+          {
+            "round_id": "71451d74-be9f-471f-aacd-a41f3b68a9cd",
+            "round_number": 1
+          },
+          {
+            "round_id": "76909e29-f664-4b2f-b16b-61b7507277e9",
+            "round_number": 2
+          },
+          {
+            "round_id": "f1dac9a9-5cf1-49a9-8f17-d6cb5d5ba5cb",
+            "round_number": 3
+          },
+          {
+            "round_id": "8e839974-b13b-407b-a5e7-fc749d877195",
+            "round_number": 4
+          },
+          {
+            "round_id": "fd3c92ff-3178-4dc9-8d9b-acf389b3982b",
+            "round_number": 5
+          },
+          {
+            "round_id": "ae78003a-4efe-425a-881a-d16a39bca0ad",
+            "round_number": 6
+          },
+          {
+            "round_id": "36e581f1-73f8-453f-ab98-cbe3052b701b",
+            "round_number": 7
+          },
+          {
+            "round_id": "c5cdf100-a876-4fb7-b5d8-757162c97989",
+            "round_number": 8
+          },
+          {
+            "round_id": "2a341ace-0f57-4309-9b89-e59fe0f09179",
+            "round_number": 9
+          },
+          {
+            "round_id": "324fde07-1670-4202-b199-7aa92ecb40ee",
+            "round_number": 11
+          },
+          {
+            "round_id": "795bfb1f-54bd-4f39-a526-9868b36f7ebd",
+            "round_number": 12
+          },
+          {
+            "round_id": "7b4bda99-6165-4221-97cc-27880f5e6d95",
+            "round_number": 13
+          }
+        ],
+        "version": 1
+      },
+      "base_mean": 57.30554027962476,
+      "gated_mean": 65.40183140659653,
+      "num_seeds": 5,
+      "prior_mean": 57.28063117299602,
+      "round_id": "75e625c3-60cb-4392-af3e-c86a98bde8c2",
+      "round_number": 10,
+      "seeds": {
+        "0": {
+          "base_score": 56.717372449678535,
+          "gate_summary": {
+            "alpha_max": 1.0,
+            "alpha_mean": 0.5674272829044162,
+            "alpha_min": 0.0,
+            "strength": 1.0
+          },
+          "gated_score": 65.98904137305152,
+          "official_score": 56.7174,
+          "prior_score": 58.443143729381255
+        },
+        "1": {
+          "base_score": 53.90017041752615,
+          "gate_summary": {
+            "alpha_max": 1.0,
+            "alpha_mean": 0.5333988065771619,
+            "alpha_min": 0.0,
+            "strength": 1.0
+          },
+          "gated_score": 63.67352919856999,
+          "official_score": 53.9002,
+          "prior_score": 57.77730718246754
+        },
+        "2": {
+          "base_score": 62.13961490281056,
+          "gate_summary": {
+            "alpha_max": 1.0,
+            "alpha_mean": 0.553375725439201,
+            "alpha_min": 0.0,
+            "strength": 1.0
+          },
+          "gated_score": 66.91194757287009,
+          "official_score": 62.1396,
+          "prior_score": 57.193462621202386
+        },
+        "3": {
+          "base_score": 62.62840273407455,
+          "gate_summary": {
+            "alpha_max": 1.0,
+            "alpha_mean": 0.535581519708795,
+            "alpha_min": 0.0,
+            "strength": 1.0
+          },
+          "gated_score": 66.60902385667919,
+          "official_score": 62.6284,
+          "prior_score": 55.957830605373374
+        },
+        "4": {
+          "base_score": 51.14214089403399,
+          "gate_summary": {
+            "alpha_max": 1.0,
+            "alpha_mean": 0.5728368444996974,
+            "alpha_min": 0.0,
+            "strength": 1.0
+          },
+          "gated_score": 63.825615031811886,
+          "official_score": 51.1421,
+          "prior_score": 57.031411726555504
+        }
+      }
+    },
+    {
+      "artifact_metadata": {
+        "historical_prior_metadata": {
+          "bucket_key_version": 2,
+          "num_rounds": 12,
+          "num_seeds": 60,
+          "rounds": [
+            {
+              "round_id": "795bfb1f-54bd-4f39-a526-9868b36f7ebd",
+              "round_number": 12
+            },
+            {
+              "round_id": "324fde07-1670-4202-b199-7aa92ecb40ee",
+              "round_number": 11
+            },
+            {
+              "round_id": "75e625c3-60cb-4392-af3e-c86a98bde8c2",
+              "round_number": 10
+            },
+            {
+              "round_id": "2a341ace-0f57-4309-9b89-e59fe0f09179",
+              "round_number": 9
+            },
+            {
+              "round_id": "c5cdf100-a876-4fb7-b5d8-757162c97989",
+              "round_number": 8
+            },
+            {
+              "round_id": "36e581f1-73f8-453f-ab98-cbe3052b701b",
+              "round_number": 7
+            },
+            {
+              "round_id": "ae78003a-4efe-425a-881a-d16a39bca0ad",
+              "round_number": 6
+            },
+            {
+              "round_id": "fd3c92ff-3178-4dc9-8d9b-acf389b3982b",
+              "round_number": 5
+            },
+            {
+              "round_id": "8e839974-b13b-407b-a5e7-fc749d877195",
+              "round_number": 4
+            },
+            {
+              "round_id": "f1dac9a9-5cf1-49a9-8f17-d6cb5d5ba5cb",
+              "round_number": 3
+            },
+            {
+              "round_id": "76909e29-f664-4b2f-b16b-61b7507277e9",
+              "round_number": 2
+            },
+            {
+              "round_id": "71451d74-be9f-471f-aacd-a41f3b68a9cd",
+              "round_number": 1
+            }
+          ],
+          "source": "archive"
+        },
+        "holdout_round_number": 11,
+        "l2_regularization": 0.2,
+        "learned_prior_metadata": {
+          "holdout_round_number": null,
+          "l2_active": 0.6,
+          "l2_active_type": 0.8,
+          "l2_forest": 0.6,
+          "num_rounds": 12,
+          "num_seeds": 60,
+          "rounds": [
+            {
+              "round_id": "71451d74-be9f-471f-aacd-a41f3b68a9cd",
+              "round_number": 1
+            },
+            {
+              "round_id": "76909e29-f664-4b2f-b16b-61b7507277e9",
+              "round_number": 2
+            },
+            {
+              "round_id": "f1dac9a9-5cf1-49a9-8f17-d6cb5d5ba5cb",
+              "round_number": 3
+            },
+            {
+              "round_id": "8e839974-b13b-407b-a5e7-fc749d877195",
+              "round_number": 4
+            },
+            {
+              "round_id": "fd3c92ff-3178-4dc9-8d9b-acf389b3982b",
+              "round_number": 5
+            },
+            {
+              "round_id": "ae78003a-4efe-425a-881a-d16a39bca0ad",
+              "round_number": 6
+            },
+            {
+              "round_id": "36e581f1-73f8-453f-ab98-cbe3052b701b",
+              "round_number": 7
+            },
+            {
+              "round_id": "c5cdf100-a876-4fb7-b5d8-757162c97989",
+              "round_number": 8
+            },
+            {
+              "round_id": "2a341ace-0f57-4309-9b89-e59fe0f09179",
+              "round_number": 9
+            },
+            {
+              "round_id": "75e625c3-60cb-4392-af3e-c86a98bde8c2",
+              "round_number": 10
+            },
+            {
+              "round_id": "324fde07-1670-4202-b199-7aa92ecb40ee",
+              "round_number": 11
+            },
+            {
+              "round_id": "795bfb1f-54bd-4f39-a526-9868b36f7ebd",
+              "round_number": 12
+            }
+          ],
+          "version": 1
+        },
+        "learning_rate": 0.05,
+        "max_depth": 4,
+        "max_iter": 300,
+        "min_samples_leaf": 400,
+        "num_rounds": 12,
+        "num_seeds": 60,
+        "rounds": [
+          {
+            "round_id": "71451d74-be9f-471f-aacd-a41f3b68a9cd",
+            "round_number": 1
+          },
+          {
+            "round_id": "76909e29-f664-4b2f-b16b-61b7507277e9",
+            "round_number": 2
+          },
+          {
+            "round_id": "f1dac9a9-5cf1-49a9-8f17-d6cb5d5ba5cb",
+            "round_number": 3
+          },
+          {
+            "round_id": "8e839974-b13b-407b-a5e7-fc749d877195",
+            "round_number": 4
+          },
+          {
+            "round_id": "fd3c92ff-3178-4dc9-8d9b-acf389b3982b",
+            "round_number": 5
+          },
+          {
+            "round_id": "ae78003a-4efe-425a-881a-d16a39bca0ad",
+            "round_number": 6
+          },
+          {
+            "round_id": "36e581f1-73f8-453f-ab98-cbe3052b701b",
+            "round_number": 7
+          },
+          {
+            "round_id": "c5cdf100-a876-4fb7-b5d8-757162c97989",
+            "round_number": 8
+          },
+          {
+            "round_id": "2a341ace-0f57-4309-9b89-e59fe0f09179",
+            "round_number": 9
+          },
+          {
+            "round_id": "75e625c3-60cb-4392-af3e-c86a98bde8c2",
+            "round_number": 10
+          },
+          {
+            "round_id": "795bfb1f-54bd-4f39-a526-9868b36f7ebd",
+            "round_number": 12
+          },
+          {
+            "round_id": "7b4bda99-6165-4221-97cc-27880f5e6d95",
+            "round_number": 13
+          }
+        ],
+        "version": 1
+      },
+      "base_mean": 51.39878324586224,
+      "gated_mean": 70.59751993627273,
+      "num_seeds": 5,
+      "prior_mean": 63.28298777304353,
+      "round_id": "324fde07-1670-4202-b199-7aa92ecb40ee",
+      "round_number": 11,
+      "seeds": {
+        "0": {
+          "base_score": 51.90425449949968,
+          "gate_summary": {
+            "alpha_max": 1.0,
+            "alpha_mean": 0.38784627535012994,
+            "alpha_min": 0.0,
+            "strength": 1.0
+          },
+          "gated_score": 72.75863924639255,
+          "official_score": 51.9043,
+          "prior_score": 67.01737249392892
+        },
+        "1": {
+          "base_score": 53.04839678450959,
+          "gate_summary": {
+            "alpha_max": 1.0,
+            "alpha_mean": 0.39171470491808336,
+            "alpha_min": 0.0,
+            "strength": 1.0
+          },
+          "gated_score": 73.86137099699694,
+          "official_score": 53.0484,
+          "prior_score": 67.69117455245676
+        },
+        "2": {
+          "base_score": 49.858641180491475,
+          "gate_summary": {
+            "alpha_max": 1.0,
+            "alpha_mean": 0.4249218752678172,
+            "alpha_min": 0.0,
+            "strength": 1.0
+          },
+          "gated_score": 67.69949794653364,
+          "official_score": 49.8586,
+          "prior_score": 53.39262906509163
+        },
+        "3": {
+          "base_score": 51.27372705872272,
+          "gate_summary": {
+            "alpha_max": 1.0,
+            "alpha_mean": 0.41584550786258534,
+            "alpha_min": 0.0,
+            "strength": 1.0
+          },
+          "gated_score": 70.03944420643481,
+          "official_score": 51.2737,
+          "prior_score": 65.12668896161598
+        },
+        "4": {
+          "base_score": 50.9088967060877,
+          "gate_summary": {
+            "alpha_max": 1.0,
+            "alpha_mean": 0.4247061054826625,
+            "alpha_min": 0.0,
+            "strength": 1.0
+          },
+          "gated_score": 68.62864728500574,
+          "official_score": 50.9089,
+          "prior_score": 63.18707379212444
+        }
+      }
+    },
+    {
+      "artifact_metadata": {
+        "historical_prior_metadata": {
+          "bucket_key_version": 2,
+          "num_rounds": 12,
+          "num_seeds": 60,
+          "rounds": [
+            {
+              "round_id": "795bfb1f-54bd-4f39-a526-9868b36f7ebd",
+              "round_number": 12
+            },
+            {
+              "round_id": "324fde07-1670-4202-b199-7aa92ecb40ee",
+              "round_number": 11
+            },
+            {
+              "round_id": "75e625c3-60cb-4392-af3e-c86a98bde8c2",
+              "round_number": 10
+            },
+            {
+              "round_id": "2a341ace-0f57-4309-9b89-e59fe0f09179",
+              "round_number": 9
+            },
+            {
+              "round_id": "c5cdf100-a876-4fb7-b5d8-757162c97989",
+              "round_number": 8
+            },
+            {
+              "round_id": "36e581f1-73f8-453f-ab98-cbe3052b701b",
+              "round_number": 7
+            },
+            {
+              "round_id": "ae78003a-4efe-425a-881a-d16a39bca0ad",
+              "round_number": 6
+            },
+            {
+              "round_id": "fd3c92ff-3178-4dc9-8d9b-acf389b3982b",
+              "round_number": 5
+            },
+            {
+              "round_id": "8e839974-b13b-407b-a5e7-fc749d877195",
+              "round_number": 4
+            },
+            {
+              "round_id": "f1dac9a9-5cf1-49a9-8f17-d6cb5d5ba5cb",
+              "round_number": 3
+            },
+            {
+              "round_id": "76909e29-f664-4b2f-b16b-61b7507277e9",
+              "round_number": 2
+            },
+            {
+              "round_id": "71451d74-be9f-471f-aacd-a41f3b68a9cd",
+              "round_number": 1
+            }
+          ],
+          "source": "archive"
+        },
+        "holdout_round_number": 12,
+        "l2_regularization": 0.2,
+        "learned_prior_metadata": {
+          "holdout_round_number": null,
+          "l2_active": 0.6,
+          "l2_active_type": 0.8,
+          "l2_forest": 0.6,
+          "num_rounds": 12,
+          "num_seeds": 60,
+          "rounds": [
+            {
+              "round_id": "71451d74-be9f-471f-aacd-a41f3b68a9cd",
+              "round_number": 1
+            },
+            {
+              "round_id": "76909e29-f664-4b2f-b16b-61b7507277e9",
+              "round_number": 2
+            },
+            {
+              "round_id": "f1dac9a9-5cf1-49a9-8f17-d6cb5d5ba5cb",
+              "round_number": 3
+            },
+            {
+              "round_id": "8e839974-b13b-407b-a5e7-fc749d877195",
+              "round_number": 4
+            },
+            {
+              "round_id": "fd3c92ff-3178-4dc9-8d9b-acf389b3982b",
+              "round_number": 5
+            },
+            {
+              "round_id": "ae78003a-4efe-425a-881a-d16a39bca0ad",
+              "round_number": 6
+            },
+            {
+              "round_id": "36e581f1-73f8-453f-ab98-cbe3052b701b",
+              "round_number": 7
+            },
+            {
+              "round_id": "c5cdf100-a876-4fb7-b5d8-757162c97989",
+              "round_number": 8
+            },
+            {
+              "round_id": "2a341ace-0f57-4309-9b89-e59fe0f09179",
+              "round_number": 9
+            },
+            {
+              "round_id": "75e625c3-60cb-4392-af3e-c86a98bde8c2",
+              "round_number": 10
+            },
+            {
+              "round_id": "324fde07-1670-4202-b199-7aa92ecb40ee",
+              "round_number": 11
+            },
+            {
+              "round_id": "795bfb1f-54bd-4f39-a526-9868b36f7ebd",
+              "round_number": 12
+            }
+          ],
+          "version": 1
+        },
+        "learning_rate": 0.05,
+        "max_depth": 4,
+        "max_iter": 300,
+        "min_samples_leaf": 400,
+        "num_rounds": 12,
+        "num_seeds": 60,
+        "rounds": [
+          {
+            "round_id": "71451d74-be9f-471f-aacd-a41f3b68a9cd",
+            "round_number": 1
+          },
+          {
+            "round_id": "76909e29-f664-4b2f-b16b-61b7507277e9",
+            "round_number": 2
+          },
+          {
+            "round_id": "f1dac9a9-5cf1-49a9-8f17-d6cb5d5ba5cb",
+            "round_number": 3
+          },
+          {
+            "round_id": "8e839974-b13b-407b-a5e7-fc749d877195",
+            "round_number": 4
+          },
+          {
+            "round_id": "fd3c92ff-3178-4dc9-8d9b-acf389b3982b",
+            "round_number": 5
+          },
+          {
+            "round_id": "ae78003a-4efe-425a-881a-d16a39bca0ad",
+            "round_number": 6
+          },
+          {
+            "round_id": "36e581f1-73f8-453f-ab98-cbe3052b701b",
+            "round_number": 7
+          },
+          {
+            "round_id": "c5cdf100-a876-4fb7-b5d8-757162c97989",
+            "round_number": 8
+          },
+          {
+            "round_id": "2a341ace-0f57-4309-9b89-e59fe0f09179",
+            "round_number": 9
+          },
+          {
+            "round_id": "75e625c3-60cb-4392-af3e-c86a98bde8c2",
+            "round_number": 10
+          },
+          {
+            "round_id": "324fde07-1670-4202-b199-7aa92ecb40ee",
+            "round_number": 11
+          },
+          {
+            "round_id": "7b4bda99-6165-4221-97cc-27880f5e6d95",
+            "round_number": 13
+          }
+        ],
+        "version": 1
+      },
+      "base_mean": 29.743091372875845,
+      "gated_mean": 53.05992329714913,
+      "num_seeds": 5,
+      "prior_mean": 38.969047007845504,
+      "round_id": "795bfb1f-54bd-4f39-a526-9868b36f7ebd",
+      "round_number": 12,
+      "seeds": {
+        "0": {
+          "base_score": 28.10399606898308,
+          "gate_summary": {
+            "alpha_max": 1.0,
+            "alpha_mean": 0.6168473138818176,
+            "alpha_min": 0.0,
+            "strength": 1.0
+          },
+          "gated_score": 52.55384533597704,
+          "official_score": 28.104,
+          "prior_score": 40.26245370636196
+        },
+        "1": {
+          "base_score": 34.0511023062519,
+          "gate_summary": {
+            "alpha_max": 1.0,
+            "alpha_mean": 0.5974365441477929,
+            "alpha_min": 0.0,
+            "strength": 1.0
+          },
+          "gated_score": 54.826673311007056,
+          "official_score": 34.0511,
+          "prior_score": 36.691989433056385
+        },
+        "2": {
+          "base_score": 24.777697726798074,
+          "gate_summary": {
+            "alpha_max": 1.0,
+            "alpha_mean": 0.5810855296483849,
+            "alpha_min": 0.0,
+            "strength": 1.0
+          },
+          "gated_score": 48.9402737741279,
+          "official_score": 24.7777,
+          "prior_score": 39.032029531958216
+        },
+        "3": {
+          "base_score": 31.628217327415562,
+          "gate_summary": {
+            "alpha_max": 1.0,
+            "alpha_mean": 0.5590171046771103,
+            "alpha_min": 0.0,
+            "strength": 1.0
+          },
+          "gated_score": 57.192708554078855,
+          "official_score": 31.6282,
+          "prior_score": 40.09695079236973
+        },
+        "4": {
+          "base_score": 30.154443434930617,
+          "gate_summary": {
+            "alpha_max": 1.0,
+            "alpha_mean": 0.6081957426840527,
+            "alpha_min": 0.0,
+            "strength": 1.0
+          },
+          "gated_score": 51.78611551055483,
+          "official_score": 30.1544,
+          "prior_score": 38.761811575481204
+        }
+      }
+    },
+    {
+      "artifact_metadata": {
+        "historical_prior_metadata": {
+          "bucket_key_version": 2,
+          "num_rounds": 12,
+          "num_seeds": 60,
+          "rounds": [
+            {
+              "round_id": "795bfb1f-54bd-4f39-a526-9868b36f7ebd",
+              "round_number": 12
+            },
+            {
+              "round_id": "324fde07-1670-4202-b199-7aa92ecb40ee",
+              "round_number": 11
+            },
+            {
+              "round_id": "75e625c3-60cb-4392-af3e-c86a98bde8c2",
+              "round_number": 10
+            },
+            {
+              "round_id": "2a341ace-0f57-4309-9b89-e59fe0f09179",
+              "round_number": 9
+            },
+            {
+              "round_id": "c5cdf100-a876-4fb7-b5d8-757162c97989",
+              "round_number": 8
+            },
+            {
+              "round_id": "36e581f1-73f8-453f-ab98-cbe3052b701b",
+              "round_number": 7
+            },
+            {
+              "round_id": "ae78003a-4efe-425a-881a-d16a39bca0ad",
+              "round_number": 6
+            },
+            {
+              "round_id": "fd3c92ff-3178-4dc9-8d9b-acf389b3982b",
+              "round_number": 5
+            },
+            {
+              "round_id": "8e839974-b13b-407b-a5e7-fc749d877195",
+              "round_number": 4
+            },
+            {
+              "round_id": "f1dac9a9-5cf1-49a9-8f17-d6cb5d5ba5cb",
+              "round_number": 3
+            },
+            {
+              "round_id": "76909e29-f664-4b2f-b16b-61b7507277e9",
+              "round_number": 2
+            },
+            {
+              "round_id": "71451d74-be9f-471f-aacd-a41f3b68a9cd",
+              "round_number": 1
+            }
+          ],
+          "source": "archive"
+        },
+        "holdout_round_number": 13,
+        "l2_regularization": 0.2,
+        "learned_prior_metadata": {
+          "holdout_round_number": null,
+          "l2_active": 0.6,
+          "l2_active_type": 0.8,
+          "l2_forest": 0.6,
+          "num_rounds": 12,
+          "num_seeds": 60,
+          "rounds": [
+            {
+              "round_id": "71451d74-be9f-471f-aacd-a41f3b68a9cd",
+              "round_number": 1
+            },
+            {
+              "round_id": "76909e29-f664-4b2f-b16b-61b7507277e9",
+              "round_number": 2
+            },
+            {
+              "round_id": "f1dac9a9-5cf1-49a9-8f17-d6cb5d5ba5cb",
+              "round_number": 3
+            },
+            {
+              "round_id": "8e839974-b13b-407b-a5e7-fc749d877195",
+              "round_number": 4
+            },
+            {
+              "round_id": "fd3c92ff-3178-4dc9-8d9b-acf389b3982b",
+              "round_number": 5
+            },
+            {
+              "round_id": "ae78003a-4efe-425a-881a-d16a39bca0ad",
+              "round_number": 6
+            },
+            {
+              "round_id": "36e581f1-73f8-453f-ab98-cbe3052b701b",
+              "round_number": 7
+            },
+            {
+              "round_id": "c5cdf100-a876-4fb7-b5d8-757162c97989",
+              "round_number": 8
+            },
+            {
+              "round_id": "2a341ace-0f57-4309-9b89-e59fe0f09179",
+              "round_number": 9
+            },
+            {
+              "round_id": "75e625c3-60cb-4392-af3e-c86a98bde8c2",
+              "round_number": 10
+            },
+            {
+              "round_id": "324fde07-1670-4202-b199-7aa92ecb40ee",
+              "round_number": 11
+            },
+            {
+              "round_id": "795bfb1f-54bd-4f39-a526-9868b36f7ebd",
+              "round_number": 12
+            }
+          ],
+          "version": 1
+        },
+        "learning_rate": 0.05,
+        "max_depth": 4,
+        "max_iter": 300,
+        "min_samples_leaf": 400,
+        "num_rounds": 12,
+        "num_seeds": 60,
+        "rounds": [
+          {
+            "round_id": "71451d74-be9f-471f-aacd-a41f3b68a9cd",
+            "round_number": 1
+          },
+          {
+            "round_id": "76909e29-f664-4b2f-b16b-61b7507277e9",
+            "round_number": 2
+          },
+          {
+            "round_id": "f1dac9a9-5cf1-49a9-8f17-d6cb5d5ba5cb",
+            "round_number": 3
+          },
+          {
+            "round_id": "8e839974-b13b-407b-a5e7-fc749d877195",
+            "round_number": 4
+          },
+          {
+            "round_id": "fd3c92ff-3178-4dc9-8d9b-acf389b3982b",
+            "round_number": 5
+          },
+          {
+            "round_id": "ae78003a-4efe-425a-881a-d16a39bca0ad",
+            "round_number": 6
+          },
+          {
+            "round_id": "36e581f1-73f8-453f-ab98-cbe3052b701b",
+            "round_number": 7
+          },
+          {
+            "round_id": "c5cdf100-a876-4fb7-b5d8-757162c97989",
+            "round_number": 8
+          },
+          {
+            "round_id": "2a341ace-0f57-4309-9b89-e59fe0f09179",
+            "round_number": 9
+          },
+          {
+            "round_id": "75e625c3-60cb-4392-af3e-c86a98bde8c2",
+            "round_number": 10
+          },
+          {
+            "round_id": "324fde07-1670-4202-b199-7aa92ecb40ee",
+            "round_number": 11
+          },
+          {
+            "round_id": "795bfb1f-54bd-4f39-a526-9868b36f7ebd",
+            "round_number": 12
+          }
+        ],
+        "version": 1
+      },
+      "base_mean": 69.19639608499728,
+      "gated_mean": 86.86285939781163,
+      "num_seeds": 5,
+      "prior_mean": 88.0936445700132,
+      "round_id": "7b4bda99-6165-4221-97cc-27880f5e6d95",
+      "round_number": 13,
+      "seeds": {
+        "0": {
+          "base_score": 73.20991525587536,
+          "gate_summary": {
+            "alpha_max": 1.0,
+            "alpha_mean": 0.5939435452837727,
+            "alpha_min": 0.0,
+            "strength": 1.0
+          },
+          "gated_score": 87.74387092071693,
+          "official_score": 73.2099,
+          "prior_score": 88.80823693818353
+        },
+        "1": {
+          "base_score": 66.78608151674142,
+          "gate_summary": {
+            "alpha_max": 1.0,
+            "alpha_mean": 0.6041985418371183,
+            "alpha_min": 0.0,
+            "strength": 1.0
+          },
+          "gated_score": 86.39799967778914,
+          "official_score": 66.7861,
+          "prior_score": 87.91519939039574
+        },
+        "2": {
+          "base_score": 68.31361239470154,
+          "gate_summary": {
+            "alpha_max": 1.0,
+            "alpha_mean": 0.6188733011177976,
+            "alpha_min": 0.0,
+            "strength": 1.0
+          },
+          "gated_score": 85.95469534248811,
+          "official_score": 68.3136,
+          "prior_score": 87.64072815700746
+        },
+        "3": {
+          "base_score": 69.95437250830288,
+          "gate_summary": {
+            "alpha_max": 1.0,
+            "alpha_mean": 0.6246993775431533,
+            "alpha_min": 0.0,
+            "strength": 1.0
+          },
+          "gated_score": 87.43732417752975,
+          "official_score": 69.9544,
+          "prior_score": 89.23085690981335
+        },
+        "4": {
+          "base_score": 67.71799874936524,
+          "gate_summary": {
+            "alpha_max": 1.0,
+            "alpha_mean": 0.588372379512946,
+            "alpha_min": 0.0,
+            "strength": 1.0
+          },
+          "gated_score": 86.78040687053426,
+          "official_score": 67.718,
+          "prior_score": 86.87320145466595
+        }
+      }
+    }
+  ]
+}

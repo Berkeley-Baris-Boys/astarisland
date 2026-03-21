@@ -1,0 +1,21 @@
+{
+  "argmax_count": {
+    "empty": 6164,
+    "forest": 1717,
+    "mountain": 116,
+    "port": 0,
+    "ruin": 0,
+    "settlement": 3
+  },
+  "class_mass": {
+    "empty": 4939.301311572393,
+    "forest": 1620.3679320060119,
+    "mountain": 134.2971188057739,
+    "port": 97.79565668648891,
+    "ruin": 167.50983978447238,
+    "settlement": 1040.7281411448605
+  },
+  "prior_blend_gate_strength": 0.25,
+  "repeat_proxy_score": 15.302860705430623,
+  "source_run_dir": "artifacts/20260321_112939"
+}
