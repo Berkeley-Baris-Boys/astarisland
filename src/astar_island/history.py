@@ -6,7 +6,7 @@ from typing import Any
 
 import numpy as np
 
-from .features import build_all_features, make_bucket_keys
+from .features import BUCKET_KEY_VERSION, build_all_features, make_bucket_keys
 from .types import NUM_CLASSES, RoundDetail
 from .utils import load_json, save_json, to_jsonable
 
@@ -198,7 +198,13 @@ def build_historical_prior_from_archive(history_dir: Path, max_rounds: int | Non
         if round_used:
             used_rounds.append({"round_id": detail.round_id, "round_number": detail.round_number})
 
-    metadata = {"num_rounds": len(used_rounds), "num_seeds": used_seeds, "rounds": used_rounds, "source": "archive"}
+    metadata = {
+        "num_rounds": len(used_rounds),
+        "num_seeds": used_seeds,
+        "rounds": used_rounds,
+        "source": "archive",
+        "bucket_key_version": BUCKET_KEY_VERSION,
+    }
     return bucket_counts, initial_class_counts, metadata
 
 

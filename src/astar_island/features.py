@@ -22,6 +22,8 @@ from .types import (
     terrain_grid_to_class_grid,
 )
 
+BUCKET_KEY_VERSION = 2
+
 
 def _neighbor_sum(mask: np.ndarray, radius: int = 1) -> np.ndarray:
     h, w = mask.shape
@@ -171,13 +173,15 @@ def make_bucket_keys(seed_features: SeedFeatures) -> np.ndarray:
     dist_coast = np.digitize(features[..., seed_features.feature_names.index("dist_to_coast")], [0.05, 0.1, 0.2])
     settle_density = np.digitize(features[..., seed_features.feature_names.index("settlement_density")], [0.1, 0.25, 0.5])
     forest_density = np.digitize(features[..., seed_features.feature_names.index("forest_density")], [0.1, 0.25, 0.5])
-    keys = (
-        seed_features.coastal_mask.astype(np.int32) * 10000
-        + seed_features.frontier_mask.astype(np.int32) * 1000
-        + seed_features.conflict_mask.astype(np.int32) * 100
-        + dist_settle * 10
-        + dist_coast
-        + settle_density * 3
-        + forest_density
-    )
+    keys = seed_features.initial_class_grid.astype(np.int32)
+    for component, base in (
+        (seed_features.coastal_mask.astype(np.int32), 2),
+        (seed_features.frontier_mask.astype(np.int32), 2),
+        (seed_features.conflict_mask.astype(np.int32), 2),
+        (dist_settle.astype(np.int32), 4),
+        (dist_coast.astype(np.int32), 4),
+        (settle_density.astype(np.int32), 4),
+        (forest_density.astype(np.int32), 4),
+    ):
+        keys = keys * base + component
     return keys

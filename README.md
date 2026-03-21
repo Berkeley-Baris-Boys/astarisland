@@ -18,6 +18,7 @@ The system combines:
 - feature-based transfer from observed windows to unseen cells
 - calibrated probability floors and final validation
 - optional learned feature-conditioned priors from completed rounds via the analysis endpoint
+- optional tree-based residual calibration learned from archived prediction and ground-truth pairs
 
 ## Markdown Facts Used As Primary Context
 
@@ -47,14 +48,20 @@ src/astar_island/
   aggregator.py
   config.py
   features.py
+  learned_prior.py
   predictor.py
   query_planner.py
+  residual_calibrator.py
+  scoring.py
   submit.py
   types.py
   utils.py
   visualize.py
 scripts/
   archive_completed_rounds.py
+  build_learned_prior.py
+  build_residual_calibrator.py
+  evaluate_residual_calibrator.py
   run_round.py
   analyze_round.py
   inspect_predictions.py
@@ -195,6 +202,24 @@ PYTHONPATH=src python scripts/build_historical_priors.py --max-rounds 9 --refres
 
 This fetches completed rounds, stores the raw per-seed analysis plus normalized `.npy` tensors, buckets cells by structural features, and stores aggregated class counts in a local artifact. The live predictor automatically loads that artifact if it exists.
 
+Build the learned static prior:
+
+```bash
+PYTHONPATH=src python scripts/build_learned_prior.py
+```
+
+Build the residual calibrator:
+
+```bash
+PYTHONPATH=src python scripts/build_residual_calibrator.py
+```
+
+Evaluate the residual calibrator with leave-one-round-out exact scoring:
+
+```bash
+PYTHONPATH=src python scripts/evaluate_residual_calibrator.py --rounds 8 9 10 11 12
+```
+
 ## Run The Full Pipeline
 
 Dry run without submission:
@@ -228,6 +253,11 @@ Artifacts are written under `artifacts/<timestamp>/`:
 - `observation_counts.npy`
 - `conditional_counts.json`
 - `prediction_seed_*.npy`
+- `diagnostics/index.json`
+- `diagnostics/seed_<n>/summary.json`
+- `diagnostics/seed_<n>/*.npy` for stage tensors like `prior`, `transfer`, `combined`, `learned_prior`, `post_structural`, `rare_port_support`, `rare_ruin_support`, and `final_prediction`
+- `artifacts/learned_prior.json`
+- `artifacts/residual_calibrator.joblib`
 - visualization PNGs
 
 ## Inspection Utilities

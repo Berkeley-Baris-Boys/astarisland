@@ -93,7 +93,9 @@ class ObservationAggregator:
     def empirical_distribution(self, seed_index: int) -> np.ndarray:
         counts = self.class_counts[seed_index]
         totals = counts.sum(axis=-1, keepdims=True)
-        return np.divide(counts, np.maximum(totals, 1e-12), where=totals > 0)
+        probs = np.zeros_like(counts, dtype=np.float64)
+        np.divide(counts, np.maximum(totals, 1e-12), out=probs, where=totals > 0)
+        return probs
 
     def observed_entropy(self, seed_index: int) -> np.ndarray:
         return entropy_from_counts(self.class_counts[seed_index])
