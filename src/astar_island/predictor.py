@@ -83,20 +83,29 @@ class Predictor:
         ruin_share = latent["ruin_share_given_active"]
         forest_share = max(latent["forest_share_dynamic"], 0.15)
 
+        # Dynamic activity scale: adjust settlement/port/ruin priors based on observed activity.
+        # Historical average settlement_rate across rounds 1-9 is ~0.10.
+        settlement_rate = latent.get("settlement_rate", 0.10)
+        # Cap at 1.0: only reduce settlement priors for low-activity rounds.
+        # Scaling UP (>1.0) causes empty probabilities to go negative in historical counts.
+        activity_scale = float(np.clip(settlement_rate / 0.10, 0.04, 1.0))
+
         prior[..., CLASS_EMPTY] += 0.55 + 0.25 * (1.0 - frontier)
-        prior[..., CLASS_SETTLEMENT] += 0.18 * exp_settle + 0.20 * frontier + 0.10 * settlement_density
-        prior[..., CLASS_PORT] += features.coastal_mask.astype(np.float64) * (0.08 * exp_settle + 0.18 * exp_coast + 0.22 * port_share)
-        prior[..., CLASS_RUIN] += 0.03 + 0.12 * conflict + 0.15 * reclaimable + 0.10 * ruin_share
+        prior[..., CLASS_SETTLEMENT] += activity_scale * (0.18 * exp_settle + 0.20 * frontier + 0.10 * settlement_density)
+        prior[..., CLASS_PORT] += activity_scale * features.coastal_mask.astype(np.float64) * (0.08 * exp_settle + 0.18 * exp_coast + 0.22 * port_share)
+        prior[..., CLASS_RUIN] += 0.005 + activity_scale * (0.10 * conflict + 0.12 * reclaimable + 0.08 * ruin_share)
         prior[..., CLASS_FOREST] += 0.05 + 0.35 * forest_density + 0.18 * forest_share
 
-        prior[grid == TERRAIN_FOREST] += np.array([0.05, 0.02, 0.01, 0.04, 0.85, 0.0])
-        prior[grid == TERRAIN_SETTLEMENT] += np.array([0.05, 0.65, 0.10, 0.22, 0.03, 0.0])
-        prior[grid == TERRAIN_PORT] += np.array([0.05, 0.18, 0.60, 0.17, 0.02, 0.0])
-        prior[grid == TERRAIN_RUIN] += np.array([0.15, 0.18, 0.08, 0.42, 0.17, 0.0])
-        prior[grid == TERRAIN_PLAINS] += np.array([0.40, 0.06, 0.02, 0.04, 0.05, 0.0])
+        # Terrain-specific addends: settlement/port/ruin columns scaled by activity_scale.
+        a = activity_scale
+        prior[grid == TERRAIN_FOREST] += np.array([0.05, 0.11 * a, 0.01 * a, 0.02 * a, 0.75, 0.0])
+        prior[grid == TERRAIN_SETTLEMENT] += np.array([0.30, 0.55 * a, 0.06 * a, 0.10 * a, 0.18, 0.0])
+        prior[grid == TERRAIN_PORT] += np.array([0.30, 0.10 * a, 0.45 * a, 0.05 * a, 0.18, 0.0])
+        prior[grid == TERRAIN_RUIN] += np.array([0.20, 0.15 * a, 0.05 * a, 0.30 * a, 0.15, 0.0])
+        prior[grid == TERRAIN_PLAINS] += np.array([0.55, 0.12 * a, 0.01 * a, 0.01 * a, 0.04, 0.0])
         prior[grid == TERRAIN_OCEAN] += np.array([0.95, 0.01, 0.01, 0.01, 0.01, 0.0])
         prior[grid == TERRAIN_MOUNTAIN] += np.array([0.01, 0.0, 0.0, 0.0, 0.0, 1.0])
-        prior = self._apply_historical_priors(prior, features)
+        prior = self._apply_historical_priors(prior, features, activity_scale)
         return normalize_probabilities(prior, self.config.min_probability)
 
     def _build_transfer(self, seed_index: int, features: SeedFeatures, aggregator) -> np.ndarray:
@@ -131,22 +140,46 @@ class Predictor:
             prediction[..., CLASS_SETTLEMENT] = blended
         return prediction
 
-    def _apply_historical_priors(self, prior: np.ndarray, features: SeedFeatures) -> np.ndarray:
+    def _apply_historical_priors(self, prior: np.ndarray, features: SeedFeatures, activity_scale: float = 1.0) -> np.ndarray:
         if self.historical_priors is None:
             return prior
         bucket_keys = make_bucket_keys(features)
-        for key, counts in self.historical_priors.bucket_counts.items():
+        for key, raw_counts in self.historical_priors.bucket_counts.items():
             mask = bucket_keys == int(key)
             if np.any(mask):
-                counts = counts / max(float(np.sum(counts)), 1e-12)
+                counts = self._activity_scale_counts(raw_counts, activity_scale)
                 prior[mask] += self.config.historical_prior_strength * counts
-        for class_id_str, counts in self.historical_priors.initial_class_counts.items():
+        for class_id_str, raw_counts in self.historical_priors.initial_class_counts.items():
             class_id = int(class_id_str)
             mask = features.initial_class_grid == class_id
             if np.any(mask):
-                counts = counts / max(float(np.sum(counts)), 1e-12)
+                counts = self._activity_scale_counts(raw_counts, activity_scale)
                 prior[mask] += 0.5 * self.config.historical_prior_strength * counts
         return prior
+
+    def _activity_scale_counts(self, raw_counts: np.ndarray, activity_scale: float) -> np.ndarray:
+        """Normalize counts and scale settlement/port/ruin fractions by activity_scale,
+        redistributing the difference to the empty class."""
+        total = float(np.sum(raw_counts))
+        if total < 1e-12:
+            return raw_counts.copy()
+        counts = raw_counts / total
+        if abs(activity_scale - 1.0) < 1e-6:
+            return counts
+        # Scale dynamic classes; redistribute excess/deficit to empty.
+        dynamic_classes = [CLASS_SETTLEMENT, CLASS_PORT, CLASS_RUIN]
+        reduction = 0.0
+        for c in dynamic_classes:
+            original = counts[c]
+            scaled = original * activity_scale
+            counts[c] = scaled
+            reduction += original - scaled
+        counts[CLASS_EMPTY] += reduction
+        counts = np.clip(counts, 0.0, None)
+        s = float(np.sum(counts))
+        if s > 1e-12:
+            counts /= s
+        return counts
 
     def _apply_physical_constraints(self, prediction: np.ndarray, features: SeedFeatures) -> np.ndarray:
         mountain_mask = features.initial_class_grid == CLASS_MOUNTAIN

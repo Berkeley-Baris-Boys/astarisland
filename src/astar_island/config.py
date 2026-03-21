@@ -24,7 +24,7 @@ class QueryPlannerConfig:
 @dataclass
 class PredictorConfig:
     min_probability: float = 0.0025
-    direct_observation_strength: float = 18.0
+    direct_observation_strength: float = 35.0
     transfer_strength: float = 8.0
     local_kernel_sigma: float = 4.0
     feature_match_strength: float = 5.0
@@ -33,7 +33,7 @@ class PredictorConfig:
     settlement_sigma: float = 2.2
     settlement_intensity_blend: float = 0.22
     confidence_sharpen_power: float = 1.15
-    historical_prior_strength: float = 6.0
+    historical_prior_strength: float = 30.0
     historical_prior_path: Path = field(
         default_factory=lambda: Path(os.getenv("ASTAR_ISLAND_HISTORICAL_PRIOR_PATH", "artifacts/historical_priors.json"))
     )
