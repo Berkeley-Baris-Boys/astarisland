@@ -69,6 +69,7 @@ class Predictor:
         collect_diagnostics: bool,
     ) -> tuple[dict[int, np.ndarray], dict[int, dict[str, object]]]:
         latent = aggregator.round_latent_summary()
+        round_regime = self._compute_round_regime(latent, aggregator)
         predictions: dict[int, np.ndarray] = {}
         diagnostics: dict[int, dict[str, object]] = {}
         for seed_index, features in self.seed_features.items():
@@ -77,6 +78,7 @@ class Predictor:
                 features,
                 aggregator,
                 latent,
+                round_regime,
                 collect_diagnostics=collect_diagnostics,
             )
             validate_prediction_tensor(prediction, self.config.min_probability)
@@ -86,11 +88,13 @@ class Predictor:
         return predictions, diagnostics
 
     def predict_seed(self, seed_index: int, features: SeedFeatures, aggregator, latent: dict[str, float]) -> np.ndarray:
+        round_regime = self._compute_round_regime(latent, aggregator)
         prediction, _ = self._predict_seed_internal(
             seed_index,
             features,
             aggregator,
             latent,
+            round_regime,
             collect_diagnostics=False,
         )
         return prediction
@@ -101,6 +105,7 @@ class Predictor:
         features: SeedFeatures,
         aggregator,
         latent: dict[str, float],
+        round_regime: dict[str, float],
         *,
         collect_diagnostics: bool,
     ) -> tuple[np.ndarray, dict[str, object] | None]:
@@ -114,12 +119,13 @@ class Predictor:
             prior,
             observed_counts,
             observation_counts,
+            round_regime,
         )
         combined = transfer.copy()
         base_prediction = transfer.copy()
         prediction = self._apply_settlement_intensity_prior(base_prediction, features)
         post_settlement = prediction.copy()
-        prediction = self._apply_structural_calibration(prediction, features)
+        prediction = self._apply_structural_calibration(prediction, features, round_regime)
         post_structural = prediction.copy()
         rare_details = None
         if collect_diagnostics:
@@ -147,6 +153,7 @@ class Predictor:
                 features,
                 observed_counts,
                 observation_counts,
+                round_regime,
                 return_details=True,
             )
         else:
@@ -155,6 +162,7 @@ class Predictor:
                 features,
                 observed_counts,
                 observation_counts,
+                round_regime,
                 return_details=False,
             )
         prior_gate_details = None
@@ -163,6 +171,7 @@ class Predictor:
                 prior,
                 prediction,
                 features,
+                round_regime,
                 return_details=True,
             )
         else:
@@ -170,14 +179,22 @@ class Predictor:
                 prior,
                 prediction,
                 features,
+                round_regime,
                 return_details=False,
             )
         post_prior_gate = prediction.copy()
+        prediction = self._apply_high_activity_active_concentration(
+            prediction,
+            features,
+            round_regime,
+        )
+        post_active_concentration = prediction.copy()
         prediction = self._apply_active_dominance_separation(
             prediction,
             prior,
             features,
             observation_details["tensors"]["active_dominance_support"],
+            round_regime,
         )
         prediction = self._apply_physical_constraints(prediction, features)
         prediction = normalize_probabilities(prediction, self.config.min_probability)
@@ -191,6 +208,7 @@ class Predictor:
         diagnostics = {
             "seed_index": seed_index,
             "observation_summary": self._summarize_observations(observed_counts, observation_counts),
+            "round_regime": round_regime,
             "stage_summaries": {
                 "prior": self._summarize_tensor(prior),
                 "transfer": self._summarize_tensor(transfer),
@@ -201,6 +219,7 @@ class Predictor:
                 "post_physical": self._summarize_tensor(post_physical),
                 "post_confidence": self._summarize_tensor(post_confidence),
                 "post_prior_gate": self._summarize_tensor(post_prior_gate),
+                "post_active_concentration": self._summarize_tensor(post_active_concentration),
                 "final_prediction": self._summarize_tensor(prediction),
             },
             "tensors": {
@@ -214,6 +233,7 @@ class Predictor:
                 "post_physical": post_physical,
                 "post_confidence": post_confidence,
                 "post_prior_gate": post_prior_gate,
+                "post_active_concentration": post_active_concentration,
                 "final_prediction": prediction,
             },
             "observation_model": observation_details["summary"],
@@ -276,9 +296,11 @@ class Predictor:
         prior: np.ndarray,
         observed_counts: np.ndarray,
         observation_counts: np.ndarray,
+        round_regime: dict[str, float],
     ) -> tuple[np.ndarray, dict[str, object]]:
         bucket_keys = make_bucket_keys(features)
         h, w = bucket_keys.shape
+        regime = round_regime["high_activity_factor"]
         empirical = np.zeros_like(observed_counts, dtype=np.float64)
         np.divide(
             observed_counts,
@@ -321,9 +343,14 @@ class Predictor:
             smooth_empirical,
             bucket_target,
         )
+        bucket_blend = self._interp(
+            self.config.observation_bucket_blend,
+            self.config.observation_bucket_blend_high_activity,
+            regime,
+        )
         observation_target = normalize_probabilities(
-            (1.0 - self.config.observation_bucket_blend) * observation_target
-            + self.config.observation_bucket_blend * bucket_target,
+            (1.0 - bucket_blend) * observation_target
+            + bucket_blend * bucket_target,
             self.config.min_probability,
         )
 
@@ -336,18 +363,33 @@ class Predictor:
         prior_active_types = self._normalize_active_types(prior)
         target_active_types = self._normalize_active_types(observation_target, fallback=prior_active_types)
 
+        nonactive_blend = self._interp(
+            self.config.observation_nonactive_blend,
+            self.config.observation_nonactive_blend_high_activity,
+            regime,
+        )
         nonactive_gate = np.clip(
-            self.config.observation_nonactive_blend * correction_support,
+            nonactive_blend * correction_support,
             0.0,
             1.0,
+        )
+        active_mass_blend = self._interp(
+            self.config.observation_active_mass_blend,
+            self.config.observation_active_mass_blend_high_activity,
+            regime,
         )
         active_mass_gate = np.clip(
-            self.config.observation_active_mass_blend * np.sqrt(np.maximum(correction_support, 0.0)),
+            active_mass_blend * np.sqrt(np.maximum(correction_support, 0.0)),
             0.0,
             1.0,
         )
+        active_type_blend = self._interp(
+            self.config.observation_active_type_blend,
+            self.config.observation_active_type_blend_high_activity,
+            regime,
+        )
         active_type_gate = np.clip(
-            self.config.observation_active_type_blend * correction_support,
+            active_type_blend * correction_support,
             0.0,
             1.0,
         )
@@ -385,6 +427,10 @@ class Predictor:
             "summary": {
                 "correction_support_mean": float(np.mean(correction_support)),
                 "correction_support_p95": float(np.quantile(correction_support, 0.95)),
+                "bucket_blend": float(bucket_blend),
+                "nonactive_blend": float(nonactive_blend),
+                "active_mass_blend": float(active_mass_blend),
+                "active_type_blend": float(active_type_blend),
                 "active_dominance_support_mean": float(np.mean(active_dominance_support)),
                 "active_dominance_support_p95": float(np.quantile(active_dominance_support, 0.95)),
             },
@@ -437,8 +483,14 @@ class Predictor:
                 prior[mask] += 0.5 * self.config.historical_prior_strength * counts
         return prior
 
-    def _apply_structural_calibration(self, prediction: np.ndarray, features: SeedFeatures) -> np.ndarray:
+    def _apply_structural_calibration(
+        self,
+        prediction: np.ndarray,
+        features: SeedFeatures,
+        round_regime: dict[str, float],
+    ) -> np.ndarray:
         out = prediction.copy().astype(np.float64)
+        regime = round_regime["high_activity_factor"]
         settlement_intensity = features.feature_stack[..., features.feature_names.index("settlement_intensity")]
         port_intensity = features.feature_stack[..., features.feature_names.index("port_intensity")]
         frontier = features.frontier_mask.astype(np.float64)
@@ -451,15 +503,34 @@ class Predictor:
             1.0,
         )
         settlement_factor = np.clip(
-            self.config.plains_settlement_base
-            + self.config.plains_settlement_gain * np.power(support, self.config.plains_settlement_power),
+            self._interp(
+                self.config.plains_settlement_base,
+                self.config.plains_settlement_base_high_activity,
+                regime,
+            )
+            + self._interp(
+                self.config.plains_settlement_gain,
+                self.config.plains_settlement_gain_high_activity,
+                regime,
+            )
+            * np.power(support, self.config.plains_settlement_power),
             0.25,
             2.5,
         )
         out[..., CLASS_SETTLEMENT][buildable_empty] *= settlement_factor[buildable_empty]
 
         empty_factor = np.clip(
-            self.config.plains_empty_base - self.config.plains_empty_support_slope * support,
+            self._interp(
+                self.config.plains_empty_base,
+                self.config.plains_empty_base_high_activity,
+                regime,
+            )
+            - self._interp(
+                self.config.plains_empty_support_slope,
+                self.config.plains_empty_support_slope_high_activity,
+                regime,
+            )
+            * support,
             0.8,
             1.2,
         )
@@ -467,26 +538,68 @@ class Predictor:
 
         coastal_empty = buildable_empty & features.coastal_mask
         port_factor = np.clip(
-            0.8 + self.config.coastal_port_support_gain * np.maximum(support, port_intensity),
+            0.8
+            + self._interp(
+                self.config.coastal_port_support_gain,
+                self.config.coastal_port_support_gain_high_activity,
+                regime,
+            )
+            * np.maximum(support, port_intensity),
             0.75,
             2.0,
         )
         out[..., CLASS_PORT][coastal_empty] *= port_factor[coastal_empty]
 
         initial_forest = features.initial_class_grid == CLASS_FOREST
-        out[..., CLASS_FOREST][initial_forest] *= self.config.forest_retention_boost
-        out[..., CLASS_EMPTY][initial_forest] *= self.config.forest_empty_suppression
-        out[..., CLASS_SETTLEMENT][initial_forest] *= self.config.forest_settlement_suppression
-        out[..., CLASS_PORT][initial_forest] *= self.config.forest_port_suppression
-        out[..., CLASS_RUIN][initial_forest] *= self.config.forest_ruin_suppression
+        out[..., CLASS_FOREST][initial_forest] *= self._interp(
+            self.config.forest_retention_boost,
+            self.config.forest_retention_boost_high_activity,
+            regime,
+        )
+        out[..., CLASS_EMPTY][initial_forest] *= self._interp(
+            self.config.forest_empty_suppression,
+            self.config.forest_empty_suppression_high_activity,
+            regime,
+        )
+        out[..., CLASS_SETTLEMENT][initial_forest] *= self._interp(
+            self.config.forest_settlement_suppression,
+            self.config.forest_settlement_suppression_high_activity,
+            regime,
+        )
+        out[..., CLASS_PORT][initial_forest] *= self._interp(
+            self.config.forest_port_suppression,
+            self.config.forest_port_suppression_high_activity,
+            regime,
+        )
+        out[..., CLASS_RUIN][initial_forest] *= self._interp(
+            self.config.forest_ruin_suppression,
+            self.config.forest_ruin_suppression_high_activity,
+            regime,
+        )
 
         initial_settlement = features.initial_class_grid == CLASS_SETTLEMENT
-        out[..., CLASS_SETTLEMENT][initial_settlement] *= self.config.initial_settlement_boost
-        out[..., CLASS_EMPTY][initial_settlement] *= self.config.initial_settlement_empty_suppression
+        out[..., CLASS_SETTLEMENT][initial_settlement] *= self._interp(
+            self.config.initial_settlement_boost,
+            self.config.initial_settlement_boost_high_activity,
+            regime,
+        )
+        out[..., CLASS_EMPTY][initial_settlement] *= self._interp(
+            self.config.initial_settlement_empty_suppression,
+            self.config.initial_settlement_empty_suppression_high_activity,
+            regime,
+        )
 
         initial_port = features.initial_class_grid == CLASS_PORT
-        out[..., CLASS_PORT][initial_port] *= self.config.initial_port_boost
-        out[..., CLASS_EMPTY][initial_port] *= self.config.initial_port_empty_suppression
+        out[..., CLASS_PORT][initial_port] *= self._interp(
+            self.config.initial_port_boost,
+            self.config.initial_port_boost_high_activity,
+            regime,
+        )
+        out[..., CLASS_EMPTY][initial_port] *= self._interp(
+            self.config.initial_port_empty_suppression,
+            self.config.initial_port_empty_suppression_high_activity,
+            regime,
+        )
 
         return normalize_probabilities(out, self.config.min_probability)
 
@@ -590,6 +703,8 @@ class Predictor:
         power: float,
         support_mask: np.ndarray,
     ) -> np.ndarray:
+        if blend <= 0.0:
+            return prediction
         total_mass = float(prediction[..., class_id].sum())
         if total_mass <= 0.0 or not np.any(support_mask):
             return prediction
@@ -639,6 +754,7 @@ class Predictor:
         features: SeedFeatures,
         observed_counts: np.ndarray,
         observation_counts: np.ndarray,
+        round_regime: dict[str, float],
         *,
         return_details: bool = False,
     ) -> np.ndarray | tuple[np.ndarray, dict[str, object] | None]:
@@ -646,7 +762,7 @@ class Predictor:
             if return_details:
                 return prediction, None
             return prediction
-        blend_map = self._residual_blend_map(observed_counts, observation_counts)
+        blend_map = self._residual_blend_map(observed_counts, observation_counts, round_regime)
         calibrated, details = apply_residual_calibrator(
             self.residual_calibrator,
             prediction,
@@ -663,10 +779,12 @@ class Predictor:
         prior: np.ndarray,
         prediction: np.ndarray,
         features: SeedFeatures,
+        round_regime: dict[str, float],
         *,
         return_details: bool = False,
     ) -> np.ndarray | tuple[np.ndarray, dict[str, object] | None]:
-        if self.prior_blend_gate is None or self.config.prior_blend_gate_strength <= 0.0:
+        effective_strength = self.config.prior_blend_gate_strength * round_regime["low_activity_factor"]
+        if self.prior_blend_gate is None or effective_strength <= 0.0:
             if return_details:
                 return prediction, None
             return prediction
@@ -676,22 +794,110 @@ class Predictor:
             prediction,
             features,
             min_probability=self.config.min_probability,
-            strength=self.config.prior_blend_gate_strength,
+            strength=effective_strength,
         )
         if return_details:
             return blended, details
         return blended
 
-    def _residual_blend_map(self, observed_counts: np.ndarray, observation_counts: np.ndarray) -> np.ndarray:
-        blend_map = np.full(observation_counts.shape, self.config.residual_calibrator_blend, dtype=np.float64)
-        blend_map[observation_counts == 1] = self.config.residual_calibrator_single_observed_blend
-        blend_map[observation_counts >= 2] = self.config.residual_calibrator_repeated_observed_blend
+    def _apply_high_activity_active_concentration(
+        self,
+        prediction: np.ndarray,
+        features: SeedFeatures,
+        round_regime: dict[str, float],
+    ) -> np.ndarray:
+        regime = round_regime["high_activity_factor"]
+        if regime <= 0.0:
+            return prediction
+        out = prediction.copy().astype(np.float64)
+        settlement_intensity = features.feature_stack[..., features.feature_names.index("settlement_intensity")]
+        settlement_density = features.feature_stack[..., features.feature_names.index("settlement_density")]
+        frontier = features.frontier_mask.astype(np.float64)
+        initial_settlement = (features.initial_class_grid == CLASS_SETTLEMENT).astype(np.float64)
+        settlement_support = (
+            self.config.settlement_support_intensity_weight * settlement_intensity
+            + self.config.settlement_support_frontier_weight * frontier
+            + self.config.settlement_support_density_weight * settlement_density
+            + self.config.settlement_support_prediction_weight * out[..., CLASS_SETTLEMENT]
+            + self.config.settlement_support_initial_bonus * initial_settlement
+        )
+        settlement_blend = np.clip(
+            regime * self.config.settlement_focus_blend_high_activity,
+            0.0,
+            1.0,
+        )
+        out = self._reshape_class_mass(
+            out,
+            CLASS_SETTLEMENT,
+            settlement_support,
+            blend=settlement_blend,
+            power=self.config.settlement_focus_power_high_activity,
+            support_mask=features.buildable_mask,
+        )
+        border_distance = features.feature_stack[..., features.feature_names.index("border_distance")]
+        border_scale = max(float(np.max(border_distance)), 1e-6)
+        border_support = 1.0 - np.clip(border_distance / border_scale, 0.0, 1.0)
+        active_mass = out[..., CLASS_SETTLEMENT] + out[..., CLASS_PORT]
+        port_support = (
+            self.config.post_port_support_intensity_weight * settlement_intensity
+            + self.config.post_port_support_frontier_weight * frontier
+            + self.config.post_port_support_border_weight * border_support
+            + self.config.post_port_support_prediction_weight * active_mass
+        )
+        port_support += self.config.post_port_support_initial_settlement_bonus * (
+            features.initial_class_grid == CLASS_SETTLEMENT
+        )
+        port_support += self.config.post_port_support_initial_port_bonus * (features.initial_class_grid == CLASS_PORT)
+        port_blend = np.clip(
+            regime * self.config.post_port_focus_blend_high_activity,
+            0.0,
+            1.0,
+        )
+        return self._reshape_class_mass(
+            out,
+            CLASS_PORT,
+            port_support,
+            blend=port_blend,
+            power=self.config.post_port_focus_power_high_activity,
+            support_mask=features.coastal_mask & features.buildable_mask,
+        )
+
+    def _residual_blend_map(
+        self,
+        observed_counts: np.ndarray,
+        observation_counts: np.ndarray,
+        round_regime: dict[str, float],
+    ) -> np.ndarray:
+        regime = round_regime["high_activity_factor"]
+        blend_map = np.full(
+            observation_counts.shape,
+            self._interp(
+                self.config.residual_calibrator_blend,
+                self.config.residual_calibrator_high_activity_blend,
+                regime,
+            ),
+            dtype=np.float64,
+        )
+        blend_map[observation_counts == 1] = self._interp(
+            self.config.residual_calibrator_single_observed_blend,
+            self.config.residual_calibrator_high_activity_single_observed_blend,
+            regime,
+        )
+        blend_map[observation_counts >= 2] = self._interp(
+            self.config.residual_calibrator_repeated_observed_blend,
+            self.config.residual_calibrator_high_activity_repeated_observed_blend,
+            regime,
+        )
         active_observed = (
             observed_counts[..., CLASS_SETTLEMENT]
             + observed_counts[..., CLASS_PORT]
             + observed_counts[..., CLASS_RUIN]
         ) > 0
-        blend_map[active_observed] = self.config.residual_calibrator_active_observed_blend
+        blend_map[active_observed] = self._interp(
+            self.config.residual_calibrator_active_observed_blend,
+            self.config.residual_calibrator_high_activity_active_observed_blend,
+            regime,
+        )
         return blend_map
 
     def _apply_active_dominance_separation(
@@ -700,16 +906,21 @@ class Predictor:
         prior: np.ndarray,
         features: SeedFeatures,
         dominance_support: np.ndarray,
+        round_regime: dict[str, float],
     ) -> np.ndarray:
         out = prediction.copy().astype(np.float64)
         active_mass = out[..., CLASS_SETTLEMENT] + out[..., CLASS_PORT] + out[..., CLASS_RUIN]
         nonactive_reference = np.maximum(out[..., CLASS_EMPTY], out[..., CLASS_FOREST])
+        regime_relax = 1.0 + round_regime["high_activity_factor"] * self.config.active_dominance_regime_relaxation
         allowed_active = self.config.active_dominance_additive + nonactive_reference * (
             self.config.active_dominance_base_ratio
             + self.config.active_dominance_support_gain * dominance_support
-        )
+        ) * regime_relax
         initial_active_like = np.isin(features.initial_class_grid, [CLASS_SETTLEMENT, CLASS_PORT, CLASS_RUIN])
-        allowed_active[initial_active_like] += self.config.active_dominance_initial_bonus
+        allowed_active[initial_active_like] += (
+            self.config.active_dominance_initial_bonus
+            + round_regime["high_activity_factor"] * self.config.active_dominance_regime_initial_bonus
+        )
         allowed_active = np.clip(allowed_active, 0.0, 0.98)
 
         scale = np.ones_like(active_mass, dtype=np.float64)
@@ -740,6 +951,121 @@ class Predictor:
         empty_share = np.where(redistribute_base > 1e-12, empty_share, fallback_empty_share)
         out[..., CLASS_EMPTY] += removed_mass * empty_share
         out[..., CLASS_FOREST] += removed_mass * (1.0 - empty_share)
+        out = self._apply_settlement_dominance_allowance(out, features, round_regime)
+        out = self._apply_port_dominance_allowance(out, features, round_regime)
+        return out
+
+    def _apply_settlement_dominance_allowance(
+        self,
+        prediction: np.ndarray,
+        features: SeedFeatures,
+        round_regime: dict[str, float],
+    ) -> np.ndarray:
+        regime = round_regime["high_activity_factor"]
+        if regime <= 0.0 or self.config.active_dominance_settlement_bonus_high_activity <= 0.0:
+            return prediction
+
+        out = prediction.copy().astype(np.float64)
+        settlement_intensity = features.feature_stack[..., features.feature_names.index("settlement_intensity")]
+        settlement_density = features.feature_stack[..., features.feature_names.index("settlement_density")]
+        frontier = features.frontier_mask.astype(np.float64)
+        settlement_support = (
+            self.config.settlement_support_intensity_weight * settlement_intensity
+            + self.config.settlement_support_frontier_weight * frontier
+            + self.config.settlement_support_density_weight * settlement_density
+            + self.config.settlement_support_prediction_weight * out[..., CLASS_SETTLEMENT]
+            + self.config.settlement_support_initial_bonus * (features.initial_class_grid == CLASS_SETTLEMENT)
+        )
+        settlement_support = np.clip(settlement_support, 0.0, 1.0)
+
+        competitor_stack = np.stack(
+            [
+                out[..., CLASS_EMPTY],
+                out[..., CLASS_PORT],
+                out[..., CLASS_RUIN],
+                out[..., CLASS_FOREST],
+            ],
+            axis=-1,
+        )
+        competitor_index = np.argmax(competitor_stack, axis=-1)
+        competitor = np.take_along_axis(competitor_stack, competitor_index[..., None], axis=-1)[..., 0]
+        deficit = competitor - out[..., CLASS_SETTLEMENT]
+        candidate_mask = (
+            features.buildable_mask
+            & (out[..., CLASS_SETTLEMENT] >= self.config.active_dominance_settlement_min_probability)
+            & (deficit > 0.0)
+            & (deficit < self.config.active_dominance_settlement_margin_threshold)
+        )
+        max_shift = regime * self.config.active_dominance_settlement_bonus_high_activity * settlement_support
+        desired_shift = 0.5 * deficit + 1e-4
+        delta = np.where(candidate_mask, np.minimum(desired_shift, max_shift), 0.0)
+        if not np.any(delta > 0.0):
+            return prediction
+
+        out[..., CLASS_SETTLEMENT] += delta
+        for class_index, class_id in enumerate((CLASS_EMPTY, CLASS_PORT, CLASS_RUIN, CLASS_FOREST)):
+            class_mask = candidate_mask & (competitor_index == class_index)
+            out[..., class_id][class_mask] -= delta[class_mask]
+        return out
+
+    def _apply_port_dominance_allowance(
+        self,
+        prediction: np.ndarray,
+        features: SeedFeatures,
+        round_regime: dict[str, float],
+    ) -> np.ndarray:
+        regime = round_regime["high_activity_factor"]
+        if regime <= 0.0 or self.config.active_dominance_port_bonus_high_activity <= 0.0:
+            return prediction
+
+        out = prediction.copy().astype(np.float64)
+        settlement_intensity = features.feature_stack[..., features.feature_names.index("settlement_intensity")]
+        border_distance = features.feature_stack[..., features.feature_names.index("border_distance")]
+        frontier = features.frontier_mask.astype(np.float64)
+        border_scale = max(float(np.max(border_distance)), 1e-6)
+        border_support = 1.0 - np.clip(border_distance / border_scale, 0.0, 1.0)
+        active_mass = out[..., CLASS_SETTLEMENT] + out[..., CLASS_PORT]
+        port_support = (
+            self.config.post_port_support_intensity_weight * settlement_intensity
+            + self.config.post_port_support_frontier_weight * frontier
+            + self.config.post_port_support_border_weight * border_support
+            + self.config.post_port_support_prediction_weight * active_mass
+        )
+        port_support += self.config.post_port_support_initial_settlement_bonus * (
+            features.initial_class_grid == CLASS_SETTLEMENT
+        )
+        port_support += self.config.post_port_support_initial_port_bonus * (features.initial_class_grid == CLASS_PORT)
+        port_support = np.clip(port_support, 0.0, 1.0)
+
+        competitor_stack = np.stack(
+            [
+                out[..., CLASS_EMPTY],
+                out[..., CLASS_SETTLEMENT],
+                out[..., CLASS_RUIN],
+                out[..., CLASS_FOREST],
+            ],
+            axis=-1,
+        )
+        competitor_index = np.argmax(competitor_stack, axis=-1)
+        competitor = np.take_along_axis(competitor_stack, competitor_index[..., None], axis=-1)[..., 0]
+        deficit = competitor - out[..., CLASS_PORT]
+        candidate_mask = (
+            features.coastal_mask
+            & features.buildable_mask
+            & (out[..., CLASS_PORT] >= self.config.active_dominance_port_min_probability)
+            & (deficit > 0.0)
+            & (deficit < self.config.active_dominance_port_margin_threshold)
+        )
+        max_shift = regime * self.config.active_dominance_port_bonus_high_activity * port_support
+        desired_shift = 0.5 * deficit + 1e-4
+        delta = np.where(candidate_mask, np.minimum(desired_shift, max_shift), 0.0)
+        if not np.any(delta > 0.0):
+            return prediction
+
+        out[..., CLASS_PORT] += delta
+        for class_index, class_id in enumerate((CLASS_EMPTY, CLASS_SETTLEMENT, CLASS_RUIN, CLASS_FOREST)):
+            class_mask = candidate_mask & (competitor_index == class_index)
+            out[..., class_id][class_mask] -= delta[class_mask]
         return out
 
     def _weighted_gaussian_average(self, values: np.ndarray, weights: np.ndarray, *, sigma: float) -> np.ndarray:
@@ -802,3 +1128,62 @@ class Predictor:
             "repeat_cells": int(np.sum(observation_counts >= 2)),
             "per_class_observed_mass": per_class,
         }
+
+    def _compute_round_regime(self, latent: dict[str, float], aggregator=None) -> dict[str, float]:
+        if aggregator is None:
+            observed_cells = float(latent.get("observed_cells", 0.0))
+            repeat_fraction = 0.0
+        else:
+            observed_cells = float(np.sum(aggregator.observation_counts > 0))
+            repeat_fraction = float(np.sum(aggregator.observation_counts >= 2)) / max(observed_cells, 1.0)
+        settlement_signal = self._range_signal(
+            latent["settlement_rate"],
+            self.config.regime_settlement_rate_low,
+            self.config.regime_settlement_rate_high,
+        )
+        forest_signal = self._inverse_range_signal(
+            latent["forest_share_dynamic"],
+            self.config.regime_forest_share_low,
+            self.config.regime_forest_share_high,
+        )
+        repeat_signal = self._range_signal(
+            repeat_fraction,
+            self.config.regime_repeat_fraction_low,
+            self.config.regime_repeat_fraction_high,
+        )
+        total_weight = (
+            self.config.regime_settlement_weight
+            + self.config.regime_forest_weight
+            + self.config.regime_repeat_weight
+        )
+        high_activity_factor = (
+            self.config.regime_settlement_weight * settlement_signal
+            + self.config.regime_forest_weight * forest_signal
+            + self.config.regime_repeat_weight * repeat_signal
+        ) / max(total_weight, 1e-12)
+        high_activity_factor = float(np.clip(high_activity_factor, 0.0, 1.0))
+        return {
+            "settlement_signal": float(settlement_signal),
+            "forest_signal": float(forest_signal),
+            "repeat_signal": float(repeat_signal),
+            "repeat_fraction": float(repeat_fraction),
+            "high_activity_factor": high_activity_factor,
+            "low_activity_factor": float(1.0 - high_activity_factor),
+        }
+
+    @staticmethod
+    def _range_signal(value: float, low: float, high: float) -> float:
+        if high < low:
+            low, high = high, low
+        if high - low <= 1e-12:
+            return 1.0 if value >= high else 0.0
+        return float(np.clip((value - low) / (high - low), 0.0, 1.0))
+
+    @classmethod
+    def _inverse_range_signal(cls, value: float, low: float, high: float) -> float:
+        return float(1.0 - cls._range_signal(value, low, high))
+
+    @staticmethod
+    def _interp(low: float, high: float, t: float) -> float:
+        t = float(np.clip(t, 0.0, 1.0))
+        return float((1.0 - t) * low + t * high)
