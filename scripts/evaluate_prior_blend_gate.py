@@ -11,8 +11,9 @@ from astar_island.features import build_all_features
 from astar_island.history import _round_detail_from_json
 from astar_island.learned_prior import load_learned_prior_artifact
 from astar_island.predictor import Predictor
-from astar_island.prior_blend_gate import apply_prior_blend_gate, build_prior_blend_gate_artifact_from_archive, infer_latent_summary_from_prediction
+from astar_island.prior_blend_gate import apply_prior_blend_gate, build_prior_blend_gate_artifact_from_archive
 from astar_island.priors import load_historical_prior_artifact
+from astar_island.regime import compute_round_regime, infer_latent_summary_from_prediction
 from astar_island.scoring import score_prediction
 from astar_island.utils import load_json, save_json
 
@@ -63,12 +64,14 @@ def evaluate_round(
         prediction = np.asarray(payload["prediction"], dtype=np.float64)
         ground_truth = np.asarray(payload["ground_truth"], dtype=np.float64)
         latent = infer_latent_summary_from_prediction(prediction)
+        round_regime = compute_round_regime(latent, config.predictor)
         prior = predictor._build_prior(seed_index, seed_features, None, latent)
         gated, details = apply_prior_blend_gate(
             artifact,
             prior,
             prediction,
             seed_features,
+            round_regime=round_regime,
             min_probability=config.predictor.min_probability,
         )
         prior_score = score_prediction(ground_truth, prior)

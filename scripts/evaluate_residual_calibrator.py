@@ -9,6 +9,7 @@ import numpy as np
 from astar_island.config import AstarConfig
 from astar_island.features import build_all_features
 from astar_island.history import _round_detail_from_json
+from astar_island.regime import compute_round_regime, infer_latent_summary_from_prediction
 from astar_island.residual_calibrator import apply_residual_calibrator, build_residual_calibrator_artifact_from_archive
 from astar_island.scoring import score_prediction
 from astar_island.utils import load_json, normalize_probabilities, save_json
@@ -61,6 +62,7 @@ def evaluate_round(
         payload = load_json(analysis_path)
         prediction = np.asarray(payload["prediction"], dtype=np.float64)
         ground_truth = np.asarray(payload["ground_truth"], dtype=np.float64)
+        round_regime = compute_round_regime(infer_latent_summary_from_prediction(prediction), config.predictor)
         base_score = score_prediction(ground_truth, prediction)
         base_scores.append(base_score)
         per_seed = {
@@ -74,6 +76,7 @@ def evaluate_round(
                 artifact,
                 prediction,
                 seed_features,
+                round_regime,
                 blend=blend,
                 min_probability=config.predictor.min_probability,
             )

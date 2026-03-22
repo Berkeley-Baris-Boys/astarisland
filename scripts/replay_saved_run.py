@@ -14,6 +14,7 @@ from astar_island.learned_prior import load_learned_prior_artifact
 from astar_island.predictor import Predictor
 from astar_island.prior_blend_gate import load_prior_blend_gate_artifact
 from astar_island.priors import load_historical_prior_artifact
+from astar_island.regime import compute_round_regime, regime_bucket, repeat_fraction_from_observation_counts
 from astar_island.residual_calibrator import load_residual_calibrator_artifact
 from astar_island.scoring import score_prediction
 
@@ -64,7 +65,10 @@ def main() -> None:
 
     config = AstarConfig()
     detail = _round_detail_from_json(json.loads((args.run_dir / "round_detail.json").read_text()))
-    features = build_all_features(detail.initial_states)
+    features = build_all_features(
+        detail.initial_states,
+        settlement_sigma=config.predictor.settlement_sigma,
+    )
     aggregator = ObservationAggregator(detail, features)
     aggregator.class_counts = np.load(args.run_dir / "class_counts.npy")
     aggregator.observation_counts = np.load(args.run_dir / "observation_counts.npy")
@@ -95,6 +99,12 @@ def main() -> None:
         residual_calibrator=residual,
         prior_blend_gate=prior_blend_gate,
     )
+    latent = aggregator.round_latent_summary()
+    round_regime = compute_round_regime(
+        latent,
+        config.predictor,
+        repeat_fraction=repeat_fraction_from_observation_counts(aggregator.observation_counts),
+    )
     if args.no_diagnostics:
         predictions = predictor.predict_round(aggregator)
         diagnostics: dict[int, dict[str, object]] = {}
@@ -112,6 +122,8 @@ def main() -> None:
         "round_number": metadata.get("round_number"),
         "round_id": metadata.get("round_id"),
         "history_round_dir": str(round_dir) if round_dir is not None else None,
+        "round_regime": round_regime,
+        "round_bucket": regime_bucket(round_regime["high_activity_factor"]),
     }
 
     if round_dir is None:
@@ -133,6 +145,10 @@ def main() -> None:
 
     if diagnostics:
         stage_scores: dict[str, float] = {}
+        per_seed_round_regime: dict[str, object] = {}
+        for seed, payload in diagnostics.items():
+            per_seed_round_regime[str(seed)] = payload.get("round_regime", {})
+        result["per_seed_round_regime"] = per_seed_round_regime
         common_stages = sorted(
             set.intersection(*[set(payload["tensors"].keys()) for payload in diagnostics.values()])  # type: ignore[index]
         )

@@ -36,7 +36,10 @@ def run_active_round(config: AstarConfig, *, submit: bool = True, make_plots: bo
     LOGGER.info("Active round %s, number %s", detail.round_id, detail.round_number)
     save_json(run_dir / "round_detail.json", detail.raw)
     save_json(run_dir / "active_round.json", active)
-    features = build_all_features(detail.initial_states)
+    features = build_all_features(
+        detail.initial_states,
+        settlement_sigma=config.predictor.settlement_sigma,
+    )
     aggregator = ObservationAggregator(detail, features)
     planner = QueryPlanner(config.planner, detail, features)
     historical_priors = None

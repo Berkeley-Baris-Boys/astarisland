@@ -1,0 +1,338 @@
+{
+  "observation_model": {
+    "active_dominance_support_mean": 0.9562354072180603,
+    "active_dominance_support_p95": 1.0,
+    "active_mass_blend": 0.95,
+    "active_type_blend": 0.8,
+    "bucket_blend": 0.7,
+    "correction_support_mean": 0.3510788763175104,
+    "correction_support_p95": 0.5441771168546876,
+    "nonactive_blend": 0.8
+  },
+  "observation_summary": {
+    "covered_fraction": 0.74875,
+    "per_class_observed_mass": {
+      "empty": 724.0,
+      "forest": 264.0,
+      "mountain": 42.0,
+      "port": 31.0,
+      "ruin": 29.0,
+      "settlement": 566.0
+    },
+    "repeat_cells": 453,
+    "total_observations": 1656.0
+  },
+  "rare_class": {
+    "port_blend": 0.7,
+    "port_gate": 1.0,
+    "port_rate": 0.08887738508934477,
+    "port_support_summary": {
+      "count": 207.0,
+      "max": 0.7308423176986485,
+      "mean": 0.36888725078619045,
+      "p95": 0.6713062702787914
+    },
+    "ruin_blend": 0.8,
+    "ruin_support_summary": {
+      "count": 1359.0,
+      "max": 0.9885154798781037,
+      "mean": 0.41961094298127777,
+      "p95": 0.8708069546233975
+    }
+  },
+  "residual_calibrator": {
+    "blend_max": 0.9335264988632377,
+    "blend_mean": 0.47263465642518143,
+    "blend_min": 0.0,
+    "mean_pred_active": 0.2621029494218339,
+    "mean_pred_forest_share_non_active": 0.25628603305529024,
+    "mean_pred_port_share_active": 0.06161905188778434,
+    "mean_pred_ruin_share_active": 0.07538674089071894,
+    "mean_pred_settlement_share_active": 0.8629942072214968,
+    "used_trust_gate": true
+  },
+  "round_regime": {
+    "forest_signal": 1.0,
+    "high_activity_factor": 1.0,
+    "low_activity_factor": 0.0,
+    "repeat_fraction": 0.423624942546346,
+    "repeat_signal": 1.0,
+    "settlement_signal": 1.0
+  },
+  "seed_index": 1,
+  "stage_summaries": {
+    "base_prediction": {
+      "argmax_count": {
+        "empty": 1139,
+        "forest": 372,
+        "mountain": 40,
+        "port": 0,
+        "ruin": 0,
+        "settlement": 49
+      },
+      "class_mass": {
+        "empty": 869.6886556472334,
+        "forest": 287.97676391806596,
+        "mountain": 38.68967815763567,
+        "port": 25.96064327295069,
+        "ruin": 42.000929315196686,
+        "settlement": 335.6833296889175
+      },
+      "max_entropy": 1.407251472576246,
+      "mean_entropy": 0.8854631105927049,
+      "min_probability": 0.002312871343524317
+    },
+    "final_prediction": {
+      "argmax_count": {
+        "empty": 959,
+        "forest": 283,
+        "mountain": 40,
+        "port": 0,
+        "ruin": 0,
+        "settlement": 318
+      },
+      "class_mass": {
+        "empty": 809.7256730323476,
+        "forest": 282.11087563238146,
+        "mountain": 43.39306187594825,
+        "port": 26.791564720530886,
+        "ruin": 33.480279756321906,
+        "settlement": 404.4985449824699
+      },
+      "max_entropy": 1.438432519654341,
+      "mean_entropy": 0.7943869699075529,
+      "min_probability": 0.0024999907442030942
+    },
+    "learned_prior": {
+      "argmax_count": {
+        "empty": 1179,
+        "forest": 381,
+        "mountain": 40,
+        "port": 0,
+        "ruin": 0,
+        "settlement": 0
+      },
+      "class_mass": {
+        "empty": 879.8483117470369,
+        "forest": 327.2708071465658,
+        "mountain": 43.400052834525304,
+        "port": 20.96189887334983,
+        "ruin": 28.530582727045463,
+        "settlement": 299.9883466714769
+      },
+      "max_entropy": 1.3214862780258485,
+      "mean_entropy": 1.0017115323529857,
+      "min_probability": 0.0024996142570590956
+    },
+    "observation_target": {
+      "argmax_count": {
+        "empty": 806,
+        "forest": 227,
+        "mountain": 35,
+        "port": 3,
+        "ruin": 0,
+        "settlement": 529
+      },
+      "class_mass": {
+        "empty": 754.7430046782899,
+        "forest": 249.88327079371697,
+        "mountain": 37.15800701017804,
+        "port": 29.41434498334928,
+        "ruin": 27.018020055396264,
+        "settlement": 501.78335247906955
+      },
+      "max_entropy": 1.4090341955045198,
+      "mean_entropy": 0.9254104452789795,
+      "min_probability": 0.0024999230855473633
+    },
+    "post_active_concentration": {
+      "argmax_count": {
+        "empty": 926,
+        "forest": 356,
+        "mountain": 40,
+        "port": 0,
+        "ruin": 0,
+        "settlement": 278
+      },
+      "class_mass": {
+        "empty": 801.5730294261571,
+        "forest": 283.82202859412627,
+        "mountain": 43.57956196643573,
+        "port": 27.150322482691088,
+        "ruin": 37.9556200657754,
+        "settlement": 405.91943746481456
+      },
+      "max_entropy": 1.445675132621119,
+      "mean_entropy": 0.7990150036145951,
+      "min_probability": 0.0024986133224566523
+    },
+    "post_confidence": {
+      "argmax_count": {
+        "empty": 824,
+        "forest": 373,
+        "mountain": 40,
+        "port": 0,
+        "ruin": 0,
+        "settlement": 363
+      },
+      "class_mass": {
+        "empty": 760.9143366296647,
+        "forest": 297.4985190657219,
+        "mountain": 43.5449754648125,
+        "port": 28.316849932223487,
+        "ruin": 40.69469107037625,
+        "settlement": 429.0306278372011
+      },
+      "max_entropy": 1.4246572331024074,
+      "mean_entropy": 0.8031445214661352,
+      "min_probability": 0.0024996142570590956
+    },
+    "post_physical": {
+      "argmax_count": {
+        "empty": 841,
+        "forest": 376,
+        "mountain": 40,
+        "port": 0,
+        "ruin": 0,
+        "settlement": 343
+      },
+      "class_mass": {
+        "empty": 766.5074517707083,
+        "forest": 302.63632445947883,
+        "mountain": 43.461385631688714,
+        "port": 27.889138188441265,
+        "ruin": 40.41292643641247,
+        "settlement": 419.0927735132706
+      },
+      "max_entropy": 1.4246572331024074,
+      "mean_entropy": 0.8133973320018818,
+      "min_probability": 0.0024691358024691358
+    },
+    "post_prior_gate": {
+      "argmax_count": {
+        "empty": 940,
+        "forest": 376,
+        "mountain": 40,
+        "port": 0,
+        "ruin": 0,
+        "settlement": 244
+      },
+      "class_mass": {
+        "empty": 794.5359846698682,
+        "forest": 282.79511602970854,
+        "mountain": 43.542642604560086,
+        "port": 27.7395789466156,
+        "ruin": 38.52510879593545,
+        "settlement": 412.86156895331226
+      },
+      "max_entropy": 1.458176050646563,
+      "mean_entropy": 0.8182679608945171,
+      "min_probability": 0.002499995178222539
+    },
+    "post_rare": {
+      "argmax_count": {
+        "empty": 841,
+        "forest": 376,
+        "mountain": 40,
+        "port": 0,
+        "ruin": 0,
+        "settlement": 343
+      },
+      "class_mass": {
+        "empty": 751.1883874521914,
+        "forest": 307.7265899604443,
+        "mountain": 39.030207885224534,
+        "port": 28.060758154023326,
+        "ruin": 40.32447241503458,
+        "settlement": 433.6695841330819
+      },
+      "max_entropy": 1.4248103155737328,
+      "mean_entropy": 0.8712677910689253,
+      "min_probability": 0.002499599321198593
+    },
+    "post_settlement": {
+      "argmax_count": {
+        "empty": 1139,
+        "forest": 372,
+        "mountain": 40,
+        "port": 0,
+        "ruin": 0,
+        "settlement": 49
+      },
+      "class_mass": {
+        "empty": 869.6886556472334,
+        "forest": 287.97676391806596,
+        "mountain": 38.68967815763567,
+        "port": 25.96064327295069,
+        "ruin": 42.000929315196686,
+        "settlement": 335.6833296889175
+      },
+      "max_entropy": 1.407251472576246,
+      "mean_entropy": 0.8854631105927049,
+      "min_probability": 0.002312871343524317
+    },
+    "post_structural": {
+      "argmax_count": {
+        "empty": 841,
+        "forest": 376,
+        "mountain": 40,
+        "port": 0,
+        "ruin": 0,
+        "settlement": 343
+      },
+      "class_mass": {
+        "empty": 749.1505681060298,
+        "forest": 307.98313228190943,
+        "mountain": 38.76742837667786,
+        "port": 28.32432729696998,
+        "ruin": 40.40180527439111,
+        "settlement": 435.3727386640217
+      },
+      "max_entropy": 1.38710110241298,
+      "mean_entropy": 0.8890609426159714,
+      "min_probability": 0.00249743751576382
+    },
+    "prior": {
+      "argmax_count": {
+        "empty": 1178,
+        "forest": 382,
+        "mountain": 40,
+        "port": 0,
+        "ruin": 0,
+        "settlement": 0
+      },
+      "class_mass": {
+        "empty": 974.5348908929735,
+        "forest": 327.15679960825196,
+        "mountain": 39.504189895528,
+        "port": 18.98425016483486,
+        "ruin": 33.22720003410548,
+        "settlement": 206.5926694043062
+      },
+      "max_entropy": 1.3746035859695844,
+      "mean_entropy": 0.7664564582707744,
+      "min_probability": 0.002499995240591931
+    },
+    "transfer": {
+      "argmax_count": {
+        "empty": 1141,
+        "forest": 376,
+        "mountain": 40,
+        "port": 0,
+        "ruin": 0,
+        "settlement": 43
+      },
+      "class_mass": {
+        "empty": 868.3198107957378,
+        "forest": 286.41142790857435,
+        "mountain": 39.897520306471634,
+        "port": 26.09785815045958,
+        "ruin": 42.135624093618915,
+        "settlement": 337.13775874513783
+      },
+      "max_entropy": 1.4125484219367672,
+      "mean_entropy": 0.8893751477857762,
+      "min_probability": 0.002499180809789373
+    }
+  }
+}

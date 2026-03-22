@@ -1,0 +1,30 @@
+{
+  "complete": true,
+  "missing_files": [],
+  "observation_events": 50,
+  "query_count": 50,
+  "required_files": [
+    "round_detail.json",
+    "active_round.json",
+    "metadata.json",
+    "observations.json",
+    "query_events.jsonl",
+    "class_counts.npy",
+    "observation_counts.npy",
+    "conditional_counts.json",
+    "diagnostics/index.json",
+    "prediction_seed_0.npy",
+    "diagnostics/seed_0/summary.json",
+    "prediction_seed_1.npy",
+    "diagnostics/seed_1/summary.json",
+    "prediction_seed_2.npy",
+    "diagnostics/seed_2/summary.json",
+    "prediction_seed_3.npy",
+    "diagnostics/seed_3/summary.json",
+    "prediction_seed_4.npy",
+    "diagnostics/seed_4/summary.json"
+  ],
+  "round_id": "3eb0c25d-28fa-48ca-b8e1-fc249e3918e9",
+  "round_number": 17,
+  "seeds_count": 5
+}

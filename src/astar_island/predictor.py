@@ -10,6 +10,7 @@ from .features import BUCKET_KEY_VERSION, make_bucket_keys
 from .learned_prior import LearnedPriorArtifact, predict_learned_prior
 from .prior_blend_gate import PriorBlendGateArtifact, apply_prior_blend_gate
 from .priors import HistoricalPriorArtifact
+from .regime import compute_round_regime, inverse_range_signal, range_signal, repeat_fraction_from_observation_counts
 from .residual_calibrator import ResidualCalibratorArtifact, apply_residual_calibrator
 from .types import (
     CLASS_EMPTY,
@@ -165,6 +166,7 @@ class Predictor:
                 round_regime,
                 return_details=False,
             )
+        prediction = self._apply_boundary_softening(prediction, features)
         prior_gate_details = None
         if collect_diagnostics:
             prediction, prior_gate_details = self._apply_prior_blend_gate(
@@ -198,6 +200,13 @@ class Predictor:
         )
         prediction = self._apply_physical_constraints(prediction, features)
         prediction = normalize_probabilities(prediction, self.config.min_probability)
+        prediction = self._apply_ruin_dampening(prediction)
+        prediction = self._apply_global_villager_recalibration(
+            prediction,
+            observed_counts,
+            observation_counts,
+            features,
+        )
 
         if not collect_diagnostics:
             return prediction, None
@@ -255,6 +264,76 @@ class Predictor:
             diagnostics["prior_blend_gate"] = prior_gate_details["summary"]
             diagnostics["tensors"].update(prior_gate_details["tensors"])
         return prediction, diagnostics
+
+    def _apply_global_villager_recalibration(
+        self,
+        prediction: np.ndarray,
+        observed_counts: np.ndarray,
+        observation_counts: np.ndarray,
+        features: SeedFeatures,
+    ) -> np.ndarray:
+        """Scale CLASS_SETTLEMENT mass to close the gap between the observed Villager
+        fraction and the predicted Villager fraction on the same observed buildable cells.
+
+        Using the relative gap on *observed* cells (obs_rate / pred_on_obs) rather than
+        comparing obs_rate to a fixed historical baseline removes the query-planner bias:
+        if the planner focuses on high-Villager areas, both numerator and denominator are
+        inflated equally and the ratio stays correct.
+        """
+        strength = self.config.villager_recalib_strength
+        if strength <= 0.0:
+            return prediction
+
+        buildable = features.buildable_mask
+        observed_buildable = (observation_counts > 0) & buildable
+
+        if int(np.sum(observed_buildable)) < self.config.villager_recalib_min_obs_cells:
+            return prediction
+
+        obs_settlement = float(np.sum(observed_counts[observed_buildable, CLASS_SETTLEMENT]))
+        obs_total = float(np.sum(observed_counts[observed_buildable]))
+        if obs_total <= 0.0:
+            return prediction
+        obs_rate = obs_settlement / obs_total
+
+        pred_rate = float(np.mean(prediction[observed_buildable, CLASS_SETTLEMENT]))
+        if pred_rate <= 1e-6:
+            return prediction
+
+        raw_scale = obs_rate / pred_rate
+        clipped = float(np.clip(raw_scale, self.config.villager_recalib_scale_clip_lo,
+                                self.config.villager_recalib_scale_clip_hi))
+        scale = 1.0 + strength * (clipped - 1.0)
+
+        out = prediction.copy()
+        out[..., CLASS_SETTLEMENT][buildable] *= scale
+        return normalize_probabilities(out, self.config.min_probability)
+
+    def _apply_boundary_softening(self, prediction: np.ndarray, features: SeedFeatures) -> np.ndarray:
+        alpha = self.config.boundary_softening_alpha
+        if alpha <= 0.0:
+            return prediction
+        from scipy.ndimage import binary_dilation
+        si_idx = features.feature_names.index("settlement_intensity")
+        settlement_intensity = features.feature_stack[..., si_idx]
+        is_forest = features.feature_stack[..., features.feature_names.index("initial_forest")].astype(bool)
+        non_forest_buildable = features.buildable_mask & ~is_forest
+        forest_boundary = is_forest & binary_dilation(non_forest_buildable, iterations=1)
+        intermediate_si = (settlement_intensity > 0.3) & (settlement_intensity < 0.7)
+        mask = (intermediate_si | forest_boundary | features.frontier_mask) & features.buildable_mask
+        out = prediction.copy().astype(np.float64)
+        out[mask] += alpha
+        return normalize_probabilities(out, self.config.min_probability)
+
+    def _apply_ruin_dampening(self, prediction: np.ndarray) -> np.ndarray:
+        scale = self.config.ruin_dampening_scale
+        if scale >= 1.0:
+            return prediction
+        out = prediction.copy().astype(np.float64)
+        removed = out[..., CLASS_RUIN] * (1.0 - scale)
+        out[..., CLASS_RUIN] -= removed
+        out[..., CLASS_EMPTY] += removed
+        return normalize_probabilities(out, self.config.min_probability)
 
     def _build_prior(self, seed_index: int, features: SeedFeatures, aggregator, latent: dict[str, float]) -> np.ndarray:
         grid = self.round_detail.initial_states[seed_index].grid
@@ -491,6 +570,7 @@ class Predictor:
     ) -> np.ndarray:
         out = prediction.copy().astype(np.float64)
         regime = round_regime["high_activity_factor"]
+        quiet_regime = self._quiet_dominance(round_regime)
         settlement_intensity = features.feature_stack[..., features.feature_names.index("settlement_intensity")]
         port_intensity = features.feature_stack[..., features.feature_names.index("port_intensity")]
         frontier = features.frontier_mask.astype(np.float64)
@@ -600,6 +680,49 @@ class Predictor:
             self.config.initial_port_empty_suppression_high_activity,
             regime,
         )
+
+        if quiet_regime > 0.0:
+            out[..., CLASS_EMPTY][buildable_empty] *= self._interp(1.0, self.config.quiet_plains_empty_boost, quiet_regime)
+            out[..., CLASS_SETTLEMENT][buildable_empty] *= self._interp(
+                1.0,
+                self.config.quiet_plains_settlement_suppression,
+                quiet_regime,
+            )
+            out[..., CLASS_PORT][buildable_empty] *= self._interp(
+                1.0,
+                self.config.quiet_plains_port_suppression,
+                quiet_regime,
+            )
+            out[..., CLASS_RUIN][buildable_empty] *= self._interp(
+                1.0,
+                self.config.quiet_plains_ruin_suppression,
+                quiet_regime,
+            )
+            out[..., CLASS_FOREST][initial_forest] *= self._interp(
+                1.0,
+                self.config.quiet_forest_retention_boost,
+                quiet_regime,
+            )
+            out[..., CLASS_EMPTY][initial_forest] *= self._interp(
+                1.0,
+                self.config.quiet_forest_empty_suppression,
+                quiet_regime,
+            )
+            out[..., CLASS_SETTLEMENT][initial_forest] *= self._interp(
+                1.0,
+                self.config.quiet_forest_settlement_suppression,
+                quiet_regime,
+            )
+            out[..., CLASS_PORT][initial_forest] *= self._interp(
+                1.0,
+                self.config.quiet_forest_port_suppression,
+                quiet_regime,
+            )
+            out[..., CLASS_RUIN][initial_forest] *= self._interp(
+                1.0,
+                self.config.quiet_forest_ruin_suppression,
+                quiet_regime,
+            )
 
         return normalize_probabilities(out, self.config.min_probability)
 
@@ -767,8 +890,12 @@ class Predictor:
             self.residual_calibrator,
             prediction,
             features,
+            round_regime,
             blend=blend_map,
             min_probability=self.config.min_probability,
+            active_observed_cap=self.config.residual_trust_gate_active_observed_cap,
+            observation_counts=observation_counts,
+            observed_counts=observed_counts,
         )
         if return_details:
             return calibrated, details
@@ -784,6 +911,8 @@ class Predictor:
         return_details: bool = False,
     ) -> np.ndarray | tuple[np.ndarray, dict[str, object] | None]:
         effective_strength = self.config.prior_blend_gate_strength * round_regime["low_activity_factor"]
+        if round_regime["high_activity_factor"] < 0.15:
+            effective_strength *= self.config.quiet_prior_blend_gate_multiplier
         if self.prior_blend_gate is None or effective_strength <= 0.0:
             if return_details:
                 return prediction, None
@@ -793,6 +922,7 @@ class Predictor:
             prior,
             prediction,
             features,
+            round_regime=round_regime,
             min_probability=self.config.min_probability,
             strength=effective_strength,
         )
@@ -868,36 +998,39 @@ class Predictor:
         observation_counts: np.ndarray,
         round_regime: dict[str, float],
     ) -> np.ndarray:
-        regime = round_regime["high_activity_factor"]
-        blend_map = np.full(
-            observation_counts.shape,
-            self._interp(
-                self.config.residual_calibrator_blend,
-                self.config.residual_calibrator_high_activity_blend,
-                regime,
-            ),
-            dtype=np.float64,
+        base_blend = self._regime_endpoint_interp(
+            self.config.residual_calibrator_low_activity_blend,
+            self.config.residual_calibrator_blend,
+            self.config.residual_calibrator_high_activity_blend,
+            round_regime,
         )
-        blend_map[observation_counts == 1] = self._interp(
+        single_observed_blend = self._regime_endpoint_interp(
+            self.config.residual_calibrator_low_activity_single_observed_blend,
             self.config.residual_calibrator_single_observed_blend,
             self.config.residual_calibrator_high_activity_single_observed_blend,
-            regime,
+            round_regime,
         )
-        blend_map[observation_counts >= 2] = self._interp(
+        repeated_observed_blend = self._regime_endpoint_interp(
+            self.config.residual_calibrator_low_activity_repeated_observed_blend,
             self.config.residual_calibrator_repeated_observed_blend,
             self.config.residual_calibrator_high_activity_repeated_observed_blend,
-            regime,
+            round_regime,
         )
+        active_observed_blend = self._regime_endpoint_interp(
+            self.config.residual_calibrator_low_activity_active_observed_blend,
+            self.config.residual_calibrator_active_observed_blend,
+            self.config.residual_calibrator_high_activity_active_observed_blend,
+            round_regime,
+        )
+        blend_map = np.full(observation_counts.shape, base_blend, dtype=np.float64)
+        blend_map[observation_counts == 1] = single_observed_blend
+        blend_map[observation_counts >= 2] = repeated_observed_blend
         active_observed = (
             observed_counts[..., CLASS_SETTLEMENT]
             + observed_counts[..., CLASS_PORT]
             + observed_counts[..., CLASS_RUIN]
         ) > 0
-        blend_map[active_observed] = self._interp(
-            self.config.residual_calibrator_active_observed_blend,
-            self.config.residual_calibrator_high_activity_active_observed_blend,
-            regime,
-        )
+        blend_map[active_observed] = active_observed_blend
         return blend_map
 
     def _apply_active_dominance_separation(
@@ -1131,57 +1264,42 @@ class Predictor:
 
     def _compute_round_regime(self, latent: dict[str, float], aggregator=None) -> dict[str, float]:
         if aggregator is None:
-            observed_cells = float(latent.get("observed_cells", 0.0))
             repeat_fraction = 0.0
         else:
-            observed_cells = float(np.sum(aggregator.observation_counts > 0))
-            repeat_fraction = float(np.sum(aggregator.observation_counts >= 2)) / max(observed_cells, 1.0)
-        settlement_signal = self._range_signal(
-            latent["settlement_rate"],
-            self.config.regime_settlement_rate_low,
-            self.config.regime_settlement_rate_high,
+            repeat_fraction = repeat_fraction_from_observation_counts(aggregator.observation_counts)
+        return compute_round_regime(latent, self.config, repeat_fraction=repeat_fraction)
+
+    @staticmethod
+    def _quiet_dominance(round_regime: dict[str, float]) -> float:
+        return float(
+            np.clip(
+                round_regime["low_activity_factor"] - round_regime["high_activity_factor"],
+                0.0,
+                1.0,
+            )
         )
-        forest_signal = self._inverse_range_signal(
-            latent["forest_share_dynamic"],
-            self.config.regime_forest_share_low,
-            self.config.regime_forest_share_high,
-        )
-        repeat_signal = self._range_signal(
-            repeat_fraction,
-            self.config.regime_repeat_fraction_low,
-            self.config.regime_repeat_fraction_high,
-        )
-        total_weight = (
-            self.config.regime_settlement_weight
-            + self.config.regime_forest_weight
-            + self.config.regime_repeat_weight
-        )
-        high_activity_factor = (
-            self.config.regime_settlement_weight * settlement_signal
-            + self.config.regime_forest_weight * forest_signal
-            + self.config.regime_repeat_weight * repeat_signal
-        ) / max(total_weight, 1e-12)
-        high_activity_factor = float(np.clip(high_activity_factor, 0.0, 1.0))
-        return {
-            "settlement_signal": float(settlement_signal),
-            "forest_signal": float(forest_signal),
-            "repeat_signal": float(repeat_signal),
-            "repeat_fraction": float(repeat_fraction),
-            "high_activity_factor": high_activity_factor,
-            "low_activity_factor": float(1.0 - high_activity_factor),
-        }
+
+    @classmethod
+    def _regime_endpoint_interp(
+        cls,
+        quiet_value: float,
+        base_value: float,
+        high_value: float,
+        round_regime: dict[str, float],
+    ) -> float:
+        high = round_regime["high_activity_factor"]
+        quiet = round_regime["low_activity_factor"]
+        if quiet > high:
+            return cls._interp(base_value, quiet_value, quiet)
+        return cls._interp(base_value, high_value, high)
 
     @staticmethod
     def _range_signal(value: float, low: float, high: float) -> float:
-        if high < low:
-            low, high = high, low
-        if high - low <= 1e-12:
-            return 1.0 if value >= high else 0.0
-        return float(np.clip((value - low) / (high - low), 0.0, 1.0))
+        return range_signal(value, low, high)
 
     @classmethod
     def _inverse_range_signal(cls, value: float, low: float, high: float) -> float:
-        return float(1.0 - cls._range_signal(value, low, high))
+        return inverse_range_signal(value, low, high)
 
     @staticmethod
     def _interp(low: float, high: float, t: float) -> float:
