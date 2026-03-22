@@ -1,6 +1,12 @@
 {
-  "num_rounds": 19,
+  "num_rounds": 20,
   "rounds": [
+    {
+      "archived_seeds": 5,
+      "round_id": "fd82f643-15e2-40e7-9866-8d8f5157081c",
+      "round_number": 20,
+      "status": "completed"
+    },
     {
       "archived_seeds": 5,
       "round_id": "597e60cf-d1a1-4627-ac4d-2a61da68b6df",
