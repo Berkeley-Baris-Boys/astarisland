@@ -9,15 +9,17 @@ import numpy as np
 from sklearn.ensemble import HistGradientBoostingRegressor
 
 from .config import AstarConfig
+from .features import build_all_features, make_bucket_keys
 from .history import _round_detail_from_json
 from .learned_prior import build_learned_prior_features
+from .ood import OOD_REFERENCE_VERSION, build_ood_reference_from_archive
 from .regime import compute_round_regime, infer_latent_summary_from_prediction
 from .scoring import cell_entropy, cell_kl_divergence
 from .types import CLASS_EMPTY, CLASS_FOREST, CLASS_MOUNTAIN, CLASS_NAMES, CLASS_PORT, CLASS_RUIN, CLASS_SETTLEMENT, NUM_CLASSES, SeedFeatures
 from .utils import load_json, normalize_probabilities
 
 EPS = 1e-12
-RESIDUAL_CALIBRATOR_VERSION = 3
+RESIDUAL_CALIBRATOR_VERSION = 5
 
 
 @dataclass
@@ -29,6 +31,10 @@ class ResidualCalibratorArtifact:
     port_model: HistGradientBoostingRegressor
     ruin_model: HistGradientBoostingRegressor
     metadata: dict[str, Any]
+    active_budget_model: HistGradientBoostingRegressor | None = None
+    budget_feature_names: list[str] | None = None
+    collapsed_active_model: HistGradientBoostingRegressor | None = None
+    collapsed_active_feature_names: list[str] | None = None
     blend_model: HistGradientBoostingRegressor | None = None
     blend_feature_names: list[str] | None = None
 
@@ -39,7 +45,368 @@ def save_residual_calibrator_artifact(path: Path, artifact: ResidualCalibratorAr
 
 
 def load_residual_calibrator_artifact(path: Path) -> ResidualCalibratorArtifact:
-    return joblib.load(path)
+    artifact = joblib.load(path)
+    metadata = getattr(artifact, "metadata", {}) or {}
+    version = metadata.get("version")
+    if version != RESIDUAL_CALIBRATOR_VERSION:
+        raise ValueError(
+            f"Residual calibrator artifact at {path} has version {version!r}; "
+            f"expected {RESIDUAL_CALIBRATOR_VERSION}. Rebuild the artifact."
+        )
+    return artifact
+
+
+def build_active_budget_features(
+    prediction: np.ndarray,
+    seed_features: SeedFeatures,
+    round_regime: dict[str, float] | None = None,
+    *,
+    observed_counts: np.ndarray | None = None,
+    observation_counts: np.ndarray | None = None,
+    bucket_target: np.ndarray | None = None,
+    ood_signal_values: dict[str, float] | None = None,
+) -> tuple[np.ndarray, list[str]]:
+    if round_regime is None:
+        round_regime = compute_round_regime(
+            infer_latent_summary_from_prediction(prediction),
+            AstarConfig().predictor,
+        )
+
+    buildable = seed_features.buildable_mask
+    active = prediction[..., CLASS_SETTLEMENT] + prediction[..., CLASS_PORT] + prediction[..., CLASS_RUIN]
+    forest = prediction[..., CLASS_FOREST]
+    settlement = prediction[..., CLASS_SETTLEMENT]
+    frontier = seed_features.frontier_mask & buildable
+    coastal = seed_features.coastal_mask & buildable
+    initial_settlement = seed_features.initial_settlement_mask & buildable
+    if "dist_to_settlement" in seed_features.feature_names:
+        dist_idx = seed_features.feature_names.index("dist_to_settlement")
+        near_threshold = 2.0 / max(sum(prediction.shape[:2]), 1)
+        near_settlement = buildable & (seed_features.feature_stack[..., dist_idx] <= near_threshold)
+    else:
+        near_settlement = frontier | initial_settlement
+
+    def _masked_mean(values: np.ndarray, mask: np.ndarray) -> float:
+        if not np.any(mask):
+            return float("nan")
+        return float(np.mean(values[mask]))
+
+    pred_active_mass = _masked_mean(active, buildable)
+    pred_settlement_mass = _masked_mean(settlement, buildable)
+    pred_forest_mass = _masked_mean(forest, buildable)
+    pred_active_frontier = _masked_mean(active, frontier)
+    pred_active_coastal = _masked_mean(active, coastal)
+    pred_active_initial_settlement = _masked_mean(active, initial_settlement)
+    pred_active_near_settlement = _masked_mean(active, near_settlement)
+
+    if bucket_target is not None:
+        bucket_active = bucket_target[..., CLASS_SETTLEMENT] + bucket_target[..., CLASS_PORT] + bucket_target[..., CLASS_RUIN]
+        bucket_target_active_mass = _masked_mean(bucket_active, buildable)
+    else:
+        bucket_target_active_mass = float("nan")
+
+    observed_active_rate = float("nan")
+    observed_forest_share = float("nan")
+    buildable_coverage_fraction = float("nan")
+    buildable_repeat_fraction = float("nan")
+    initial_settlement_observed_inactive_rate = float("nan")
+    frontier_observed_active_rate = float("nan")
+    coastal_observed_active_rate = float("nan")
+    has_observation_context = 0.0
+
+    if observed_counts is not None and observation_counts is not None:
+        has_observation_context = 1.0
+        observed_buildable = buildable & (observation_counts > 0)
+        total_buildable = max(float(np.sum(buildable)), 1.0)
+        buildable_coverage_fraction = float(np.sum(observed_buildable) / total_buildable)
+        buildable_repeat_fraction = float(np.sum(buildable & (observation_counts >= 2)) / total_buildable)
+
+        active_counts = (
+            observed_counts[..., CLASS_SETTLEMENT]
+            + observed_counts[..., CLASS_PORT]
+            + observed_counts[..., CLASS_RUIN]
+        )
+        total_counts = np.sum(observed_counts, axis=-1)
+
+        total_observed_mass = float(np.sum(total_counts[observed_buildable]))
+        if total_observed_mass > 0.0:
+            observed_active_rate = float(np.sum(active_counts[observed_buildable]) / total_observed_mass)
+            observed_forest_share = float(np.sum(observed_counts[..., CLASS_FOREST][observed_buildable]) / total_observed_mass)
+
+        observed_initial = observed_buildable & initial_settlement
+        if np.any(observed_initial):
+            initial_settlement_observed_inactive_rate = float(np.mean(active_counts[observed_initial] <= 0.0))
+
+        observed_frontier = observed_buildable & frontier
+        frontier_total = float(np.sum(total_counts[observed_frontier]))
+        if frontier_total > 0.0:
+            frontier_observed_active_rate = float(np.sum(active_counts[observed_frontier]) / frontier_total)
+
+        observed_coastal = observed_buildable & coastal
+        coastal_total = float(np.sum(total_counts[observed_coastal]))
+        if coastal_total > 0.0:
+            coastal_observed_active_rate = float(np.sum(active_counts[observed_coastal]) / coastal_total)
+
+    ood_signal_values = ood_signal_values or {}
+    arrays = [
+        pred_active_mass,
+        pred_settlement_mass,
+        pred_forest_mass,
+        pred_active_frontier,
+        pred_active_coastal,
+        pred_active_initial_settlement,
+        pred_active_near_settlement,
+        bucket_target_active_mass,
+        observed_active_rate,
+        observed_forest_share,
+        buildable_coverage_fraction,
+        buildable_repeat_fraction,
+        initial_settlement_observed_inactive_rate,
+        frontier_observed_active_rate,
+        coastal_observed_active_rate,
+        float(round_regime["settlement_signal"]),
+        float(round_regime["forest_signal"]),
+        float(round_regime["high_activity_factor"]),
+        float(round_regime["low_activity_factor"]),
+        float(round_regime["repeat_fraction"]),
+        float(ood_signal_values.get("settlement_rate", np.nan)),
+        float(ood_signal_values.get("forest_share_dynamic", np.nan)),
+        float(ood_signal_values.get("port_share_given_active", np.nan)),
+        float(ood_signal_values.get("observed_cells", np.nan)),
+        has_observation_context,
+        0.0 if bucket_target is None else 1.0,
+    ]
+    names = [
+        "budget_pred_active_mass_buildable",
+        "budget_pred_settlement_mass_buildable",
+        "budget_pred_forest_mass_buildable",
+        "budget_pred_active_frontier",
+        "budget_pred_active_coastal",
+        "budget_pred_active_initial_settlement",
+        "budget_pred_active_near_settlement",
+        "budget_bucket_target_active_mass_buildable",
+        "budget_observed_active_rate_buildable",
+        "budget_observed_forest_share_buildable",
+        "budget_buildable_coverage_fraction",
+        "budget_buildable_repeat_fraction",
+        "budget_initial_settlement_observed_inactive_rate",
+        "budget_frontier_observed_active_rate",
+        "budget_coastal_observed_active_rate",
+        "budget_round_regime_settlement_signal",
+        "budget_round_regime_forest_signal",
+        "budget_round_regime_high_activity_factor",
+        "budget_round_regime_low_activity_factor",
+        "budget_round_regime_repeat_fraction",
+        "budget_ood_settlement_rate",
+        "budget_ood_forest_share_dynamic",
+        "budget_ood_port_share_given_active",
+        "budget_ood_observed_cells",
+        "budget_has_observation_context",
+        "budget_has_bucket_target",
+    ]
+    return np.asarray(arrays, dtype=np.float64)[None, :], names
+
+
+def predict_active_budget(
+    artifact: ResidualCalibratorArtifact,
+    prediction: np.ndarray,
+    seed_features: SeedFeatures,
+    round_regime: dict[str, float] | None = None,
+    *,
+    observed_counts: np.ndarray | None = None,
+    observation_counts: np.ndarray | None = None,
+    bucket_target: np.ndarray | None = None,
+    ood_signal_values: dict[str, float] | None = None,
+) -> tuple[float, dict[str, object] | None]:
+    if artifact.active_budget_model is None or artifact.budget_feature_names is None:
+        return float("nan"), None
+    matrix, names = build_active_budget_features(
+        prediction,
+        seed_features,
+        round_regime,
+        observed_counts=observed_counts,
+        observation_counts=observation_counts,
+        bucket_target=bucket_target,
+        ood_signal_values=ood_signal_values,
+    )
+    if names != artifact.budget_feature_names:
+        raise ValueError("Active budget feature names do not match runtime construction.")
+    budget = float(np.clip(artifact.active_budget_model.predict(matrix)[0], 0.0, 1.0))
+    return budget, {
+        "summary": {"predicted_active_budget": budget},
+        "tensors": {"active_budget_features": matrix.reshape(-1)},
+    }
+
+
+def build_collapsed_active_features(
+    prediction: np.ndarray,
+    seed_features: SeedFeatures,
+    round_regime: dict[str, float] | None = None,
+    *,
+    observed_counts: np.ndarray | None = None,
+    observation_counts: np.ndarray | None = None,
+    bucket_target: np.ndarray | None = None,
+    ood_signal_values: dict[str, float] | None = None,
+) -> tuple[np.ndarray, list[str]]:
+    if round_regime is None:
+        round_regime = compute_round_regime(
+            infer_latent_summary_from_prediction(prediction),
+            AstarConfig().predictor,
+        )
+
+    buildable = seed_features.buildable_mask
+    active = prediction[..., CLASS_SETTLEMENT] + prediction[..., CLASS_PORT] + prediction[..., CLASS_RUIN]
+    frontier = seed_features.frontier_mask & buildable
+    coastal = seed_features.coastal_mask & buildable
+    initial_settlement = seed_features.initial_settlement_mask & buildable
+
+    def _masked_mean(values: np.ndarray, mask: np.ndarray) -> float:
+        if not np.any(mask):
+            return float("nan")
+        return float(np.mean(values[mask]))
+
+    current_active_mass = _masked_mean(active, buildable)
+    frontier_active_mass = _masked_mean(active, frontier)
+    coastal_active_mass = _masked_mean(active, coastal)
+    initial_settlement_active_mass = _masked_mean(active, initial_settlement)
+
+    bucket_target_active_mass = float("nan")
+    if bucket_target is not None:
+        bucket_active = bucket_target[..., CLASS_SETTLEMENT] + bucket_target[..., CLASS_PORT] + bucket_target[..., CLASS_RUIN]
+        bucket_target_active_mass = _masked_mean(bucket_active, buildable)
+
+    observed_active_rate = float("nan")
+    observed_forest_share = float("nan")
+    buildable_coverage_fraction = float("nan")
+    buildable_repeat_fraction = float("nan")
+    frontier_observed_active_rate = float("nan")
+    coastal_observed_active_rate = float("nan")
+    initial_settlement_observed_active_rate = float("nan")
+    has_observation_context = 0.0
+    if observed_counts is not None and observation_counts is not None:
+        has_observation_context = 1.0
+        observed_buildable = buildable & (observation_counts > 0)
+        total_buildable = max(float(np.sum(buildable)), 1.0)
+        buildable_coverage_fraction = float(np.sum(observed_buildable) / total_buildable)
+        buildable_repeat_fraction = float(np.sum(buildable & (observation_counts >= 2)) / total_buildable)
+
+        active_counts = (
+            observed_counts[..., CLASS_SETTLEMENT]
+            + observed_counts[..., CLASS_PORT]
+            + observed_counts[..., CLASS_RUIN]
+        )
+        total_counts = np.sum(observed_counts, axis=-1)
+        total_observed_mass = float(np.sum(total_counts[observed_buildable]))
+        if total_observed_mass > 0.0:
+            observed_active_rate = float(np.sum(active_counts[observed_buildable]) / total_observed_mass)
+            observed_forest_share = float(
+                np.sum(observed_counts[..., CLASS_FOREST][observed_buildable]) / total_observed_mass
+            )
+
+        for mask, name in (
+            (frontier, "frontier"),
+            (coastal, "coastal"),
+            (initial_settlement, "initial_settlement"),
+        ):
+            observed_mask = observed_buildable & mask
+            denom = float(np.sum(total_counts[observed_mask]))
+            value = float("nan")
+            if denom > 0.0:
+                value = float(np.sum(active_counts[observed_mask]) / denom)
+            if name == "frontier":
+                frontier_observed_active_rate = value
+            elif name == "coastal":
+                coastal_observed_active_rate = value
+            else:
+                initial_settlement_observed_active_rate = value
+
+    ood_signal_values = ood_signal_values or {}
+    arrays = [
+        current_active_mass,
+        bucket_target_active_mass,
+        observed_active_rate,
+        observed_forest_share,
+        buildable_coverage_fraction,
+        buildable_repeat_fraction,
+        frontier_active_mass,
+        coastal_active_mass,
+        initial_settlement_active_mass,
+        frontier_observed_active_rate,
+        coastal_observed_active_rate,
+        initial_settlement_observed_active_rate,
+        float(round_regime["settlement_signal"]),
+        float(round_regime["forest_signal"]),
+        float(round_regime["high_activity_factor"]),
+        float(round_regime["low_activity_factor"]),
+        float(round_regime["repeat_fraction"]),
+        float(ood_signal_values.get("settlement_rate", np.nan)),
+        float(ood_signal_values.get("forest_share_dynamic", np.nan)),
+        float(ood_signal_values.get("port_share_given_active", np.nan)),
+        float(ood_signal_values.get("observed_cells", np.nan)),
+        has_observation_context,
+        0.0 if bucket_target is None else 1.0,
+    ]
+    names = [
+        "collapsed_current_active_mass_buildable",
+        "collapsed_bucket_target_active_mass_buildable",
+        "collapsed_observed_active_rate_buildable",
+        "collapsed_observed_forest_share_buildable",
+        "collapsed_buildable_coverage_fraction",
+        "collapsed_buildable_repeat_fraction",
+        "collapsed_pred_active_frontier",
+        "collapsed_pred_active_coastal",
+        "collapsed_pred_active_initial_settlement",
+        "collapsed_observed_active_frontier",
+        "collapsed_observed_active_coastal",
+        "collapsed_observed_active_initial_settlement",
+        "collapsed_round_regime_settlement_signal",
+        "collapsed_round_regime_forest_signal",
+        "collapsed_round_regime_high_activity_factor",
+        "collapsed_round_regime_low_activity_factor",
+        "collapsed_round_regime_repeat_fraction",
+        "collapsed_ood_settlement_rate",
+        "collapsed_ood_forest_share_dynamic",
+        "collapsed_ood_port_share_given_active",
+        "collapsed_ood_observed_cells",
+        "collapsed_has_observation_context",
+        "collapsed_has_bucket_target",
+    ]
+    return np.asarray(arrays, dtype=np.float64)[None, :], names
+
+
+def predict_collapsed_active_scale(
+    artifact: ResidualCalibratorArtifact,
+    prediction: np.ndarray,
+    seed_features: SeedFeatures,
+    round_regime: dict[str, float] | None = None,
+    *,
+    observed_counts: np.ndarray | None = None,
+    observation_counts: np.ndarray | None = None,
+    bucket_target: np.ndarray | None = None,
+    ood_signal_values: dict[str, float] | None = None,
+    scale_clip: tuple[float, float] = (0.0, 1.0),
+) -> tuple[float, dict[str, object] | None]:
+    model = getattr(artifact, "collapsed_active_model", None)
+    feature_names = getattr(artifact, "collapsed_active_feature_names", None)
+    if model is None or feature_names is None:
+        return float("nan"), None
+    matrix, names = build_collapsed_active_features(
+        prediction,
+        seed_features,
+        round_regime,
+        observed_counts=observed_counts,
+        observation_counts=observation_counts,
+        bucket_target=bucket_target,
+        ood_signal_values=ood_signal_values,
+    )
+    if names != feature_names:
+        raise ValueError("Collapsed-active feature names do not match runtime construction.")
+    lo, hi = scale_clip
+    scale = float(np.clip(model.predict(matrix)[0], lo, hi))
+    return scale, {
+        "summary": {"collapsed_active_predicted_scale": scale},
+        "tensors": {"collapsed_active_features": matrix.reshape(-1)},
+    }
 
 
 def build_residual_features(
@@ -371,19 +738,28 @@ def build_residual_calibrator_artifact_from_archive(
 ) -> ResidualCalibratorArtifact:
     config = AstarConfig().predictor
     matrices: list[np.ndarray] = []
+    budget_matrices: list[np.ndarray] = []
+    collapsed_active_matrices: list[np.ndarray] = []
     active_targets: list[np.ndarray] = []
     forest_targets: list[np.ndarray] = []
     settlement_targets: list[np.ndarray] = []
     port_targets: list[np.ndarray] = []
     ruin_targets: list[np.ndarray] = []
+    budget_targets: list[float] = []
+    collapsed_active_targets: list[float] = []
     active_weights: list[np.ndarray] = []
     forest_weights: list[np.ndarray] = []
     type_weights: list[np.ndarray] = []
+    budget_weights: list[float] = []
+    collapsed_active_weights: list[float] = []
     base_preds: list[np.ndarray] = []
     ground_truths: list[np.ndarray] = []
     feature_names: list[str] | None = None
+    budget_feature_names: list[str] | None = None
+    collapsed_active_feature_names: list[str] | None = None
     used_rounds: list[dict[str, Any]] = []
     used_seeds = 0
+    runtime_contexts = _discover_round_runtime_contexts(history_dir)
 
     for round_dir in sorted(history_dir.glob("round_*")):
         detail_path = round_dir / "round_detail.json"
@@ -392,9 +768,13 @@ def build_residual_calibrator_artifact_from_archive(
         detail = _round_detail_from_json(load_json(detail_path))
         if holdout_round_number is not None and detail.round_number == holdout_round_number:
             continue
-        from .features import build_all_features
-
         features = build_all_features(detail.initial_states)
+        runtime_context = runtime_contexts.get(detail.round_number)
+        global_counts = None
+        conditional_counts = None
+        if runtime_context is not None:
+            global_counts = runtime_context["class_counts"].sum(axis=(0, 1, 2))
+            conditional_counts = runtime_context["conditional_counts"]
         round_used = False
         for seed_index, seed_features in features.items():
             analysis_path = round_dir / f"seed_{seed_index}" / "analysis.json"
@@ -412,6 +792,44 @@ def build_residual_calibrator_artifact_from_archive(
                 feature_names = names
             elif feature_names != names:
                 raise ValueError("Residual feature name mismatch while building artifact.")
+            bucket_target = None
+            observed_counts = None
+            observation_counts = None
+            if runtime_context is not None and global_counts is not None and conditional_counts is not None:
+                observed_counts = runtime_context["class_counts"][seed_index]
+                observation_counts = runtime_context["observation_counts"][seed_index]
+                bucket_target = _build_bucket_target_tensor(
+                    seed_features,
+                    conditional_counts=conditional_counts,
+                    global_counts=global_counts,
+                    min_probability=config.min_probability,
+                )
+            budget_matrix, budget_names = build_active_budget_features(
+                prediction,
+                seed_features,
+                round_regime,
+                observed_counts=observed_counts,
+                observation_counts=observation_counts,
+                bucket_target=bucket_target,
+                ood_signal_values=_runtime_ood_signal_values(runtime_context, round_dir, prediction, round_regime),
+            )
+            if budget_feature_names is None:
+                budget_feature_names = budget_names
+            elif budget_feature_names != budget_names:
+                raise ValueError("Active budget feature name mismatch while building artifact.")
+            collapsed_matrix, collapsed_names = build_collapsed_active_features(
+                prediction,
+                seed_features,
+                round_regime,
+                observed_counts=observed_counts,
+                observation_counts=observation_counts,
+                bucket_target=bucket_target,
+                ood_signal_values=_runtime_ood_signal_values(runtime_context, round_dir, prediction, round_regime),
+            )
+            if collapsed_active_feature_names is None:
+                collapsed_active_feature_names = collapsed_names
+            elif collapsed_active_feature_names != collapsed_names:
+                raise ValueError("Collapsed-active feature name mismatch while building artifact.")
             gt = ground_truth.reshape(-1, NUM_CLASSES)
             entropy = -np.sum(np.where(gt > 0, gt * np.log(np.maximum(gt, EPS)), 0.0), axis=1)
             active_target = np.clip(gt[:, CLASS_SETTLEMENT] + gt[:, CLASS_PORT] + gt[:, CLASS_RUIN], 0.0, 1.0)
@@ -423,14 +841,38 @@ def build_residual_calibrator_artifact_from_archive(
             ruin_target = gt[:, CLASS_RUIN] / active_mass
 
             matrices.append(matrix)
+            budget_matrices.append(budget_matrix)
+            collapsed_active_matrices.append(collapsed_matrix)
             active_targets.append(active_target)
             forest_targets.append(forest_target)
             settlement_targets.append(settlement_target)
             port_targets.append(port_target)
             ruin_targets.append(ruin_target)
+            budget_target_value = float(np.mean(active_target[seed_features.buildable_mask.reshape(-1)]))
+            pred_active_flat = prediction.reshape(-1, NUM_CLASSES)[:, CLASS_SETTLEMENT] + prediction.reshape(-1, NUM_CLASSES)[:, CLASS_PORT] + prediction.reshape(-1, NUM_CLASSES)[:, CLASS_RUIN]
+            pred_budget_value = float(np.mean(pred_active_flat[seed_features.buildable_mask.reshape(-1)]))
+            budget_targets.append(budget_target_value)
+            collapsed_target_value = float(
+                np.clip(
+                    budget_target_value / max(pred_budget_value, EPS),
+                    config.collapsed_active_calibrator_scale_clip_lo,
+                    config.collapsed_active_calibrator_scale_clip_hi,
+                )
+            )
+            collapsed_active_targets.append(collapsed_target_value)
             active_weights.append(0.15 + 1.85 * entropy)
             forest_weights.append(non_active * (0.1 + 1.5 * entropy))
             type_weights.append(active_target * (0.1 + 2.0 * entropy))
+            budget_weights.append(
+                1.0
+                + float(round_regime["low_activity_factor"])
+                + abs(budget_target_value - pred_budget_value)
+            )
+            collapsed_active_weights.append(
+                1.0
+                + 0.5 * float(round_regime["low_activity_factor"])
+                + 0.75 * abs(collapsed_target_value - 1.0)
+            )
             base_preds.append(prediction.reshape(-1, NUM_CLASSES))
             ground_truths.append(gt)
             used_seeds += 1
@@ -442,22 +884,32 @@ def build_residual_calibrator_artifact_from_archive(
         raise ValueError("No archived predictions available to build residual calibrator.")
 
     X = np.concatenate(matrices, axis=0)
+    X_budget = np.concatenate(budget_matrices, axis=0)
+    X_collapsed_active = np.concatenate(collapsed_active_matrices, axis=0)
     active_y = np.concatenate(active_targets, axis=0)
     forest_y = np.concatenate(forest_targets, axis=0)
     settlement_y = np.concatenate(settlement_targets, axis=0)
     port_y = np.concatenate(port_targets, axis=0)
     ruin_y = np.concatenate(ruin_targets, axis=0)
+    budget_y = np.asarray(budget_targets, dtype=np.float64)
+    collapsed_active_y = np.asarray(collapsed_active_targets, dtype=np.float64)
     active_w = np.concatenate(active_weights, axis=0)
     forest_w = np.concatenate(forest_weights, axis=0)
     type_w = np.concatenate(type_weights, axis=0)
+    budget_w = np.asarray(budget_weights, dtype=np.float64)
+    collapsed_active_w = np.asarray(collapsed_active_weights, dtype=np.float64)
 
     active_model = _make_regressor(max_iter, max_depth, min_samples_leaf, learning_rate, l2_regularization)
+    active_budget_model = _make_regressor(max_iter, max_depth, min_samples_leaf, learning_rate, l2_regularization)
+    collapsed_active_model = _make_regressor(max_iter, max_depth, min_samples_leaf, learning_rate, l2_regularization)
     forest_model = _make_regressor(max_iter, max_depth, min_samples_leaf, learning_rate, l2_regularization)
     settlement_model = _make_regressor(max_iter, max_depth, min_samples_leaf, learning_rate, l2_regularization)
     port_model = _make_regressor(max_iter, max_depth, min_samples_leaf, learning_rate, l2_regularization)
     ruin_model = _make_regressor(max_iter, max_depth, min_samples_leaf, learning_rate, l2_regularization)
 
     active_model.fit(X, active_y, sample_weight=active_w)
+    active_budget_model.fit(X_budget, budget_y, sample_weight=budget_w)
+    collapsed_active_model.fit(X_collapsed_active, collapsed_active_y, sample_weight=collapsed_active_w)
     forest_model.fit(X, forest_y, sample_weight=forest_w)
     settlement_model.fit(X, settlement_y, sample_weight=type_w)
     port_model.fit(X, port_y, sample_weight=type_w)
@@ -521,6 +973,8 @@ def build_residual_calibrator_artifact_from_archive(
         "num_rounds": len(used_rounds),
         "num_seeds": used_seeds,
         "rounds": used_rounds,
+        "budget_training_rounds": used_rounds,
+        "collapsed_active_training_rounds": used_rounds,
         "holdout_round_number": holdout_round_number,
         "max_iter": max_iter,
         "max_depth": max_depth,
@@ -533,6 +987,11 @@ def build_residual_calibrator_artifact_from_archive(
             "forest_share_low": config.regime_forest_share_low,
             "forest_share_high": config.regime_forest_share_high,
         },
+        "ood_reference_version": OOD_REFERENCE_VERSION,
+        "ood_reference": build_ood_reference_from_archive(
+            history_dir,
+            holdout_round_number=holdout_round_number,
+        ),
     }
     return ResidualCalibratorArtifact(
         feature_names=feature_names,
@@ -542,9 +1001,109 @@ def build_residual_calibrator_artifact_from_archive(
         port_model=port_model,
         ruin_model=ruin_model,
         metadata=metadata,
+        active_budget_model=active_budget_model,
+        budget_feature_names=budget_feature_names,
+        collapsed_active_model=collapsed_active_model,
+        collapsed_active_feature_names=collapsed_active_feature_names,
         blend_model=blend_model,
         blend_feature_names=blend_feature_names,
     )
+
+
+def _discover_round_runtime_contexts(history_dir: Path) -> dict[int, dict[str, Any]]:
+    if history_dir.name != "history":
+        return {}
+    artifacts_root = history_dir.parent
+    contexts: dict[int, dict[str, Any]] = {}
+    for metadata_path in artifacts_root.glob("*/metadata.json"):
+        run_dir = metadata_path.parent
+        if run_dir.name == "history":
+            continue
+        required = [
+            run_dir / "class_counts.npy",
+            run_dir / "observation_counts.npy",
+            run_dir / "conditional_counts.json",
+        ]
+        if not all(path.exists() for path in required):
+            continue
+        try:
+            payload = load_json(metadata_path)
+        except Exception:
+            continue
+        round_number = payload.get("round_number")
+        if round_number is None:
+            continue
+        current = contexts.get(int(round_number))
+        if current is not None and current["mtime"] >= run_dir.stat().st_mtime:
+            continue
+        contexts[int(round_number)] = {
+            "mtime": run_dir.stat().st_mtime,
+            "metadata": payload,
+            "class_counts": np.load(run_dir / "class_counts.npy"),
+            "observation_counts": np.load(run_dir / "observation_counts.npy"),
+            "conditional_counts": {
+                key: np.asarray(value, dtype=np.float64)
+                for key, value in load_json(run_dir / "conditional_counts.json").items()
+            },
+        }
+    return contexts
+
+
+def _build_bucket_target_tensor(
+    seed_features: SeedFeatures,
+    *,
+    conditional_counts: dict[str, np.ndarray],
+    global_counts: np.ndarray,
+    min_probability: float,
+) -> np.ndarray:
+    bucket_keys = make_bucket_keys(seed_features)
+    h, w = bucket_keys.shape
+    bucket_target = np.zeros((h, w, NUM_CLASSES), dtype=np.float64)
+    global_probs = global_counts / max(float(np.sum(global_counts)), EPS)
+    bucket_target[:] = global_probs
+    for key, counts in conditional_counts.items():
+        mask = bucket_keys == int(key)
+        if np.any(mask):
+            bucket_target[mask] = counts / max(float(np.sum(counts)), EPS)
+    return normalize_probabilities(bucket_target, min_probability)
+
+
+def _runtime_ood_signal_values(
+    runtime_context: dict[str, Any] | None,
+    round_dir: Path,
+    prediction: np.ndarray,
+    round_regime: dict[str, float],
+) -> dict[str, float]:
+    if runtime_context is not None:
+        latent = runtime_context.get("metadata", {}).get("latent_summary")
+        if isinstance(latent, dict):
+            return {
+                "settlement_rate": float(latent.get("settlement_rate", np.nan)),
+                "forest_share_dynamic": float(latent.get("forest_share_dynamic", np.nan)),
+                "port_share_given_active": float(latent.get("port_share_given_active", np.nan)),
+                "observed_cells": float(latent.get("observed_cells", np.nan)),
+                "repeat_fraction": float(round_regime.get("repeat_fraction", np.nan)),
+            }
+    metadata_path = round_dir / "metadata.json"
+    if metadata_path.exists():
+        payload = load_json(metadata_path)
+        latent = payload.get("latent_summary")
+        if isinstance(latent, dict):
+            return {
+                "settlement_rate": float(latent.get("settlement_rate", np.nan)),
+                "forest_share_dynamic": float(latent.get("forest_share_dynamic", np.nan)),
+                "port_share_given_active": float(latent.get("port_share_given_active", np.nan)),
+                "observed_cells": float(latent.get("observed_cells", np.nan)),
+                "repeat_fraction": float(round_regime.get("repeat_fraction", np.nan)),
+            }
+    latent = infer_latent_summary_from_prediction(prediction)
+    return {
+        "settlement_rate": float(latent.get("settlement_rate", np.nan)),
+        "forest_share_dynamic": float(latent.get("forest_share_dynamic", np.nan)),
+        "port_share_given_active": float(latent.get("port_share_given_active", np.nan)),
+        "observed_cells": float("nan"),
+        "repeat_fraction": float(round_regime.get("repeat_fraction", np.nan)),
+    }
 
 
 def _make_regressor(

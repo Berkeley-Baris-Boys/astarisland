@@ -1,14 +1,18 @@
 from __future__ import annotations
 
+import tempfile
 import unittest
+from pathlib import Path
 from unittest.mock import patch
 
+import joblib
 import numpy as np
 
 from astar_island.residual_calibrator import (
     ResidualCalibratorArtifact,
     apply_residual_calibrator,
     build_residual_trust_gate_features,
+    load_residual_calibrator_artifact,
     optimal_residual_blend,
     residual_trust_gate_sample_weight,
 )
@@ -210,6 +214,22 @@ class ResidualTrustGateCapTests(unittest.TestCase):
         self.assertEqual(blend_map[0, 1], 0.6)
         self.assertEqual(blend_map[1, 0], 0.6)
         self.assertEqual(blend_map[1, 1], 0.9)
+
+    def test_loading_stale_artifact_fails_fast(self) -> None:
+        artifact = ResidualCalibratorArtifact(
+            feature_names=["feat_0"],
+            active_model=_ConstantModel(0.4),
+            forest_model=_ConstantModel(0.5),
+            settlement_model=_ConstantModel(0.6),
+            port_model=_ConstantModel(0.2),
+            ruin_model=_ConstantModel(0.2),
+            metadata={"version": 3},
+        )
+        with tempfile.TemporaryDirectory() as tmpdir:
+            path = Path(tmpdir) / "residual.joblib"
+            joblib.dump(artifact, path)
+            with self.assertRaises(ValueError):
+                load_residual_calibrator_artifact(path)
 
 
 if __name__ == "__main__":

@@ -26,11 +26,11 @@ def run_active_round(config: AstarConfig, *, submit: bool = True, make_plots: bo
     if make_plots:
         from .visualize import save_class_probability_maps, save_grid_image, save_heatmap
 
-    run_dir = setup_logging(config.log_dir)
     api = AstarIslandAPI(config)
     active = api.get_active_round()
     if not active:
         raise RuntimeError("No active round found.")
+    run_dir = setup_logging(config.log_dir, round_number=active.get("round_number"))
     round_id = active["id"]
     detail = api.get_round_details(round_id, use_cache=False)
     LOGGER.info("Active round %s, number %s", detail.round_id, detail.round_number)
@@ -68,11 +68,18 @@ def run_active_round(config: AstarConfig, *, submit: bool = True, make_plots: bo
         )
     else:
         LOGGER.info("No learned prior artifact found at %s; continuing without it", config.predictor.learned_prior_path)
-    if config.predictor.residual_calibrator_path.exists():
-        residual_calibrator = load_residual_calibrator_artifact(config.predictor.residual_calibrator_path)
+    residual_paths = []
+    if config.predictor.collapsed_active_calibrator_enabled:
+        residual_paths.append(config.predictor.collapsed_active_calibrator_path)
+    if config.predictor.active_budget_enabled:
+        residual_paths.append(config.predictor.active_budget_path)
+    residual_paths.append(config.predictor.residual_calibrator_path)
+    residual_path = next((path for path in residual_paths if path.exists()), None)
+    if residual_path is not None:
+        residual_calibrator = load_residual_calibrator_artifact(residual_path)
         LOGGER.info(
             "Loaded residual calibrator from %s using %s rounds and %s seeds",
-            config.predictor.residual_calibrator_path,
+            residual_path,
             residual_calibrator.metadata.get("num_rounds", 0),
             residual_calibrator.metadata.get("num_seeds", 0),
         )

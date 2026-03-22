@@ -147,12 +147,92 @@ class PredictorConfig:
     ruin_support_forest_weight: float = 0.05
     ruin_dampening_scale: float = 0.90
     boundary_softening_alpha: float = 0.0
+    mass_matching_strength: float = 0.5
+    mass_matching_min_buildable_observed: int = 150
+    mass_matching_target_support_buildable: int = 400
+    mass_matching_min_active_observed: int = 25
+    mass_matching_target_support_active: int = 100
+    mass_matching_enable_nonactive: bool = False
+    mass_matching_min_nonactive_observed: int = 100
+    mass_matching_target_support_nonactive: int = 250
+    mass_matching_active_scale_clip: tuple[float, float] = (0.85, 1.25)
+    mass_matching_settlement_scale_clip: tuple[float, float] = (0.85, 1.35)
+    mass_matching_forest_scale_clip: tuple[float, float] = (0.85, 1.25)
+    mass_matching_empty_scale_clip: tuple[float, float] = (0.85, 1.25)
     villager_recalib_strength: float = 0.5
     villager_recalib_min_obs_cells: int = 150
     villager_recalib_scale_clip_lo: float = 0.9
     villager_recalib_scale_clip_hi: float = 1.8
     learned_prior_blend: float = 0.25
+    learned_prior_ood_enabled: bool = False
+    learned_prior_ood_trigger: float = 0.75
+    learned_prior_ood_full: float = 2.0
+    learned_prior_ood_strength: float = 0.75
     residual_calibrator_blend: float = 0.25
+    active_budget_enabled: bool = field(
+        default_factory=lambda: os.getenv("ASTAR_ISLAND_ACTIVE_BUDGET_ENABLED", "0") != "0"
+    )
+    active_budget_strength_low_activity: float = field(
+        default_factory=lambda: float(os.getenv("ASTAR_ISLAND_ACTIVE_BUDGET_STRENGTH_LOW_ACTIVITY", "0.95"))
+    )
+    active_budget_strength_default: float = field(
+        default_factory=lambda: float(os.getenv("ASTAR_ISLAND_ACTIVE_BUDGET_STRENGTH_DEFAULT", "0.55"))
+    )
+    active_budget_strength_high_activity: float = field(
+        default_factory=lambda: float(os.getenv("ASTAR_ISLAND_ACTIVE_BUDGET_STRENGTH_HIGH_ACTIVITY", "0.20"))
+    )
+    active_budget_min_buildable_observed: int = field(
+        default_factory=lambda: int(os.getenv("ASTAR_ISLAND_ACTIVE_BUDGET_MIN_BUILDABLE_OBSERVED", "120"))
+    )
+    active_budget_ood_enabled: bool = field(
+        default_factory=lambda: os.getenv("ASTAR_ISLAND_ACTIVE_BUDGET_OOD_ENABLED", "1") != "0"
+    )
+    active_budget_ood_trigger: float = field(
+        default_factory=lambda: float(os.getenv("ASTAR_ISLAND_ACTIVE_BUDGET_OOD_TRIGGER", "0.75"))
+    )
+    active_budget_ood_full: float = field(
+        default_factory=lambda: float(os.getenv("ASTAR_ISLAND_ACTIVE_BUDGET_OOD_FULL", "2.0"))
+    )
+    active_budget_ood_strength: float = field(
+        default_factory=lambda: float(os.getenv("ASTAR_ISLAND_ACTIVE_BUDGET_OOD_STRENGTH", "0.60"))
+    )
+    collapsed_active_calibrator_enabled: bool = field(
+        default_factory=lambda: os.getenv("ASTAR_ISLAND_COLLAPSED_ACTIVE_CALIBRATOR_ENABLED", "0") != "0"
+    )
+    collapsed_active_calibrator_strength_low_activity: float = field(
+        default_factory=lambda: float(os.getenv("ASTAR_ISLAND_COLLAPSED_ACTIVE_CALIBRATOR_STRENGTH_LOW_ACTIVITY", "0.85"))
+    )
+    collapsed_active_calibrator_strength_default: float = field(
+        default_factory=lambda: float(os.getenv("ASTAR_ISLAND_COLLAPSED_ACTIVE_CALIBRATOR_STRENGTH_DEFAULT", "0.30"))
+    )
+    collapsed_active_calibrator_strength_high_activity: float = field(
+        default_factory=lambda: float(os.getenv("ASTAR_ISLAND_COLLAPSED_ACTIVE_CALIBRATOR_STRENGTH_HIGH_ACTIVITY", "0.05"))
+    )
+    collapsed_active_calibrator_min_buildable_observed: int = field(
+        default_factory=lambda: int(os.getenv("ASTAR_ISLAND_COLLAPSED_ACTIVE_CALIBRATOR_MIN_BUILDABLE_OBSERVED", "120"))
+    )
+    collapsed_active_calibrator_scale_clip_lo: float = field(
+        default_factory=lambda: float(os.getenv("ASTAR_ISLAND_COLLAPSED_ACTIVE_CALIBRATOR_SCALE_CLIP_LO", "0.70"))
+    )
+    collapsed_active_calibrator_scale_clip_hi: float = field(
+        default_factory=lambda: float(os.getenv("ASTAR_ISLAND_COLLAPSED_ACTIVE_CALIBRATOR_SCALE_CLIP_HI", "1.08"))
+    )
+    collapsed_active_calibrator_ood_enabled: bool = field(
+        default_factory=lambda: os.getenv("ASTAR_ISLAND_COLLAPSED_ACTIVE_CALIBRATOR_OOD_ENABLED", "1") != "0"
+    )
+    collapsed_active_calibrator_ood_trigger: float = field(
+        default_factory=lambda: float(os.getenv("ASTAR_ISLAND_COLLAPSED_ACTIVE_CALIBRATOR_OOD_TRIGGER", "0.75"))
+    )
+    collapsed_active_calibrator_ood_full: float = field(
+        default_factory=lambda: float(os.getenv("ASTAR_ISLAND_COLLAPSED_ACTIVE_CALIBRATOR_OOD_FULL", "2.0"))
+    )
+    collapsed_active_calibrator_ood_strength: float = field(
+        default_factory=lambda: float(os.getenv("ASTAR_ISLAND_COLLAPSED_ACTIVE_CALIBRATOR_OOD_STRENGTH", "0.60"))
+    )
+    residual_ood_enabled: bool = False
+    residual_ood_trigger: float = 0.75
+    residual_ood_full: float = 2.0
+    residual_ood_strength: float = 0.60
     residual_calibrator_single_observed_blend: float = 0.10
     residual_calibrator_repeated_observed_blend: float = 0.0
     residual_calibrator_active_observed_blend: float = 0.0
@@ -181,6 +261,14 @@ class PredictorConfig:
     )
     residual_calibrator_path: Path = field(
         default_factory=lambda: Path(os.getenv("ASTAR_ISLAND_RESIDUAL_CALIBRATOR_PATH", "artifacts/residual_calibrator.joblib"))
+    )
+    active_budget_path: Path = field(
+        default_factory=lambda: Path(os.getenv("ASTAR_ISLAND_ACTIVE_BUDGET_PATH", "artifacts/residual_calibrator.joblib"))
+    )
+    collapsed_active_calibrator_path: Path = field(
+        default_factory=lambda: Path(
+            os.getenv("ASTAR_ISLAND_COLLAPSED_ACTIVE_CALIBRATOR_PATH", "artifacts/residual_calibrator.joblib")
+        )
     )
     prior_blend_gate_path: Path = field(
         default_factory=lambda: Path(os.getenv("ASTAR_ISLAND_PRIOR_BLEND_GATE_PATH", "artifacts/prior_blend_gate.joblib"))

@@ -1,0 +1,1622 @@
+{
+  "config": {
+    "auth_mode": "bearer",
+    "base_url": "https://api.ainm.no/astar-island",
+    "cache": {
+      "directory": ".cache/astar_island",
+      "enabled": true
+    },
+    "history_dir": "artifacts/history",
+    "log_dir": "artifacts",
+    "max_retries": 5,
+    "planner": {
+      "candidate_stride": 4,
+      "max_queries": 50,
+      "max_window": 15,
+      "min_window": 5,
+      "overlap_penalty": 0.7,
+      "per_seed_soft_min": 7,
+      "phase1_queries": 20,
+      "phase2_queries": 22,
+      "phase3_queries": 8,
+      "repeat_bonus": 0.2,
+      "repeat_threshold": 0.75,
+      "repeated_view_window": 9
+    },
+    "predictor": {
+      "active_budget_enabled": false,
+      "active_budget_min_buildable_observed": 120,
+      "active_budget_ood_enabled": true,
+      "active_budget_ood_full": 2.0,
+      "active_budget_ood_strength": 0.6,
+      "active_budget_ood_trigger": 0.75,
+      "active_budget_path": "artifacts/residual_calibrator.joblib",
+      "active_budget_strength_default": 0.55,
+      "active_budget_strength_high_activity": 0.2,
+      "active_budget_strength_low_activity": 0.95,
+      "active_confidence_sharpen_power": 1.02,
+      "active_dominance_additive": 0.015,
+      "active_dominance_base_ratio": 0.32,
+      "active_dominance_initial_bonus": 0.18,
+      "active_dominance_port_bonus_high_activity": 0.08,
+      "active_dominance_port_margin_threshold": 0.08,
+      "active_dominance_port_min_probability": 0.03,
+      "active_dominance_regime_initial_bonus": 0.08,
+      "active_dominance_regime_relaxation": 0.35,
+      "active_dominance_settlement_bonus_high_activity": 0.18,
+      "active_dominance_settlement_margin_threshold": 0.14,
+      "active_dominance_settlement_min_probability": 0.08,
+      "active_dominance_sigma": 3.0,
+      "active_dominance_signal_scale": 0.18,
+      "active_dominance_support_gain": 0.95,
+      "boundary_softening_alpha": 0.0,
+      "coastal_port_support_gain": 1.2,
+      "coastal_port_support_gain_high_activity": 1.35,
+      "collapsed_active_calibrator_enabled": false,
+      "collapsed_active_calibrator_min_buildable_observed": 120,
+      "collapsed_active_calibrator_ood_enabled": true,
+      "collapsed_active_calibrator_ood_full": 2.0,
+      "collapsed_active_calibrator_ood_strength": 0.6,
+      "collapsed_active_calibrator_ood_trigger": 0.75,
+      "collapsed_active_calibrator_path": "artifacts/residual_calibrator.joblib",
+      "collapsed_active_calibrator_scale_clip_hi": 1.08,
+      "collapsed_active_calibrator_scale_clip_lo": 0.7,
+      "collapsed_active_calibrator_strength_default": 0.3,
+      "collapsed_active_calibrator_strength_high_activity": 0.05,
+      "collapsed_active_calibrator_strength_low_activity": 0.85,
+      "confidence_sharpen_power": 1.15,
+      "direct_observation_strength": 18.0,
+      "feature_match_strength": 5.0,
+      "forest_empty_suppression": 0.55,
+      "forest_empty_suppression_high_activity": 0.6,
+      "forest_port_suppression": 0.88,
+      "forest_port_suppression_high_activity": 0.98,
+      "forest_retention_boost": 1.5,
+      "forest_retention_boost_high_activity": 1.15,
+      "forest_ruin_suppression": 0.97,
+      "forest_ruin_suppression_high_activity": 1.0,
+      "forest_settlement_suppression": 0.92,
+      "forest_settlement_suppression_high_activity": 1.08,
+      "historical_prior_path": "artifacts/historical_priors.json",
+      "historical_prior_strength": 6.0,
+      "initial_port_boost": 1.12,
+      "initial_port_boost_high_activity": 1.2,
+      "initial_port_empty_suppression": 0.95,
+      "initial_port_empty_suppression_high_activity": 0.9,
+      "initial_settlement_boost": 1.05,
+      "initial_settlement_boost_high_activity": 1.18,
+      "initial_settlement_empty_suppression": 0.97,
+      "initial_settlement_empty_suppression_high_activity": 0.9,
+      "learned_prior_blend": 0.25,
+      "learned_prior_ood_enabled": false,
+      "learned_prior_ood_full": 2.0,
+      "learned_prior_ood_strength": 0.75,
+      "learned_prior_ood_trigger": 0.75,
+      "learned_prior_path": "artifacts/learned_prior.json",
+      "local_kernel_sigma": 4.0,
+      "mass_matching_active_scale_clip": [
+        0.85,
+        1.25
+      ],
+      "mass_matching_empty_scale_clip": [
+        0.85,
+        1.25
+      ],
+      "mass_matching_enable_nonactive": false,
+      "mass_matching_forest_scale_clip": [
+        0.85,
+        1.25
+      ],
+      "mass_matching_min_active_observed": 25,
+      "mass_matching_min_buildable_observed": 150,
+      "mass_matching_min_nonactive_observed": 100,
+      "mass_matching_settlement_scale_clip": [
+        0.85,
+        1.35
+      ],
+      "mass_matching_strength": 0.5,
+      "mass_matching_target_support_active": 100,
+      "mass_matching_target_support_buildable": 400,
+      "mass_matching_target_support_nonactive": 250,
+      "min_probability": 0.0025,
+      "observation_active_mass_blend": 0.24,
+      "observation_active_mass_blend_high_activity": 0.95,
+      "observation_active_type_blend": 0.18,
+      "observation_active_type_blend_high_activity": 0.8,
+      "observation_bucket_blend": 0.28,
+      "observation_bucket_blend_high_activity": 0.7,
+      "observation_nonactive_blend": 0.62,
+      "observation_nonactive_blend_high_activity": 0.8,
+      "observation_repeat_bonus": 0.45,
+      "observation_smoothing_sigma": 1.4,
+      "observation_support_temperature": 0.85,
+      "plains_empty_base": 1.12,
+      "plains_empty_base_high_activity": 0.88,
+      "plains_empty_support_slope": 0.18,
+      "plains_empty_support_slope_high_activity": 0.42,
+      "plains_settlement_base": 0.9,
+      "plains_settlement_base_high_activity": 1.28,
+      "plains_settlement_gain": 0.5,
+      "plains_settlement_gain_high_activity": 1.6,
+      "plains_settlement_power": 3.0,
+      "plains_support_intensity_weight": 0.85,
+      "port_focus_blend": 0.7,
+      "port_focus_min_blend": 0.3,
+      "port_focus_power": 1.0,
+      "port_focus_rate_ceiling": 0.045,
+      "port_focus_rate_floor": 0.015,
+      "port_support_border_weight": 0.18,
+      "port_support_frontier_weight": 0.22,
+      "port_support_initial_port_bonus": 0.25,
+      "port_support_initial_settlement_bonus": 0.1,
+      "port_support_intensity_weight": 0.5,
+      "port_support_predicted_active_weight": 0.1,
+      "post_port_focus_blend_high_activity": 0.0,
+      "post_port_focus_power_high_activity": 1.1,
+      "post_port_support_border_weight": 0.2,
+      "post_port_support_frontier_weight": 0.15,
+      "post_port_support_initial_port_bonus": 0.35,
+      "post_port_support_initial_settlement_bonus": 0.08,
+      "post_port_support_intensity_weight": 0.4,
+      "post_port_support_prediction_weight": 0.1,
+      "prior_blend_gate_path": "artifacts/prior_blend_gate.joblib",
+      "prior_blend_gate_strength": 1.0,
+      "prior_strength_dynamic": 9.0,
+      "prior_strength_static": 60.0,
+      "quiet_forest_empty_suppression": 0.72,
+      "quiet_forest_port_suppression": 0.62,
+      "quiet_forest_retention_boost": 1.18,
+      "quiet_forest_ruin_suppression": 0.72,
+      "quiet_forest_settlement_suppression": 0.7,
+      "quiet_plains_empty_boost": 1.18,
+      "quiet_plains_port_suppression": 0.45,
+      "quiet_plains_ruin_suppression": 0.72,
+      "quiet_plains_settlement_suppression": 0.65,
+      "quiet_prior_blend_gate_multiplier": 0.5,
+      "rare_class_min_support": 0.0001,
+      "regime_forest_share_high": 0.62,
+      "regime_forest_share_low": 0.38,
+      "regime_forest_weight": 0.35,
+      "regime_repeat_fraction_high": 0.12,
+      "regime_repeat_fraction_low": 0.05,
+      "regime_repeat_weight": 0.0,
+      "regime_settlement_rate_high": 0.24,
+      "regime_settlement_rate_low": 0.12,
+      "regime_settlement_weight": 0.65,
+      "residual_calibrator_active_observed_blend": 0.0,
+      "residual_calibrator_blend": 0.25,
+      "residual_calibrator_high_activity_active_observed_blend": 1.0,
+      "residual_calibrator_high_activity_blend": 1.0,
+      "residual_calibrator_high_activity_repeated_observed_blend": 1.0,
+      "residual_calibrator_high_activity_single_observed_blend": 1.0,
+      "residual_calibrator_low_activity_active_observed_blend": 0.05,
+      "residual_calibrator_low_activity_blend": 0.2,
+      "residual_calibrator_low_activity_repeated_observed_blend": 0.02,
+      "residual_calibrator_low_activity_single_observed_blend": 0.1,
+      "residual_calibrator_path": "artifacts/residual_calibrator.joblib",
+      "residual_calibrator_repeated_observed_blend": 0.0,
+      "residual_calibrator_single_observed_blend": 0.1,
+      "residual_ood_enabled": false,
+      "residual_ood_full": 2.0,
+      "residual_ood_strength": 0.6,
+      "residual_ood_trigger": 0.75,
+      "residual_trust_gate_active_observed_cap": 0.6,
+      "ruin_dampening_scale": 0.9,
+      "ruin_focus_blend": 0.8,
+      "ruin_focus_power": 1.0,
+      "ruin_support_conflict_weight": 0.2,
+      "ruin_support_density_weight": 0.1,
+      "ruin_support_forest_weight": 0.05,
+      "ruin_support_frontier_weight": 0.22,
+      "ruin_support_intensity_weight": 0.38,
+      "ruin_support_interior_weight": 0.1,
+      "ruin_support_predicted_ruin_weight": 0.05,
+      "ruin_support_predicted_settlement_weight": 0.1,
+      "settlement_focus_blend_high_activity": 0.35,
+      "settlement_focus_power_high_activity": 1.1,
+      "settlement_intensity_blend": 0.22,
+      "settlement_sigma": 2.2,
+      "settlement_support_density_weight": 0.15,
+      "settlement_support_frontier_weight": 0.2,
+      "settlement_support_initial_bonus": 0.1,
+      "settlement_support_intensity_weight": 0.45,
+      "settlement_support_prediction_weight": 0.1,
+      "transfer_strength": 8.0,
+      "villager_recalib_min_obs_cells": 150,
+      "villager_recalib_scale_clip_hi": 1.8,
+      "villager_recalib_scale_clip_lo": 0.9,
+      "villager_recalib_strength": 0.5
+    },
+    "request_timeout_s": 30.0,
+    "retry_backoff_s": 1.0,
+    "token": "<redacted>",
+    "user_agent": "astar-island-codex-baseline/0.1"
+  },
+  "historical_prior_metadata": {
+    "bucket_key_version": 2,
+    "num_rounds": 19,
+    "num_seeds": 95,
+    "rounds": [
+      {
+        "round_id": "597e60cf-d1a1-4627-ac4d-2a61da68b6df",
+        "round_number": 19
+      },
+      {
+        "round_id": "b0f9d1bf-4b71-4e6e-816c-19c718d29056",
+        "round_number": 18
+      },
+      {
+        "round_id": "3eb0c25d-28fa-48ca-b8e1-fc249e3918e9",
+        "round_number": 17
+      },
+      {
+        "round_id": "8f664aed-8839-4c85-bed0-77a2cac7c6f5",
+        "round_number": 16
+      },
+      {
+        "round_id": "cc5442dd-bc5d-418b-911b-7eb960cb0390",
+        "round_number": 15
+      },
+      {
+        "round_id": "d0a2c894-2162-4d49-86cf-435b9013f3b8",
+        "round_number": 14
+      },
+      {
+        "round_id": "7b4bda99-6165-4221-97cc-27880f5e6d95",
+        "round_number": 13
+      },
+      {
+        "round_id": "795bfb1f-54bd-4f39-a526-9868b36f7ebd",
+        "round_number": 12
+      },
+      {
+        "round_id": "324fde07-1670-4202-b199-7aa92ecb40ee",
+        "round_number": 11
+      },
+      {
+        "round_id": "75e625c3-60cb-4392-af3e-c86a98bde8c2",
+        "round_number": 10
+      },
+      {
+        "round_id": "2a341ace-0f57-4309-9b89-e59fe0f09179",
+        "round_number": 9
+      },
+      {
+        "round_id": "c5cdf100-a876-4fb7-b5d8-757162c97989",
+        "round_number": 8
+      },
+      {
+        "round_id": "36e581f1-73f8-453f-ab98-cbe3052b701b",
+        "round_number": 7
+      },
+      {
+        "round_id": "ae78003a-4efe-425a-881a-d16a39bca0ad",
+        "round_number": 6
+      },
+      {
+        "round_id": "fd3c92ff-3178-4dc9-8d9b-acf389b3982b",
+        "round_number": 5
+      },
+      {
+        "round_id": "8e839974-b13b-407b-a5e7-fc749d877195",
+        "round_number": 4
+      },
+      {
+        "round_id": "f1dac9a9-5cf1-49a9-8f17-d6cb5d5ba5cb",
+        "round_number": 3
+      },
+      {
+        "round_id": "76909e29-f664-4b2f-b16b-61b7507277e9",
+        "round_number": 2
+      },
+      {
+        "round_id": "71451d74-be9f-471f-aacd-a41f3b68a9cd",
+        "round_number": 1
+      }
+    ],
+    "source": "archive"
+  },
+  "latent_summary": {
+    "forest_share_dynamic": 0.8194060773480663,
+    "mean_defense": 0.5041722689075631,
+    "mean_food": 0.716922268907563,
+    "mean_population": 1.0213214285714285,
+    "mean_wealth": 0.00405672268907563,
+    "observed_cells": 6594.0,
+    "port_share_given_active": 0.03571428571428571,
+    "ruin_share_given_active": 0.08986615678776291,
+    "settlement_rate": 0.04713804713804714
+  },
+  "learned_prior_metadata": {
+    "holdout_round_number": null,
+    "l2_active": 0.6,
+    "l2_active_type": 0.8,
+    "l2_forest": 0.6,
+    "num_rounds": 19,
+    "num_seeds": 95,
+    "ood_reference": {
+      "num_rounds": 19,
+      "signals": {
+        "forest_share_dynamic": {
+          "count": 19,
+          "mean": 0.523941831340738,
+          "p10": 0.3682662061529679,
+          "p90": 0.7758595591534204,
+          "std": 0.15884976606363474
+        },
+        "port_share_given_active": {
+          "count": 19,
+          "mean": 0.08199445954881307,
+          "p10": 0.06244153237852277,
+          "p90": 0.12047484074247183,
+          "std": 0.023817700156236427
+        },
+        "settlement_rate": {
+          "count": 19,
+          "mean": 0.1854699450264353,
+          "p10": 0.08256314254409629,
+          "p90": 0.2621777690062158,
+          "std": 0.10847405560477064
+        }
+      },
+      "version": 1
+    },
+    "ood_reference_version": 1,
+    "rounds": [
+      {
+        "round_id": "71451d74-be9f-471f-aacd-a41f3b68a9cd",
+        "round_number": 1
+      },
+      {
+        "round_id": "76909e29-f664-4b2f-b16b-61b7507277e9",
+        "round_number": 2
+      },
+      {
+        "round_id": "f1dac9a9-5cf1-49a9-8f17-d6cb5d5ba5cb",
+        "round_number": 3
+      },
+      {
+        "round_id": "8e839974-b13b-407b-a5e7-fc749d877195",
+        "round_number": 4
+      },
+      {
+        "round_id": "fd3c92ff-3178-4dc9-8d9b-acf389b3982b",
+        "round_number": 5
+      },
+      {
+        "round_id": "ae78003a-4efe-425a-881a-d16a39bca0ad",
+        "round_number": 6
+      },
+      {
+        "round_id": "36e581f1-73f8-453f-ab98-cbe3052b701b",
+        "round_number": 7
+      },
+      {
+        "round_id": "c5cdf100-a876-4fb7-b5d8-757162c97989",
+        "round_number": 8
+      },
+      {
+        "round_id": "2a341ace-0f57-4309-9b89-e59fe0f09179",
+        "round_number": 9
+      },
+      {
+        "round_id": "75e625c3-60cb-4392-af3e-c86a98bde8c2",
+        "round_number": 10
+      },
+      {
+        "round_id": "324fde07-1670-4202-b199-7aa92ecb40ee",
+        "round_number": 11
+      },
+      {
+        "round_id": "795bfb1f-54bd-4f39-a526-9868b36f7ebd",
+        "round_number": 12
+      },
+      {
+        "round_id": "7b4bda99-6165-4221-97cc-27880f5e6d95",
+        "round_number": 13
+      },
+      {
+        "round_id": "d0a2c894-2162-4d49-86cf-435b9013f3b8",
+        "round_number": 14
+      },
+      {
+        "round_id": "cc5442dd-bc5d-418b-911b-7eb960cb0390",
+        "round_number": 15
+      },
+      {
+        "round_id": "8f664aed-8839-4c85-bed0-77a2cac7c6f5",
+        "round_number": 16
+      },
+      {
+        "round_id": "3eb0c25d-28fa-48ca-b8e1-fc249e3918e9",
+        "round_number": 17
+      },
+      {
+        "round_id": "b0f9d1bf-4b71-4e6e-816c-19c718d29056",
+        "round_number": 18
+      },
+      {
+        "round_id": "597e60cf-d1a1-4627-ac4d-2a61da68b6df",
+        "round_number": 19
+      }
+    ],
+    "version": 1
+  },
+  "prior_blend_gate_metadata": {
+    "historical_prior_metadata": {
+      "bucket_key_version": 2,
+      "num_rounds": 19,
+      "num_seeds": 95,
+      "rounds": [
+        {
+          "round_id": "597e60cf-d1a1-4627-ac4d-2a61da68b6df",
+          "round_number": 19
+        },
+        {
+          "round_id": "b0f9d1bf-4b71-4e6e-816c-19c718d29056",
+          "round_number": 18
+        },
+        {
+          "round_id": "3eb0c25d-28fa-48ca-b8e1-fc249e3918e9",
+          "round_number": 17
+        },
+        {
+          "round_id": "8f664aed-8839-4c85-bed0-77a2cac7c6f5",
+          "round_number": 16
+        },
+        {
+          "round_id": "cc5442dd-bc5d-418b-911b-7eb960cb0390",
+          "round_number": 15
+        },
+        {
+          "round_id": "d0a2c894-2162-4d49-86cf-435b9013f3b8",
+          "round_number": 14
+        },
+        {
+          "round_id": "7b4bda99-6165-4221-97cc-27880f5e6d95",
+          "round_number": 13
+        },
+        {
+          "round_id": "795bfb1f-54bd-4f39-a526-9868b36f7ebd",
+          "round_number": 12
+        },
+        {
+          "round_id": "324fde07-1670-4202-b199-7aa92ecb40ee",
+          "round_number": 11
+        },
+        {
+          "round_id": "75e625c3-60cb-4392-af3e-c86a98bde8c2",
+          "round_number": 10
+        },
+        {
+          "round_id": "2a341ace-0f57-4309-9b89-e59fe0f09179",
+          "round_number": 9
+        },
+        {
+          "round_id": "c5cdf100-a876-4fb7-b5d8-757162c97989",
+          "round_number": 8
+        },
+        {
+          "round_id": "36e581f1-73f8-453f-ab98-cbe3052b701b",
+          "round_number": 7
+        },
+        {
+          "round_id": "ae78003a-4efe-425a-881a-d16a39bca0ad",
+          "round_number": 6
+        },
+        {
+          "round_id": "fd3c92ff-3178-4dc9-8d9b-acf389b3982b",
+          "round_number": 5
+        },
+        {
+          "round_id": "8e839974-b13b-407b-a5e7-fc749d877195",
+          "round_number": 4
+        },
+        {
+          "round_id": "f1dac9a9-5cf1-49a9-8f17-d6cb5d5ba5cb",
+          "round_number": 3
+        },
+        {
+          "round_id": "76909e29-f664-4b2f-b16b-61b7507277e9",
+          "round_number": 2
+        },
+        {
+          "round_id": "71451d74-be9f-471f-aacd-a41f3b68a9cd",
+          "round_number": 1
+        }
+      ],
+      "source": "archive"
+    },
+    "holdout_round_number": null,
+    "l2_regularization": 0.2,
+    "learned_prior_metadata": {
+      "holdout_round_number": null,
+      "l2_active": 0.6,
+      "l2_active_type": 0.8,
+      "l2_forest": 0.6,
+      "num_rounds": 19,
+      "num_seeds": 95,
+      "ood_reference": {
+        "num_rounds": 19,
+        "signals": {
+          "forest_share_dynamic": {
+            "count": 19,
+            "mean": 0.523941831340738,
+            "p10": 0.3682662061529679,
+            "p90": 0.7758595591534204,
+            "std": 0.15884976606363474
+          },
+          "port_share_given_active": {
+            "count": 19,
+            "mean": 0.08199445954881307,
+            "p10": 0.06244153237852277,
+            "p90": 0.12047484074247183,
+            "std": 0.023817700156236427
+          },
+          "settlement_rate": {
+            "count": 19,
+            "mean": 0.1854699450264353,
+            "p10": 0.08256314254409629,
+            "p90": 0.2621777690062158,
+            "std": 0.10847405560477064
+          }
+        },
+        "version": 1
+      },
+      "ood_reference_version": 1,
+      "rounds": [
+        {
+          "round_id": "71451d74-be9f-471f-aacd-a41f3b68a9cd",
+          "round_number": 1
+        },
+        {
+          "round_id": "76909e29-f664-4b2f-b16b-61b7507277e9",
+          "round_number": 2
+        },
+        {
+          "round_id": "f1dac9a9-5cf1-49a9-8f17-d6cb5d5ba5cb",
+          "round_number": 3
+        },
+        {
+          "round_id": "8e839974-b13b-407b-a5e7-fc749d877195",
+          "round_number": 4
+        },
+        {
+          "round_id": "fd3c92ff-3178-4dc9-8d9b-acf389b3982b",
+          "round_number": 5
+        },
+        {
+          "round_id": "ae78003a-4efe-425a-881a-d16a39bca0ad",
+          "round_number": 6
+        },
+        {
+          "round_id": "36e581f1-73f8-453f-ab98-cbe3052b701b",
+          "round_number": 7
+        },
+        {
+          "round_id": "c5cdf100-a876-4fb7-b5d8-757162c97989",
+          "round_number": 8
+        },
+        {
+          "round_id": "2a341ace-0f57-4309-9b89-e59fe0f09179",
+          "round_number": 9
+        },
+        {
+          "round_id": "75e625c3-60cb-4392-af3e-c86a98bde8c2",
+          "round_number": 10
+        },
+        {
+          "round_id": "324fde07-1670-4202-b199-7aa92ecb40ee",
+          "round_number": 11
+        },
+        {
+          "round_id": "795bfb1f-54bd-4f39-a526-9868b36f7ebd",
+          "round_number": 12
+        },
+        {
+          "round_id": "7b4bda99-6165-4221-97cc-27880f5e6d95",
+          "round_number": 13
+        },
+        {
+          "round_id": "d0a2c894-2162-4d49-86cf-435b9013f3b8",
+          "round_number": 14
+        },
+        {
+          "round_id": "cc5442dd-bc5d-418b-911b-7eb960cb0390",
+          "round_number": 15
+        },
+        {
+          "round_id": "8f664aed-8839-4c85-bed0-77a2cac7c6f5",
+          "round_number": 16
+        },
+        {
+          "round_id": "3eb0c25d-28fa-48ca-b8e1-fc249e3918e9",
+          "round_number": 17
+        },
+        {
+          "round_id": "b0f9d1bf-4b71-4e6e-816c-19c718d29056",
+          "round_number": 18
+        },
+        {
+          "round_id": "597e60cf-d1a1-4627-ac4d-2a61da68b6df",
+          "round_number": 19
+        }
+      ],
+      "version": 1
+    },
+    "learning_rate": 0.05,
+    "max_depth": 4,
+    "max_iter": 300,
+    "min_samples_leaf": 400,
+    "num_rounds": 19,
+    "num_seeds": 95,
+    "predictor_regime_thresholds": {
+      "forest_share_high": 0.62,
+      "forest_share_low": 0.38,
+      "settlement_rate_high": 0.24,
+      "settlement_rate_low": 0.12
+    },
+    "rounds": [
+      {
+        "round_id": "71451d74-be9f-471f-aacd-a41f3b68a9cd",
+        "round_number": 1
+      },
+      {
+        "round_id": "76909e29-f664-4b2f-b16b-61b7507277e9",
+        "round_number": 2
+      },
+      {
+        "round_id": "f1dac9a9-5cf1-49a9-8f17-d6cb5d5ba5cb",
+        "round_number": 3
+      },
+      {
+        "round_id": "8e839974-b13b-407b-a5e7-fc749d877195",
+        "round_number": 4
+      },
+      {
+        "round_id": "fd3c92ff-3178-4dc9-8d9b-acf389b3982b",
+        "round_number": 5
+      },
+      {
+        "round_id": "ae78003a-4efe-425a-881a-d16a39bca0ad",
+        "round_number": 6
+      },
+      {
+        "round_id": "36e581f1-73f8-453f-ab98-cbe3052b701b",
+        "round_number": 7
+      },
+      {
+        "round_id": "c5cdf100-a876-4fb7-b5d8-757162c97989",
+        "round_number": 8
+      },
+      {
+        "round_id": "2a341ace-0f57-4309-9b89-e59fe0f09179",
+        "round_number": 9
+      },
+      {
+        "round_id": "75e625c3-60cb-4392-af3e-c86a98bde8c2",
+        "round_number": 10
+      },
+      {
+        "round_id": "324fde07-1670-4202-b199-7aa92ecb40ee",
+        "round_number": 11
+      },
+      {
+        "round_id": "795bfb1f-54bd-4f39-a526-9868b36f7ebd",
+        "round_number": 12
+      },
+      {
+        "round_id": "7b4bda99-6165-4221-97cc-27880f5e6d95",
+        "round_number": 13
+      },
+      {
+        "round_id": "d0a2c894-2162-4d49-86cf-435b9013f3b8",
+        "round_number": 14
+      },
+      {
+        "round_id": "cc5442dd-bc5d-418b-911b-7eb960cb0390",
+        "round_number": 15
+      },
+      {
+        "round_id": "8f664aed-8839-4c85-bed0-77a2cac7c6f5",
+        "round_number": 16
+      },
+      {
+        "round_id": "3eb0c25d-28fa-48ca-b8e1-fc249e3918e9",
+        "round_number": 17
+      },
+      {
+        "round_id": "b0f9d1bf-4b71-4e6e-816c-19c718d29056",
+        "round_number": 18
+      },
+      {
+        "round_id": "597e60cf-d1a1-4627-ac4d-2a61da68b6df",
+        "round_number": 19
+      }
+    ],
+    "version": 2
+  },
+  "query_history": [
+    {
+      "phase": "recon",
+      "reason": "broad coverage of likely-active region",
+      "score": 3.9626666666666672,
+      "seed_index": 4,
+      "viewport": {
+        "h": 15,
+        "w": 15,
+        "x": 4,
+        "y": 24
+      }
+    },
+    {
+      "phase": "recon",
+      "reason": "broad coverage of likely-active region",
+      "score": 3.902222222222223,
+      "seed_index": 2,
+      "viewport": {
+        "h": 15,
+        "w": 15,
+        "x": 8,
+        "y": 4
+      }
+    },
+    {
+      "phase": "recon",
+      "reason": "broad coverage of likely-active region",
+      "score": 3.858666666666667,
+      "seed_index": 4,
+      "viewport": {
+        "h": 15,
+        "w": 15,
+        "x": 24,
+        "y": 4
+      }
+    },
+    {
+      "phase": "recon",
+      "reason": "broad coverage of likely-active region",
+      "score": 3.8577777777777778,
+      "seed_index": 4,
+      "viewport": {
+        "h": 15,
+        "w": 15,
+        "x": 4,
+        "y": 0
+      }
+    },
+    {
+      "phase": "recon",
+      "reason": "broad coverage of likely-active region",
+      "score": 3.8568888888888893,
+      "seed_index": 3,
+      "viewport": {
+        "h": 15,
+        "w": 15,
+        "x": 4,
+        "y": 8
+      }
+    },
+    {
+      "phase": "recon",
+      "reason": "broad coverage of likely-active region",
+      "score": 3.8257777777777777,
+      "seed_index": 0,
+      "viewport": {
+        "h": 15,
+        "w": 15,
+        "x": 8,
+        "y": 0
+      }
+    },
+    {
+      "phase": "recon",
+      "reason": "broad coverage of likely-active region",
+      "score": 3.790222222222223,
+      "seed_index": 4,
+      "viewport": {
+        "h": 15,
+        "w": 15,
+        "x": 24,
+        "y": 24
+      }
+    },
+    {
+      "phase": "recon",
+      "reason": "broad coverage of likely-active region",
+      "score": 3.7617777777777786,
+      "seed_index": 3,
+      "viewport": {
+        "h": 15,
+        "w": 15,
+        "x": 20,
+        "y": 16
+      }
+    },
+    {
+      "phase": "recon",
+      "reason": "broad coverage of likely-active region",
+      "score": 3.679111111111111,
+      "seed_index": 2,
+      "viewport": {
+        "h": 15,
+        "w": 15,
+        "x": 24,
+        "y": 0
+      }
+    },
+    {
+      "phase": "recon",
+      "reason": "broad coverage of likely-active region",
+      "score": 3.668444444444445,
+      "seed_index": 1,
+      "viewport": {
+        "h": 15,
+        "w": 15,
+        "x": 20,
+        "y": 4
+      }
+    },
+    {
+      "phase": "recon",
+      "reason": "broad coverage of likely-active region",
+      "score": 3.640888888888889,
+      "seed_index": 0,
+      "viewport": {
+        "h": 15,
+        "w": 15,
+        "x": 20,
+        "y": 16
+      }
+    },
+    {
+      "phase": "recon",
+      "reason": "broad coverage of likely-active region",
+      "score": 3.6400000000000006,
+      "seed_index": 2,
+      "viewport": {
+        "h": 15,
+        "w": 15,
+        "x": 20,
+        "y": 24
+      }
+    },
+    {
+      "phase": "recon",
+      "reason": "broad coverage of likely-active region",
+      "score": 3.6017777777777784,
+      "seed_index": 1,
+      "viewport": {
+        "h": 15,
+        "w": 15,
+        "x": 0,
+        "y": 8
+      }
+    },
+    {
+      "phase": "recon",
+      "reason": "broad coverage of likely-active region",
+      "score": 3.5982222222222218,
+      "seed_index": 0,
+      "viewport": {
+        "h": 15,
+        "w": 15,
+        "x": 0,
+        "y": 16
+      }
+    },
+    {
+      "phase": "recon",
+      "reason": "broad coverage of likely-active region",
+      "score": 3.5182222222222217,
+      "seed_index": 3,
+      "viewport": {
+        "h": 15,
+        "w": 15,
+        "x": 24,
+        "y": 0
+      }
+    },
+    {
+      "phase": "recon",
+      "reason": "broad coverage of likely-active region",
+      "score": 3.4942222222222217,
+      "seed_index": 1,
+      "viewport": {
+        "h": 15,
+        "w": 15,
+        "x": 20,
+        "y": 24
+      }
+    },
+    {
+      "phase": "recon",
+      "reason": "broad coverage of likely-active region",
+      "score": 3.373333333333333,
+      "seed_index": 3,
+      "viewport": {
+        "h": 15,
+        "w": 15,
+        "x": 4,
+        "y": 24
+      }
+    },
+    {
+      "phase": "recon",
+      "reason": "broad coverage of likely-active region",
+      "score": 3.2924444444444445,
+      "seed_index": 0,
+      "viewport": {
+        "h": 15,
+        "w": 15,
+        "x": 24,
+        "y": 0
+      }
+    },
+    {
+      "phase": "recon",
+      "reason": "broad coverage of likely-active region",
+      "score": 3.2844444444444445,
+      "seed_index": 1,
+      "viewport": {
+        "h": 15,
+        "w": 15,
+        "x": 4,
+        "y": 24
+      }
+    },
+    {
+      "phase": "recon",
+      "reason": "broad coverage of likely-active region",
+      "score": 3.271111111111111,
+      "seed_index": 2,
+      "viewport": {
+        "h": 15,
+        "w": 15,
+        "x": 0,
+        "y": 24
+      }
+    },
+    {
+      "phase": "targeted",
+      "reason": "target high-value frontier/conflict cells",
+      "score": 2.686412067696836,
+      "seed_index": 4,
+      "viewport": {
+        "h": 15,
+        "w": 15,
+        "x": 0,
+        "y": 16
+      }
+    },
+    {
+      "phase": "targeted",
+      "reason": "target high-value frontier/conflict cells",
+      "score": 2.6194017094017097,
+      "seed_index": 2,
+      "viewport": {
+        "h": 15,
+        "w": 15,
+        "x": 4,
+        "y": 4
+      }
+    },
+    {
+      "phase": "targeted",
+      "reason": "target high-value frontier/conflict cells",
+      "score": 2.456106416275431,
+      "seed_index": 3,
+      "viewport": {
+        "h": 15,
+        "w": 15,
+        "x": 8,
+        "y": 4
+      }
+    },
+    {
+      "phase": "targeted",
+      "reason": "target high-value frontier/conflict cells",
+      "score": 2.4557454010301694,
+      "seed_index": 0,
+      "viewport": {
+        "h": 15,
+        "w": 15,
+        "x": 16,
+        "y": 24
+      }
+    },
+    {
+      "phase": "targeted",
+      "reason": "target high-value frontier/conflict cells",
+      "score": 2.414368854788292,
+      "seed_index": 2,
+      "viewport": {
+        "h": 15,
+        "w": 15,
+        "x": 20,
+        "y": 4
+      }
+    },
+    {
+      "phase": "targeted",
+      "reason": "target high-value frontier/conflict cells",
+      "score": 2.346412067696836,
+      "seed_index": 3,
+      "viewport": {
+        "h": 15,
+        "w": 15,
+        "x": 24,
+        "y": 24
+      }
+    },
+    {
+      "phase": "targeted",
+      "reason": "target high-value frontier/conflict cells",
+      "score": 2.248333333333333,
+      "seed_index": 0,
+      "viewport": {
+        "h": 15,
+        "w": 15,
+        "x": 8,
+        "y": 4
+      }
+    },
+    {
+      "phase": "targeted",
+      "reason": "target high-value frontier/conflict cells",
+      "score": 2.234757867694283,
+      "seed_index": 1,
+      "viewport": {
+        "h": 15,
+        "w": 15,
+        "x": 24,
+        "y": 0
+      }
+    },
+    {
+      "phase": "targeted",
+      "reason": "target high-value frontier/conflict cells",
+      "score": 2.1987793788024335,
+      "seed_index": 1,
+      "viewport": {
+        "h": 15,
+        "w": 15,
+        "x": 8,
+        "y": 4
+      }
+    },
+    {
+      "phase": "targeted",
+      "reason": "target high-value frontier/conflict cells",
+      "score": 2.190313423249839,
+      "seed_index": 2,
+      "viewport": {
+        "h": 15,
+        "w": 15,
+        "x": 16,
+        "y": 20
+      }
+    },
+    {
+      "phase": "targeted",
+      "reason": "target high-value frontier/conflict cells",
+      "score": 2.081623931623932,
+      "seed_index": 4,
+      "viewport": {
+        "h": 15,
+        "w": 15,
+        "x": 8,
+        "y": 0
+      }
+    },
+    {
+      "phase": "targeted",
+      "reason": "target high-value frontier/conflict cells",
+      "score": 1.942068376068376,
+      "seed_index": 4,
+      "viewport": {
+        "h": 15,
+        "w": 15,
+        "x": 24,
+        "y": 8
+      }
+    },
+    {
+      "phase": "targeted",
+      "reason": "target high-value frontier/conflict cells",
+      "score": 1.864389980751596,
+      "seed_index": 0,
+      "viewport": {
+        "h": 15,
+        "w": 15,
+        "x": 12,
+        "y": 16
+      }
+    },
+    {
+      "phase": "targeted",
+      "reason": "target high-value frontier/conflict cells",
+      "score": 1.8614516023101935,
+      "seed_index": 1,
+      "viewport": {
+        "h": 15,
+        "w": 15,
+        "x": 4,
+        "y": 12
+      }
+    },
+    {
+      "phase": "targeted",
+      "reason": "target high-value frontier/conflict cells",
+      "score": 1.8578283075566708,
+      "seed_index": 3,
+      "viewport": {
+        "h": 15,
+        "w": 15,
+        "x": 0,
+        "y": 0
+      }
+    },
+    {
+      "phase": "targeted",
+      "reason": "target high-value frontier/conflict cells",
+      "score": 1.6307960258061631,
+      "seed_index": 2,
+      "viewport": {
+        "h": 15,
+        "w": 15,
+        "x": 0,
+        "y": 4
+      }
+    },
+    {
+      "phase": "targeted",
+      "reason": "target high-value frontier/conflict cells",
+      "score": 1.515592757540249,
+      "seed_index": 4,
+      "viewport": {
+        "h": 15,
+        "w": 15,
+        "x": 0,
+        "y": 24
+      }
+    },
+    {
+      "phase": "targeted",
+      "reason": "target high-value frontier/conflict cells",
+      "score": 1.45147580049036,
+      "seed_index": 0,
+      "viewport": {
+        "h": 15,
+        "w": 15,
+        "x": 4,
+        "y": 0
+      }
+    },
+    {
+      "phase": "targeted",
+      "reason": "target high-value frontier/conflict cells",
+      "score": 1.444923276658073,
+      "seed_index": 2,
+      "viewport": {
+        "h": 15,
+        "w": 15,
+        "x": 16,
+        "y": 0
+      }
+    },
+    {
+      "phase": "targeted",
+      "reason": "target high-value frontier/conflict cells",
+      "score": 1.444059331175836,
+      "seed_index": 3,
+      "viewport": {
+        "h": 15,
+        "w": 15,
+        "x": 8,
+        "y": 20
+      }
+    },
+    {
+      "phase": "targeted",
+      "reason": "target high-value frontier/conflict cells",
+      "score": 1.4023434081086013,
+      "seed_index": 3,
+      "viewport": {
+        "h": 15,
+        "w": 15,
+        "x": 16,
+        "y": 4
+      }
+    },
+    {
+      "phase": "targeted",
+      "reason": "target high-value frontier/conflict cells",
+      "score": 1.3859299993906182,
+      "seed_index": 4,
+      "viewport": {
+        "h": 15,
+        "w": 15,
+        "x": 0,
+        "y": 4
+      }
+    },
+    {
+      "phase": "calibration",
+      "reason": "repeat sample for uncertainty calibration",
+      "score": 1.1839506172839507,
+      "seed_index": 4,
+      "viewport": {
+        "h": 9,
+        "w": 9,
+        "x": 15,
+        "y": 15
+      }
+    },
+    {
+      "phase": "calibration",
+      "reason": "repeat sample for uncertainty calibration",
+      "score": 1.067777777777778,
+      "seed_index": 0,
+      "viewport": {
+        "h": 9,
+        "w": 9,
+        "x": 3,
+        "y": 30
+      }
+    },
+    {
+      "phase": "calibration",
+      "reason": "repeat sample for uncertainty calibration",
+      "score": 0.9354256010396363,
+      "seed_index": 0,
+      "viewport": {
+        "h": 9,
+        "w": 9,
+        "x": 30,
+        "y": 30
+      }
+    },
+    {
+      "phase": "calibration",
+      "reason": "repeat sample for uncertainty calibration",
+      "score": 0.8723016746119058,
+      "seed_index": 1,
+      "viewport": {
+        "h": 9,
+        "w": 9,
+        "x": 30,
+        "y": 15
+      }
+    },
+    {
+      "phase": "calibration",
+      "reason": "repeat sample for uncertainty calibration",
+      "score": 0.8712280701754388,
+      "seed_index": 1,
+      "viewport": {
+        "h": 9,
+        "w": 9,
+        "x": 0,
+        "y": 0
+      }
+    },
+    {
+      "phase": "calibration",
+      "reason": "repeat sample for uncertainty calibration",
+      "score": 0.8041269841269844,
+      "seed_index": 2,
+      "viewport": {
+        "h": 9,
+        "w": 9,
+        "x": 30,
+        "y": 15
+      }
+    },
+    {
+      "phase": "calibration",
+      "reason": "repeat sample for uncertainty calibration",
+      "score": 0.5936372269705603,
+      "seed_index": 4,
+      "viewport": {
+        "h": 9,
+        "w": 9,
+        "x": 15,
+        "y": 24
+      }
+    },
+    {
+      "phase": "calibration",
+      "reason": "repeat sample for uncertainty calibration",
+      "score": 0.5769975308641977,
+      "seed_index": 3,
+      "viewport": {
+        "h": 9,
+        "w": 9,
+        "x": 30,
+        "y": 15
+      }
+    }
+  ],
+  "residual_calibrator_metadata": {
+    "budget_training_rounds": [
+      {
+        "round_id": "71451d74-be9f-471f-aacd-a41f3b68a9cd",
+        "round_number": 1
+      },
+      {
+        "round_id": "76909e29-f664-4b2f-b16b-61b7507277e9",
+        "round_number": 2
+      },
+      {
+        "round_id": "f1dac9a9-5cf1-49a9-8f17-d6cb5d5ba5cb",
+        "round_number": 3
+      },
+      {
+        "round_id": "8e839974-b13b-407b-a5e7-fc749d877195",
+        "round_number": 4
+      },
+      {
+        "round_id": "fd3c92ff-3178-4dc9-8d9b-acf389b3982b",
+        "round_number": 5
+      },
+      {
+        "round_id": "ae78003a-4efe-425a-881a-d16a39bca0ad",
+        "round_number": 6
+      },
+      {
+        "round_id": "36e581f1-73f8-453f-ab98-cbe3052b701b",
+        "round_number": 7
+      },
+      {
+        "round_id": "c5cdf100-a876-4fb7-b5d8-757162c97989",
+        "round_number": 8
+      },
+      {
+        "round_id": "2a341ace-0f57-4309-9b89-e59fe0f09179",
+        "round_number": 9
+      },
+      {
+        "round_id": "75e625c3-60cb-4392-af3e-c86a98bde8c2",
+        "round_number": 10
+      },
+      {
+        "round_id": "324fde07-1670-4202-b199-7aa92ecb40ee",
+        "round_number": 11
+      },
+      {
+        "round_id": "795bfb1f-54bd-4f39-a526-9868b36f7ebd",
+        "round_number": 12
+      },
+      {
+        "round_id": "7b4bda99-6165-4221-97cc-27880f5e6d95",
+        "round_number": 13
+      },
+      {
+        "round_id": "d0a2c894-2162-4d49-86cf-435b9013f3b8",
+        "round_number": 14
+      },
+      {
+        "round_id": "cc5442dd-bc5d-418b-911b-7eb960cb0390",
+        "round_number": 15
+      },
+      {
+        "round_id": "8f664aed-8839-4c85-bed0-77a2cac7c6f5",
+        "round_number": 16
+      },
+      {
+        "round_id": "3eb0c25d-28fa-48ca-b8e1-fc249e3918e9",
+        "round_number": 17
+      },
+      {
+        "round_id": "b0f9d1bf-4b71-4e6e-816c-19c718d29056",
+        "round_number": 18
+      },
+      {
+        "round_id": "597e60cf-d1a1-4627-ac4d-2a61da68b6df",
+        "round_number": 19
+      }
+    ],
+    "collapsed_active_training_rounds": [
+      {
+        "round_id": "71451d74-be9f-471f-aacd-a41f3b68a9cd",
+        "round_number": 1
+      },
+      {
+        "round_id": "76909e29-f664-4b2f-b16b-61b7507277e9",
+        "round_number": 2
+      },
+      {
+        "round_id": "f1dac9a9-5cf1-49a9-8f17-d6cb5d5ba5cb",
+        "round_number": 3
+      },
+      {
+        "round_id": "8e839974-b13b-407b-a5e7-fc749d877195",
+        "round_number": 4
+      },
+      {
+        "round_id": "fd3c92ff-3178-4dc9-8d9b-acf389b3982b",
+        "round_number": 5
+      },
+      {
+        "round_id": "ae78003a-4efe-425a-881a-d16a39bca0ad",
+        "round_number": 6
+      },
+      {
+        "round_id": "36e581f1-73f8-453f-ab98-cbe3052b701b",
+        "round_number": 7
+      },
+      {
+        "round_id": "c5cdf100-a876-4fb7-b5d8-757162c97989",
+        "round_number": 8
+      },
+      {
+        "round_id": "2a341ace-0f57-4309-9b89-e59fe0f09179",
+        "round_number": 9
+      },
+      {
+        "round_id": "75e625c3-60cb-4392-af3e-c86a98bde8c2",
+        "round_number": 10
+      },
+      {
+        "round_id": "324fde07-1670-4202-b199-7aa92ecb40ee",
+        "round_number": 11
+      },
+      {
+        "round_id": "795bfb1f-54bd-4f39-a526-9868b36f7ebd",
+        "round_number": 12
+      },
+      {
+        "round_id": "7b4bda99-6165-4221-97cc-27880f5e6d95",
+        "round_number": 13
+      },
+      {
+        "round_id": "d0a2c894-2162-4d49-86cf-435b9013f3b8",
+        "round_number": 14
+      },
+      {
+        "round_id": "cc5442dd-bc5d-418b-911b-7eb960cb0390",
+        "round_number": 15
+      },
+      {
+        "round_id": "8f664aed-8839-4c85-bed0-77a2cac7c6f5",
+        "round_number": 16
+      },
+      {
+        "round_id": "3eb0c25d-28fa-48ca-b8e1-fc249e3918e9",
+        "round_number": 17
+      },
+      {
+        "round_id": "b0f9d1bf-4b71-4e6e-816c-19c718d29056",
+        "round_number": 18
+      },
+      {
+        "round_id": "597e60cf-d1a1-4627-ac4d-2a61da68b6df",
+        "round_number": 19
+      }
+    ],
+    "holdout_round_number": null,
+    "l2_regularization": 0.2,
+    "learning_rate": 0.05,
+    "max_depth": 4,
+    "max_iter": 300,
+    "min_samples_leaf": 300,
+    "num_rounds": 19,
+    "num_seeds": 95,
+    "ood_reference": {
+      "num_rounds": 19,
+      "signals": {
+        "forest_share_dynamic": {
+          "count": 19,
+          "mean": 0.523941831340738,
+          "p10": 0.3682662061529679,
+          "p90": 0.7758595591534204,
+          "std": 0.15884976606363474
+        },
+        "port_share_given_active": {
+          "count": 19,
+          "mean": 0.08199445954881307,
+          "p10": 0.06244153237852277,
+          "p90": 0.12047484074247183,
+          "std": 0.023817700156236427
+        },
+        "settlement_rate": {
+          "count": 19,
+          "mean": 0.1854699450264353,
+          "p10": 0.08256314254409629,
+          "p90": 0.2621777690062158,
+          "std": 0.10847405560477064
+        }
+      },
+      "version": 1
+    },
+    "ood_reference_version": 1,
+    "predictor_regime_thresholds": {
+      "forest_share_high": 0.62,
+      "forest_share_low": 0.38,
+      "settlement_rate_high": 0.24,
+      "settlement_rate_low": 0.12
+    },
+    "rounds": [
+      {
+        "round_id": "71451d74-be9f-471f-aacd-a41f3b68a9cd",
+        "round_number": 1
+      },
+      {
+        "round_id": "76909e29-f664-4b2f-b16b-61b7507277e9",
+        "round_number": 2
+      },
+      {
+        "round_id": "f1dac9a9-5cf1-49a9-8f17-d6cb5d5ba5cb",
+        "round_number": 3
+      },
+      {
+        "round_id": "8e839974-b13b-407b-a5e7-fc749d877195",
+        "round_number": 4
+      },
+      {
+        "round_id": "fd3c92ff-3178-4dc9-8d9b-acf389b3982b",
+        "round_number": 5
+      },
+      {
+        "round_id": "ae78003a-4efe-425a-881a-d16a39bca0ad",
+        "round_number": 6
+      },
+      {
+        "round_id": "36e581f1-73f8-453f-ab98-cbe3052b701b",
+        "round_number": 7
+      },
+      {
+        "round_id": "c5cdf100-a876-4fb7-b5d8-757162c97989",
+        "round_number": 8
+      },
+      {
+        "round_id": "2a341ace-0f57-4309-9b89-e59fe0f09179",
+        "round_number": 9
+      },
+      {
+        "round_id": "75e625c3-60cb-4392-af3e-c86a98bde8c2",
+        "round_number": 10
+      },
+      {
+        "round_id": "324fde07-1670-4202-b199-7aa92ecb40ee",
+        "round_number": 11
+      },
+      {
+        "round_id": "795bfb1f-54bd-4f39-a526-9868b36f7ebd",
+        "round_number": 12
+      },
+      {
+        "round_id": "7b4bda99-6165-4221-97cc-27880f5e6d95",
+        "round_number": 13
+      },
+      {
+        "round_id": "d0a2c894-2162-4d49-86cf-435b9013f3b8",
+        "round_number": 14
+      },
+      {
+        "round_id": "cc5442dd-bc5d-418b-911b-7eb960cb0390",
+        "round_number": 15
+      },
+      {
+        "round_id": "8f664aed-8839-4c85-bed0-77a2cac7c6f5",
+        "round_number": 16
+      },
+      {
+        "round_id": "3eb0c25d-28fa-48ca-b8e1-fc249e3918e9",
+        "round_number": 17
+      },
+      {
+        "round_id": "b0f9d1bf-4b71-4e6e-816c-19c718d29056",
+        "round_number": 18
+      },
+      {
+        "round_id": "597e60cf-d1a1-4627-ac4d-2a61da68b6df",
+        "round_number": 19
+      }
+    ],
+    "version": 5
+  },
+  "round_id": "fd82f643-15e2-40e7-9866-8d8f5157081c",
+  "round_number": 20
+}

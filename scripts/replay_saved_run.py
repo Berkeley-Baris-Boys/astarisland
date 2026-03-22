@@ -85,8 +85,15 @@ def main() -> None:
         historical = load_historical_prior_artifact(config.predictor.historical_prior_path)
     if config.predictor.learned_prior_path.exists():
         learned = load_learned_prior_artifact(config.predictor.learned_prior_path)
-    if config.predictor.residual_calibrator_path.exists():
-        residual = load_residual_calibrator_artifact(config.predictor.residual_calibrator_path)
+    residual_paths = []
+    if config.predictor.collapsed_active_calibrator_enabled:
+        residual_paths.append(config.predictor.collapsed_active_calibrator_path)
+    if config.predictor.active_budget_enabled:
+        residual_paths.append(config.predictor.active_budget_path)
+    residual_paths.append(config.predictor.residual_calibrator_path)
+    residual_path = next((path for path in residual_paths if path.exists()), None)
+    if residual_path is not None:
+        residual = load_residual_calibrator_artifact(residual_path)
     if config.predictor.prior_blend_gate_strength > 0.0 and config.predictor.prior_blend_gate_path.exists():
         prior_blend_gate = load_prior_blend_gate_artifact(config.predictor.prior_blend_gate_path)
 

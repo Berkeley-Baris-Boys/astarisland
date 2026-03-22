@@ -12,9 +12,15 @@ import numpy as np
 from .types import NUM_CLASSES
 
 
-def setup_logging(log_dir: Path, run_name: str | None = None) -> Path:
+def setup_logging(log_dir: Path, run_name: str | None = None, round_number: int | None = None) -> Path:
     timestamp = time.strftime("%Y%m%d_%H%M%S")
-    run_dir = log_dir / (run_name or timestamp)
+    if run_name:
+        folder = run_name
+    elif round_number is not None:
+        folder = f"round_{round_number:02d}_{timestamp}"
+    else:
+        folder = timestamp
+    run_dir = log_dir / folder
     run_dir.mkdir(parents=True, exist_ok=True)
     log_file = run_dir / "run.log"
     logging.basicConfig(

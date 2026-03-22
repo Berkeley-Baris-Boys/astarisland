@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import logging
+from typing import Any
 
 import numpy as np
 from scipy.ndimage import gaussian_filter
@@ -11,7 +12,12 @@ from .learned_prior import LearnedPriorArtifact, predict_learned_prior
 from .prior_blend_gate import PriorBlendGateArtifact, apply_prior_blend_gate
 from .priors import HistoricalPriorArtifact
 from .regime import compute_round_regime, inverse_range_signal, range_signal, repeat_fraction_from_observation_counts
-from .residual_calibrator import ResidualCalibratorArtifact, apply_residual_calibrator
+from .residual_calibrator import (
+    ResidualCalibratorArtifact,
+    apply_residual_calibrator,
+    predict_active_budget,
+    predict_collapsed_active_scale,
+)
 from .types import (
     CLASS_EMPTY,
     CLASS_FOREST,
@@ -71,6 +77,44 @@ class Predictor:
     ) -> tuple[dict[int, np.ndarray], dict[int, dict[str, object]]]:
         latent = aggregator.round_latent_summary()
         round_regime = self._compute_round_regime(latent, aggregator)
+        mass_matching_anchor = self._build_round_mass_matching_anchor(aggregator)
+        ood_signal_values = self._round_ood_signal_values(latent, round_regime)
+        learned_prior_ood = self._compute_artifact_ood(
+            self.learned_prior.metadata if self.learned_prior is not None else None,
+            ood_signal_values,
+            enabled=self.config.learned_prior_ood_enabled,
+            trigger=self.config.learned_prior_ood_trigger,
+            full=self.config.learned_prior_ood_full,
+            strength=self.config.learned_prior_ood_strength,
+            base_blend=self.config.learned_prior_blend,
+        )
+        residual_ood = self._compute_artifact_ood(
+            self.residual_calibrator.metadata if self.residual_calibrator is not None else None,
+            ood_signal_values,
+            enabled=self.config.residual_ood_enabled,
+            trigger=self.config.residual_ood_trigger,
+            full=self.config.residual_ood_full,
+            strength=self.config.residual_ood_strength,
+            base_blend=None,
+        )
+        active_budget_ood = self._compute_artifact_ood(
+            self.residual_calibrator.metadata if self.residual_calibrator is not None else None,
+            ood_signal_values,
+            enabled=self.config.active_budget_ood_enabled,
+            trigger=self.config.active_budget_ood_trigger,
+            full=self.config.active_budget_ood_full,
+            strength=self.config.active_budget_ood_strength,
+            base_blend=None,
+        )
+        collapsed_active_ood = self._compute_artifact_ood(
+            self.residual_calibrator.metadata if self.residual_calibrator is not None else None,
+            ood_signal_values,
+            enabled=self.config.collapsed_active_calibrator_ood_enabled,
+            trigger=self.config.collapsed_active_calibrator_ood_trigger,
+            full=self.config.collapsed_active_calibrator_ood_full,
+            strength=self.config.collapsed_active_calibrator_ood_strength,
+            base_blend=None,
+        )
         predictions: dict[int, np.ndarray] = {}
         diagnostics: dict[int, dict[str, object]] = {}
         for seed_index, features in self.seed_features.items():
@@ -80,6 +124,12 @@ class Predictor:
                 aggregator,
                 latent,
                 round_regime,
+                mass_matching_anchor,
+                ood_signal_values,
+                learned_prior_ood,
+                collapsed_active_ood,
+                active_budget_ood,
+                residual_ood,
                 collect_diagnostics=collect_diagnostics,
             )
             validate_prediction_tensor(prediction, self.config.min_probability)
@@ -90,12 +140,52 @@ class Predictor:
 
     def predict_seed(self, seed_index: int, features: SeedFeatures, aggregator, latent: dict[str, float]) -> np.ndarray:
         round_regime = self._compute_round_regime(latent, aggregator)
+        mass_matching_anchor = self._build_round_mass_matching_anchor(aggregator)
+        ood_signal_values = self._round_ood_signal_values(latent, round_regime)
         prediction, _ = self._predict_seed_internal(
             seed_index,
             features,
             aggregator,
             latent,
             round_regime,
+            mass_matching_anchor,
+            ood_signal_values,
+            self._compute_artifact_ood(
+                self.learned_prior.metadata if self.learned_prior is not None else None,
+                ood_signal_values,
+                enabled=self.config.learned_prior_ood_enabled,
+                trigger=self.config.learned_prior_ood_trigger,
+                full=self.config.learned_prior_ood_full,
+                strength=self.config.learned_prior_ood_strength,
+                base_blend=self.config.learned_prior_blend,
+            ),
+            self._compute_artifact_ood(
+                self.residual_calibrator.metadata if self.residual_calibrator is not None else None,
+                ood_signal_values,
+                enabled=self.config.collapsed_active_calibrator_ood_enabled,
+                trigger=self.config.collapsed_active_calibrator_ood_trigger,
+                full=self.config.collapsed_active_calibrator_ood_full,
+                strength=self.config.collapsed_active_calibrator_ood_strength,
+                base_blend=None,
+            ),
+            self._compute_artifact_ood(
+                self.residual_calibrator.metadata if self.residual_calibrator is not None else None,
+                ood_signal_values,
+                enabled=self.config.active_budget_ood_enabled,
+                trigger=self.config.active_budget_ood_trigger,
+                full=self.config.active_budget_ood_full,
+                strength=self.config.active_budget_ood_strength,
+                base_blend=None,
+            ),
+            self._compute_artifact_ood(
+                self.residual_calibrator.metadata if self.residual_calibrator is not None else None,
+                ood_signal_values,
+                enabled=self.config.residual_ood_enabled,
+                trigger=self.config.residual_ood_trigger,
+                full=self.config.residual_ood_full,
+                strength=self.config.residual_ood_strength,
+                base_blend=None,
+            ),
             collect_diagnostics=False,
         )
         return prediction
@@ -107,10 +197,18 @@ class Predictor:
         aggregator,
         latent: dict[str, float],
         round_regime: dict[str, float],
+        mass_matching_anchor: dict[str, float],
+        ood_signal_values: dict[str, float] | None = None,
+        learned_prior_ood: dict[str, Any] | None = None,
+        collapsed_active_ood: dict[str, Any] | None = None,
+        active_budget_ood: dict[str, Any] | None = None,
+        residual_ood: dict[str, Any] | None = None,
         *,
         collect_diagnostics: bool,
     ) -> tuple[np.ndarray, dict[str, object] | None]:
-        prior = self._build_prior(seed_index, features, aggregator, latent)
+        if ood_signal_values is None:
+            ood_signal_values = self._round_ood_signal_values(latent, round_regime)
+        prior = self._build_prior(seed_index, features, aggregator, latent, learned_prior_ood)
         observed_counts = aggregator.class_counts[seed_index]
         observation_counts = aggregator.observation_counts[seed_index]
         transfer, observation_details = self._build_transfer(
@@ -147,6 +245,86 @@ class Predictor:
         prediction = self._calibrate_confidence(prediction, observation_counts)
         prediction = normalize_probabilities(prediction, self.config.min_probability)
         post_confidence = prediction.copy()
+        mass_matching_details = None
+        if collect_diagnostics:
+            prediction, mass_matching_details = self._apply_global_mass_matching(
+                prediction,
+                observed_counts,
+                observation_counts,
+                features,
+                mass_matching_anchor,
+                return_details=True,
+            )
+        else:
+            prediction = self._apply_global_mass_matching(
+                prediction,
+                observed_counts,
+                observation_counts,
+                features,
+                mass_matching_anchor,
+                return_details=False,
+            )
+        post_mass_matching = prediction.copy()
+        collapsed_active_details = None
+        active_mass_experiment = "none"
+        if self.config.collapsed_active_calibrator_enabled:
+            active_mass_experiment = "collapsed_active"
+            if collect_diagnostics:
+                prediction, collapsed_active_details = self._apply_collapsed_active_calibrator(
+                    prediction,
+                    features,
+                    observed_counts,
+                    observation_counts,
+                    observation_details["tensors"].get("bucket_target", transfer),
+                    round_regime,
+                    ood_signal_values,
+                    collapsed_active_ood,
+                    active_budget_enabled=self.config.active_budget_enabled,
+                    return_details=True,
+                )
+            else:
+                prediction = self._apply_collapsed_active_calibrator(
+                    prediction,
+                    features,
+                    observed_counts,
+                    observation_counts,
+                    observation_details["tensors"].get("bucket_target", transfer),
+                    round_regime,
+                    ood_signal_values,
+                    collapsed_active_ood,
+                    active_budget_enabled=self.config.active_budget_enabled,
+                    return_details=False,
+                )
+        post_collapsed_active = prediction.copy()
+        active_budget_details = None
+        run_active_budget = self.config.active_budget_enabled and not self.config.collapsed_active_calibrator_enabled
+        if run_active_budget:
+            active_mass_experiment = "active_budget"
+            if collect_diagnostics:
+                prediction, active_budget_details = self._apply_active_budget_calibrator(
+                    prediction,
+                    features,
+                    observed_counts,
+                    observation_counts,
+                    observation_details["tensors"].get("bucket_target", transfer),
+                    round_regime,
+                    ood_signal_values,
+                    active_budget_ood,
+                    return_details=True,
+                )
+            else:
+                prediction = self._apply_active_budget_calibrator(
+                    prediction,
+                    features,
+                    observed_counts,
+                    observation_counts,
+                    observation_details["tensors"].get("bucket_target", transfer),
+                    round_regime,
+                    ood_signal_values,
+                    active_budget_ood,
+                    return_details=False,
+                )
+        post_active_budget = prediction.copy()
         residual_details = None
         if collect_diagnostics:
             prediction, residual_details = self._apply_residual_calibrator(
@@ -155,6 +333,7 @@ class Predictor:
                 observed_counts,
                 observation_counts,
                 round_regime,
+                residual_ood,
                 return_details=True,
             )
         else:
@@ -164,7 +343,16 @@ class Predictor:
                 observed_counts,
                 observation_counts,
                 round_regime,
+                residual_ood,
                 return_details=False,
+            )
+        if active_budget_details is not None:
+            prediction = self._enforce_active_budget_cap(
+                prediction,
+                features,
+                observed_counts,
+                active_budget_details["summary"]["effective_target_active_budget"],
+                round_regime,
             )
         prediction = self._apply_boundary_softening(prediction, features)
         prior_gate_details = None
@@ -201,12 +389,6 @@ class Predictor:
         prediction = self._apply_physical_constraints(prediction, features)
         prediction = normalize_probabilities(prediction, self.config.min_probability)
         prediction = self._apply_ruin_dampening(prediction)
-        prediction = self._apply_global_villager_recalibration(
-            prediction,
-            observed_counts,
-            observation_counts,
-            features,
-        )
 
         if not collect_diagnostics:
             return prediction, None
@@ -227,6 +409,9 @@ class Predictor:
                 "post_rare": self._summarize_tensor(post_rare),
                 "post_physical": self._summarize_tensor(post_physical),
                 "post_confidence": self._summarize_tensor(post_confidence),
+                "post_mass_matching": self._summarize_tensor(post_mass_matching),
+                "post_collapsed_active": self._summarize_tensor(post_collapsed_active),
+                "post_active_budget": self._summarize_tensor(post_active_budget),
                 "post_prior_gate": self._summarize_tensor(post_prior_gate),
                 "post_active_concentration": self._summarize_tensor(post_active_concentration),
                 "final_prediction": self._summarize_tensor(prediction),
@@ -241,11 +426,15 @@ class Predictor:
                 "post_rare": post_rare,
                 "post_physical": post_physical,
                 "post_confidence": post_confidence,
+                "post_mass_matching": post_mass_matching,
+                "post_collapsed_active": post_collapsed_active,
+                "post_active_budget": post_active_budget,
                 "post_prior_gate": post_prior_gate,
                 "post_active_concentration": post_active_concentration,
                 "final_prediction": prediction,
             },
             "observation_model": observation_details["summary"],
+            "active_mass_experiment": active_mass_experiment,
         }
         diagnostics["tensors"].update(observation_details["tensors"])
         diagnostics["stage_summaries"]["observation_target"] = self._summarize_tensor(
@@ -257,13 +446,379 @@ class Predictor:
         if rare_details is not None:
             diagnostics["rare_class"] = rare_details["summary"]
             diagnostics["tensors"].update(rare_details["tensors"])
+        if mass_matching_details is not None:
+            diagnostics["mass_matching"] = mass_matching_details["summary"]
+        if learned_prior_ood is not None:
+            diagnostics["learned_prior_ood"] = dict(learned_prior_ood)
         if residual_details is not None:
             diagnostics["residual_calibrator"] = residual_details["summary"]
             diagnostics["tensors"].update(residual_details["tensors"])
+        if active_budget_details is not None:
+            diagnostics["active_budget"] = active_budget_details["summary"]
+            diagnostics["tensors"].update(active_budget_details["tensors"])
+        if collapsed_active_details is not None:
+            diagnostics["collapsed_active_calibrator"] = collapsed_active_details["summary"]
+            diagnostics["tensors"].update(collapsed_active_details["tensors"])
+        if collapsed_active_ood is not None:
+            diagnostics["collapsed_active_ood"] = dict(collapsed_active_ood)
+        if active_budget_ood is not None:
+            diagnostics["active_budget_ood"] = dict(active_budget_ood)
+        if residual_ood is not None:
+            residual_payload = dict(residual_ood)
+            if residual_details is not None:
+                residual_payload["base_blend_mean"] = residual_details["summary"].get("base_blend_mean", 0.0)
+                residual_payload["effective_blend_mean"] = residual_details["summary"].get("effective_blend_mean", 0.0)
+            diagnostics["residual_ood"] = residual_payload
         if prior_gate_details is not None:
             diagnostics["prior_blend_gate"] = prior_gate_details["summary"]
             diagnostics["tensors"].update(prior_gate_details["tensors"])
         return prediction, diagnostics
+
+    def _build_round_mass_matching_anchor(self, aggregator) -> dict[str, float]:
+        buildable_support = 0
+        active_support = 0
+        nonactive_support = 0
+        buildable_total = 0.0
+        active_total = 0.0
+        settlement_total = 0.0
+        nonactive_total = 0.0
+        forest_total = 0.0
+        empty_total = 0.0
+
+        for seed_index, features in self.seed_features.items():
+            observed_counts = aggregator.class_counts[seed_index]
+            observation_counts = aggregator.observation_counts[seed_index]
+            buildable_mask = features.buildable_mask
+            observed_buildable = (observation_counts > 0) & buildable_mask
+            if not np.any(observed_buildable):
+                continue
+
+            buildable_support += int(np.sum(observed_buildable))
+            buildable_total += float(np.sum(observed_counts[observed_buildable]))
+
+            active_counts = (
+                observed_counts[..., CLASS_SETTLEMENT]
+                + observed_counts[..., CLASS_PORT]
+                + observed_counts[..., CLASS_RUIN]
+            )
+            observed_active = observed_buildable & (active_counts > 0.0)
+            if np.any(observed_active):
+                active_support += int(np.sum(observed_active))
+                active_total += float(np.sum(active_counts[observed_active]))
+                settlement_total += float(np.sum(observed_counts[..., CLASS_SETTLEMENT][observed_active]))
+
+            nonactive_counts = observed_counts[..., CLASS_EMPTY] + observed_counts[..., CLASS_FOREST]
+            observed_nonactive = observed_buildable & (nonactive_counts > 0.0)
+            if np.any(observed_nonactive):
+                nonactive_support += int(np.sum(observed_nonactive))
+                nonactive_total += float(np.sum(nonactive_counts[observed_nonactive]))
+                forest_total += float(np.sum(observed_counts[..., CLASS_FOREST][observed_nonactive]))
+                empty_total += float(np.sum(observed_counts[..., CLASS_EMPTY][observed_nonactive]))
+
+        return {
+            "buildable_support": float(buildable_support),
+            "active_support": float(active_support),
+            "nonactive_support": float(nonactive_support),
+            "active_rate": active_total / max(buildable_total, 1e-12),
+            "settlement_share_given_active": settlement_total / max(active_total, 1e-12),
+            "forest_share_given_nonactive": forest_total / max(nonactive_total, 1e-12),
+            "empty_share_given_nonactive": empty_total / max(nonactive_total, 1e-12),
+        }
+
+    @staticmethod
+    def _round_ood_signal_values(latent: dict[str, float], round_regime: dict[str, float]) -> dict[str, float]:
+        return {
+            "settlement_rate": float(latent.get("settlement_rate", 0.0)),
+            "forest_share_dynamic": float(latent.get("forest_share_dynamic", 0.0)),
+            "port_share_given_active": float(latent.get("port_share_given_active", 0.0)),
+            "repeat_fraction": float(round_regime.get("repeat_fraction", 0.0)),
+            "observed_cells": float(latent.get("observed_cells", 0.0)),
+        }
+
+    def _compute_artifact_ood(
+        self,
+        metadata: dict[str, Any] | None,
+        signal_values: dict[str, float],
+        *,
+        enabled: bool,
+        trigger: float,
+        full: float,
+        strength: float,
+        base_blend: float | None,
+    ) -> dict[str, Any] | None:
+        if metadata is None:
+            return None
+
+        details: dict[str, Any] = {
+            "enabled": False,
+            "ood_score": 0.0,
+            "distance_mean": 0.0,
+            "trigger": float(trigger),
+            "full": float(full),
+            "strength": float(strength),
+            "attenuation_factor": 1.0,
+            "signal_values": {key: float(value) for key, value in signal_values.items()},
+            "signal_deviations": {},
+        }
+        if base_blend is not None:
+            details["base_blend"] = float(base_blend)
+            details["effective_blend"] = float(base_blend)
+        if not enabled:
+            details["reason"] = "config_disabled"
+            return details
+
+        reference = metadata.get("ood_reference")
+        if not isinstance(reference, dict):
+            details["reason"] = "missing_reference"
+            return details
+
+        signal_reference = reference.get("signals")
+        if not isinstance(signal_reference, dict):
+            details["reason"] = "missing_signal_reference"
+            return details
+
+        weighted_distance = 0.0
+        total_weight = 0.0
+        for signal_name, value in signal_values.items():
+            stats = signal_reference.get(signal_name)
+            if not isinstance(stats, dict):
+                continue
+            count = int(stats.get("count", 0))
+            if count <= 0:
+                continue
+            low = float(stats.get("p10", stats.get("mean", value)))
+            high = float(stats.get("p90", stats.get("mean", value)))
+            raw_std = float(stats.get("std", 0.0))
+            if raw_std <= 1e-9 and abs(high - low) <= 1e-9:
+                continue
+            std = max(raw_std, 1e-6)
+            if value < low:
+                outside = low - value
+            elif value > high:
+                outside = value - high
+            else:
+                outside = 0.0
+            normalized_distance = outside / std
+            weight = float(count)
+            weighted_distance += weight * normalized_distance
+            total_weight += weight
+            details["signal_deviations"][signal_name] = {
+                "value": float(value),
+                "p10": low,
+                "p90": high,
+                "mean": float(stats.get("mean", value)),
+                "std": raw_std,
+                "count": count,
+                "distance": float(normalized_distance),
+            }
+
+        if total_weight <= 0.0:
+            details["reason"] = "no_reference_signals"
+            return details
+
+        distance_mean = weighted_distance / total_weight
+        if full <= trigger:
+            ood_score = 1.0 if distance_mean > trigger else 0.0
+        else:
+            ood_score = float(np.clip((distance_mean - trigger) / (full - trigger), 0.0, 1.0))
+        attenuation_factor = float(np.clip(1.0 - strength * ood_score, 0.0, 1.0))
+        details["enabled"] = True
+        details["distance_mean"] = float(distance_mean)
+        details["ood_score"] = float(ood_score)
+        details["attenuation_factor"] = attenuation_factor
+        if base_blend is not None:
+            details["effective_blend"] = float(np.clip(base_blend * attenuation_factor, 0.0, base_blend))
+        return details
+
+    def _apply_global_mass_matching(
+        self,
+        prediction: np.ndarray,
+        observed_counts: np.ndarray,
+        observation_counts: np.ndarray,
+        features: SeedFeatures,
+        round_anchor: dict[str, float],
+        *,
+        return_details: bool = False,
+    ) -> np.ndarray | tuple[np.ndarray, dict[str, object]]:
+        strength = self.config.mass_matching_strength
+        if strength <= 0.0:
+            if return_details:
+                return prediction, {
+                    "summary": {
+                        "enabled": False,
+                        "strength": float(strength),
+                    }
+                }
+            return prediction
+
+        buildable_mask = features.buildable_mask
+        observed_buildable = (observation_counts > 0) & buildable_mask
+        if not np.any(observed_buildable):
+            if return_details:
+                return prediction, {
+                    "summary": {
+                        "enabled": True,
+                        "strength": float(strength),
+                        "skipped": True,
+                        "reason": "no_observed_buildable_cells",
+                    }
+                }
+            return prediction
+
+        out = prediction.copy().astype(np.float64)
+        details: dict[str, object] = {
+            "enabled": True,
+            "strength": float(strength),
+            "supports": {},
+            "observed_rates": {},
+            "round_anchor": round_anchor,
+            "blended_targets": {},
+            "predicted_observed_rates": {},
+            "scales": {},
+            "passes": {},
+        }
+
+        active_counts = (
+            observed_counts[..., CLASS_SETTLEMENT]
+            + observed_counts[..., CLASS_PORT]
+            + observed_counts[..., CLASS_RUIN]
+        )
+        nonactive_counts = observed_counts[..., CLASS_EMPTY] + observed_counts[..., CLASS_FOREST]
+        observed_active = observed_buildable & (active_counts > 0.0)
+        observed_nonactive = observed_buildable & (nonactive_counts > 0.0)
+
+        buildable_support = int(np.sum(observed_buildable))
+        active_support = int(np.sum(observed_active))
+        nonactive_support = int(np.sum(observed_nonactive))
+        details["supports"] = {
+            "buildable": float(buildable_support),
+            "active": float(active_support),
+            "nonactive": float(nonactive_support),
+        }
+
+        buildable_total = float(np.sum(observed_counts[observed_buildable]))
+        active_total = float(np.sum(active_counts[observed_active]))
+        settlement_total = float(np.sum(observed_counts[..., CLASS_SETTLEMENT][observed_active]))
+        nonactive_total = float(np.sum(nonactive_counts[observed_nonactive]))
+        forest_total = float(np.sum(observed_counts[..., CLASS_FOREST][observed_nonactive]))
+        empty_total = float(np.sum(observed_counts[..., CLASS_EMPTY][observed_nonactive]))
+        details["observed_rates"] = {
+            "active_rate": active_total / max(buildable_total, 1e-12),
+            "settlement_share_given_active": settlement_total / max(active_total, 1e-12),
+            "forest_share_given_nonactive": forest_total / max(nonactive_total, 1e-12),
+            "empty_share_given_nonactive": empty_total / max(nonactive_total, 1e-12),
+        }
+
+        active_target, active_weight = self._blend_mass_matching_target(
+            details["observed_rates"]["active_rate"],
+            round_anchor["active_rate"],
+            buildable_support,
+            self.config.mass_matching_target_support_buildable,
+        )
+        details["blended_targets"]["active_rate"] = float(active_target)
+        details["supports"]["buildable_weight"] = float(active_weight)
+        pred_active_rate = self._weighted_rate(
+            out,
+            observed_buildable,
+            observation_counts,
+            (CLASS_SETTLEMENT, CLASS_PORT, CLASS_RUIN),
+        )
+        details["predicted_observed_rates"]["active_rate"] = float(pred_active_rate)
+        active_scale = 1.0
+        active_applied = False
+        if buildable_support >= self.config.mass_matching_min_buildable_observed:
+            active_scale = self._compute_mass_matching_scale(
+                active_target,
+                pred_active_rate,
+                self.config.mass_matching_active_scale_clip,
+            )
+            out = self._scale_active_mass(out, buildable_mask, active_scale)
+            out = normalize_probabilities(out, self.config.min_probability)
+            active_applied = True
+        details["scales"]["active"] = float(active_scale)
+        details["passes"]["active_applied"] = active_applied
+
+        settlement_target, settlement_weight = self._blend_mass_matching_target(
+            details["observed_rates"]["settlement_share_given_active"],
+            round_anchor["settlement_share_given_active"],
+            active_support,
+            self.config.mass_matching_target_support_active,
+        )
+        details["blended_targets"]["settlement_share_given_active"] = float(settlement_target)
+        details["supports"]["active_weight"] = float(settlement_weight)
+        pred_settlement_share = self._weighted_conditional_share(
+            out,
+            observed_active,
+            active_counts,
+            CLASS_SETTLEMENT,
+            (CLASS_SETTLEMENT, CLASS_PORT, CLASS_RUIN),
+        )
+        details["predicted_observed_rates"]["settlement_share_given_active"] = float(pred_settlement_share)
+        settlement_scale = 1.0
+        settlement_applied = False
+        if active_support >= self.config.mass_matching_min_active_observed:
+            settlement_scale = self._compute_mass_matching_scale(
+                settlement_target,
+                pred_settlement_share,
+                self.config.mass_matching_settlement_scale_clip,
+            )
+            out = self._scale_active_component_share(out, buildable_mask, CLASS_SETTLEMENT, settlement_scale)
+            out = normalize_probabilities(out, self.config.min_probability)
+            settlement_applied = True
+        details["scales"]["settlement"] = float(settlement_scale)
+        details["passes"]["settlement_applied"] = settlement_applied
+
+        forest_target, nonactive_weight = self._blend_mass_matching_target(
+            details["observed_rates"]["forest_share_given_nonactive"],
+            round_anchor["forest_share_given_nonactive"],
+            nonactive_support,
+            self.config.mass_matching_target_support_nonactive,
+        )
+        empty_target = 1.0 - forest_target
+        details["blended_targets"]["forest_share_given_nonactive"] = float(forest_target)
+        details["blended_targets"]["empty_share_given_nonactive"] = float(empty_target)
+        details["supports"]["nonactive_weight"] = float(nonactive_weight)
+        pred_forest_share = self._weighted_conditional_share(
+            out,
+            observed_nonactive,
+            nonactive_counts,
+            CLASS_FOREST,
+            (CLASS_EMPTY, CLASS_FOREST),
+        )
+        pred_empty_share = self._weighted_conditional_share(
+            out,
+            observed_nonactive,
+            nonactive_counts,
+            CLASS_EMPTY,
+            (CLASS_EMPTY, CLASS_FOREST),
+        )
+        details["predicted_observed_rates"]["forest_share_given_nonactive"] = float(pred_forest_share)
+        details["predicted_observed_rates"]["empty_share_given_nonactive"] = float(pred_empty_share)
+        forest_scale = 1.0
+        empty_scale = 1.0
+        nonactive_applied = False
+        if self.config.mass_matching_enable_nonactive and nonactive_support >= self.config.mass_matching_min_nonactive_observed:
+            forest_scale = self._compute_mass_matching_scale(
+                forest_target,
+                pred_forest_share,
+                self.config.mass_matching_forest_scale_clip,
+            )
+            empty_scale = self._compute_mass_matching_scale(
+                empty_target,
+                pred_empty_share,
+                self.config.mass_matching_empty_scale_clip,
+            )
+            out = self._scale_nonactive_split(out, buildable_mask, empty_scale, forest_scale)
+            out = normalize_probabilities(out, self.config.min_probability)
+            nonactive_applied = True
+        details["scales"]["forest"] = float(forest_scale)
+        details["scales"]["empty"] = float(empty_scale)
+        details["passes"]["nonactive_applied"] = nonactive_applied
+        details["passes"]["nonactive_enabled"] = bool(self.config.mass_matching_enable_nonactive)
+
+        if not return_details:
+            return out
+        return out, {"summary": details}
 
     def _apply_global_villager_recalibration(
         self,
@@ -309,6 +864,127 @@ class Predictor:
         out[..., CLASS_SETTLEMENT][buildable] *= scale
         return normalize_probabilities(out, self.config.min_probability)
 
+    @staticmethod
+    def _blend_mass_matching_target(
+        seed_value: float,
+        anchor_value: float,
+        support: int,
+        target_support: int,
+    ) -> tuple[float, float]:
+        if target_support <= 0:
+            return float(seed_value), 1.0
+        weight = float(np.clip(support / max(target_support, 1), 0.0, 1.0))
+        blended = weight * float(seed_value) + (1.0 - weight) * float(anchor_value)
+        return blended, weight
+
+    @staticmethod
+    def _weighted_rate(
+        prediction: np.ndarray,
+        mask: np.ndarray,
+        weights: np.ndarray,
+        class_ids: tuple[int, ...],
+    ) -> float:
+        if not np.any(mask):
+            return 0.0
+        masked_weights = weights[mask].astype(np.float64)
+        weight_total = float(np.sum(masked_weights))
+        if weight_total <= 0.0:
+            return 0.0
+        class_mass = np.sum(prediction[..., list(class_ids)], axis=-1)
+        return float(np.sum(masked_weights * class_mass[mask]) / weight_total)
+
+    @staticmethod
+    def _weighted_conditional_share(
+        prediction: np.ndarray,
+        mask: np.ndarray,
+        weights: np.ndarray,
+        target_class: int,
+        group_classes: tuple[int, ...],
+    ) -> float:
+        if not np.any(mask):
+            return 0.0
+        masked_weights = weights[mask].astype(np.float64)
+        if float(np.sum(masked_weights)) <= 0.0:
+            return 0.0
+        target_mass = prediction[..., target_class]
+        group_mass = np.sum(prediction[..., list(group_classes)], axis=-1)
+        numerator = float(np.sum(masked_weights * target_mass[mask]))
+        denominator = float(np.sum(masked_weights * group_mass[mask]))
+        return numerator / max(denominator, 1e-12)
+
+    def _compute_mass_matching_scale(
+        self,
+        target_value: float,
+        predicted_value: float,
+        clip_range: tuple[float, float],
+    ) -> float:
+        if predicted_value <= 1e-6:
+            return 1.0
+        raw_scale = float(target_value) / float(predicted_value)
+        lo, hi = clip_range
+        clipped = float(np.clip(raw_scale, lo, hi))
+        return 1.0 + self.config.mass_matching_strength * (clipped - 1.0)
+
+    @staticmethod
+    def _scale_active_mass(
+        prediction: np.ndarray,
+        buildable_mask: np.ndarray,
+        scale: float,
+    ) -> np.ndarray:
+        if abs(scale - 1.0) <= 1e-12:
+            return prediction
+        out = prediction.copy().astype(np.float64)
+        for class_id in (CLASS_SETTLEMENT, CLASS_PORT, CLASS_RUIN):
+            out[..., class_id][buildable_mask] *= scale
+        return out
+
+    @staticmethod
+    def _scale_active_component_share(
+        prediction: np.ndarray,
+        buildable_mask: np.ndarray,
+        class_id: int,
+        scale: float,
+    ) -> np.ndarray:
+        if abs(scale - 1.0) <= 1e-12:
+            return prediction
+        out = prediction.copy().astype(np.float64)
+        active = out[..., [CLASS_SETTLEMENT, CLASS_PORT, CLASS_RUIN]]
+        active_total = np.sum(active, axis=-1, keepdims=True)
+        active[..., (CLASS_SETTLEMENT, CLASS_PORT, CLASS_RUIN).index(class_id)] *= scale
+        adjusted_total = np.sum(active, axis=-1, keepdims=True)
+        normalized_active = np.where(
+            adjusted_total > 1e-12,
+            active / np.maximum(adjusted_total, 1e-12) * active_total,
+            active,
+        )
+        for offset, active_class in enumerate((CLASS_SETTLEMENT, CLASS_PORT, CLASS_RUIN)):
+            out[..., active_class][buildable_mask] = normalized_active[..., offset][buildable_mask]
+        return out
+
+    @staticmethod
+    def _scale_nonactive_split(
+        prediction: np.ndarray,
+        buildable_mask: np.ndarray,
+        empty_scale: float,
+        forest_scale: float,
+    ) -> np.ndarray:
+        if abs(empty_scale - 1.0) <= 1e-12 and abs(forest_scale - 1.0) <= 1e-12:
+            return prediction
+        out = prediction.copy().astype(np.float64)
+        nonactive = out[..., [CLASS_EMPTY, CLASS_FOREST]]
+        nonactive_total = np.sum(nonactive, axis=-1, keepdims=True)
+        nonactive[..., 0] *= empty_scale
+        nonactive[..., 1] *= forest_scale
+        adjusted_total = np.sum(nonactive, axis=-1, keepdims=True)
+        normalized_nonactive = np.where(
+            adjusted_total > 1e-12,
+            nonactive / np.maximum(adjusted_total, 1e-12) * nonactive_total,
+            nonactive,
+        )
+        out[..., CLASS_EMPTY][buildable_mask] = normalized_nonactive[..., 0][buildable_mask]
+        out[..., CLASS_FOREST][buildable_mask] = normalized_nonactive[..., 1][buildable_mask]
+        return out
+
     def _apply_boundary_softening(self, prediction: np.ndarray, features: SeedFeatures) -> np.ndarray:
         alpha = self.config.boundary_softening_alpha
         if alpha <= 0.0:
@@ -335,7 +1011,14 @@ class Predictor:
         out[..., CLASS_EMPTY] += removed
         return normalize_probabilities(out, self.config.min_probability)
 
-    def _build_prior(self, seed_index: int, features: SeedFeatures, aggregator, latent: dict[str, float]) -> np.ndarray:
+    def _build_prior(
+        self,
+        seed_index: int,
+        features: SeedFeatures,
+        aggregator,
+        latent: dict[str, float],
+        learned_prior_ood: dict[str, Any] | None = None,
+    ) -> np.ndarray:
         grid = self.round_detail.initial_states[seed_index].grid
         h, w = grid.shape
         prior = np.full((h, w, NUM_CLASSES), 0.02, dtype=np.float64)
@@ -364,7 +1047,7 @@ class Predictor:
         prior[grid == TERRAIN_OCEAN] += np.array([0.95, 0.01, 0.01, 0.01, 0.01, 0.0])
         prior[grid == TERRAIN_MOUNTAIN] += np.array([0.01, 0.0, 0.0, 0.0, 0.0, 1.0])
         prior = self._apply_historical_priors(prior, features)
-        prior = self._apply_learned_prior(prior, features)
+        prior = self._apply_learned_prior(prior, features, learned_prior_ood)
         return normalize_probabilities(prior, self.config.min_probability)
 
     def _build_transfer(
@@ -482,6 +1165,25 @@ class Predictor:
         )
         active_types = self._normalize_active_types(active_types, fallback=prior_active_types)
         transfer_active_mass = (1.0 - active_mass_gate) * prior_active_mass + active_mass_gate * target_active_mass
+        quiet_regime = self._quiet_dominance(round_regime)
+        quiet_budget_gate = np.zeros_like(transfer_active_mass, dtype=np.float64)
+        if quiet_regime > 0.0:
+            # In quiet rounds, let strong observational evidence pull active mass down toward the
+            # bucket/observation target instead of preserving historical settlement persistence.
+            quiet_active_excess = np.clip(
+                (prior_active_mass - target_active_mass) / np.maximum(prior_active_mass, 1e-12),
+                0.0,
+                1.0,
+            )
+            quiet_budget_gate = np.clip(
+                quiet_regime * quiet_active_excess * (0.35 + 0.65 * correction_support),
+                0.0,
+                1.0,
+            )
+            transfer_active_mass = (
+                (1.0 - quiet_budget_gate) * transfer_active_mass
+                + quiet_budget_gate * target_active_mass
+            )
         transfer[..., CLASS_SETTLEMENT] = transfer_active_mass * active_types[..., 0]
         transfer[..., CLASS_PORT] = transfer_active_mass * active_types[..., 1]
         transfer[..., CLASS_RUIN] = transfer_active_mass * active_types[..., 2]
@@ -510,6 +1212,8 @@ class Predictor:
                 "nonactive_blend": float(nonactive_blend),
                 "active_mass_blend": float(active_mass_blend),
                 "active_type_blend": float(active_type_blend),
+                "quiet_budget_gate_mean": float(np.mean(quiet_budget_gate)),
+                "quiet_budget_gate_p95": float(np.quantile(quiet_budget_gate, 0.95)),
                 "active_dominance_support_mean": float(np.mean(active_dominance_support)),
                 "active_dominance_support_p95": float(np.quantile(active_dominance_support, 0.95)),
             },
@@ -517,6 +1221,7 @@ class Predictor:
                 "bucket_target": bucket_target,
                 "observation_target": observation_target,
                 "correction_support": correction_support,
+                "quiet_budget_gate": quiet_budget_gate,
                 "active_dominance_support": active_dominance_support,
             },
         }
@@ -726,11 +1431,21 @@ class Predictor:
 
         return normalize_probabilities(out, self.config.min_probability)
 
-    def _apply_learned_prior(self, prior: np.ndarray, features: SeedFeatures) -> np.ndarray:
+    def _apply_learned_prior(
+        self,
+        prior: np.ndarray,
+        features: SeedFeatures,
+        ood_diagnostics: dict[str, Any] | None = None,
+    ) -> np.ndarray:
         if self.learned_prior is None:
             return prior
+        effective_blend = self.config.learned_prior_blend
+        if ood_diagnostics is not None:
+            effective_blend = float(ood_diagnostics.get("effective_blend", effective_blend))
+        if effective_blend <= 0.0:
+            return prior
         learned = predict_learned_prior(self.learned_prior, features, self.config.min_probability)
-        blended = (1.0 - self.config.learned_prior_blend) * prior + self.config.learned_prior_blend * learned
+        blended = (1.0 - effective_blend) * prior + effective_blend * learned
         return normalize_probabilities(blended, self.config.min_probability)
 
     def _apply_rare_class_concentration(
@@ -878,6 +1593,7 @@ class Predictor:
         observed_counts: np.ndarray,
         observation_counts: np.ndarray,
         round_regime: dict[str, float],
+        residual_ood: dict[str, Any] | None = None,
         *,
         return_details: bool = False,
     ) -> np.ndarray | tuple[np.ndarray, dict[str, object] | None]:
@@ -885,7 +1601,11 @@ class Predictor:
             if return_details:
                 return prediction, None
             return prediction
-        blend_map = self._residual_blend_map(observed_counts, observation_counts, round_regime)
+        base_blend_map = self._residual_blend_map(observed_counts, observation_counts, round_regime)
+        attenuation_factor = 1.0
+        if residual_ood is not None:
+            attenuation_factor = float(residual_ood.get("attenuation_factor", 1.0))
+        blend_map = np.clip(base_blend_map * attenuation_factor, 0.0, 1.0)
         calibrated, details = apply_residual_calibrator(
             self.residual_calibrator,
             prediction,
@@ -897,9 +1617,239 @@ class Predictor:
             observation_counts=observation_counts,
             observed_counts=observed_counts,
         )
+        details["summary"]["base_blend_mean"] = float(np.mean(base_blend_map))
+        details["summary"]["effective_blend_mean"] = float(np.mean(blend_map))
+        details["summary"]["ood_enabled"] = bool(residual_ood is not None and residual_ood.get("enabled", False))
+        details["summary"]["ood_score"] = float(residual_ood.get("ood_score", 0.0)) if residual_ood is not None else 0.0
+        details["summary"]["ood_attenuation_factor"] = float(attenuation_factor)
+        details["tensors"]["residual_base_blend_map"] = base_blend_map
+        details["tensors"]["residual_effective_blend_map"] = blend_map
         if return_details:
             return calibrated, details
         return calibrated
+
+    def _apply_collapsed_active_calibrator(
+        self,
+        prediction: np.ndarray,
+        features: SeedFeatures,
+        observed_counts: np.ndarray,
+        observation_counts: np.ndarray,
+        bucket_target: np.ndarray,
+        round_regime: dict[str, float],
+        ood_signal_values: dict[str, float],
+        collapsed_active_ood: dict[str, Any] | None = None,
+        *,
+        active_budget_enabled: bool = False,
+        return_details: bool = False,
+    ) -> np.ndarray | tuple[np.ndarray, dict[str, object] | None]:
+        model_available = (
+            self.residual_calibrator is not None
+            and getattr(self.residual_calibrator, "collapsed_active_model", None) is not None
+        )
+        if not self.config.collapsed_active_calibrator_enabled or not model_available:
+            if return_details:
+                return prediction, {
+                    "summary": {
+                        "collapsed_active_enabled": bool(self.config.collapsed_active_calibrator_enabled),
+                        "collapsed_active_model_available": bool(model_available),
+                    },
+                    "tensors": {},
+                }
+            return prediction
+
+        buildable_observed = int(np.sum(features.buildable_mask & (observation_counts > 0)))
+        if buildable_observed <= 0:
+            if return_details:
+                return prediction, {
+                    "summary": {
+                        "collapsed_active_enabled": True,
+                        "collapsed_active_model_available": True,
+                        "collapsed_active_skipped_no_support": True,
+                    },
+                    "tensors": {},
+                }
+            return prediction
+
+        raw_scale, details = predict_collapsed_active_scale(
+            self.residual_calibrator,
+            prediction,
+            features,
+            round_regime,
+            observed_counts=observed_counts,
+            observation_counts=observation_counts,
+            bucket_target=bucket_target,
+            ood_signal_values=ood_signal_values,
+            scale_clip=(
+                self.config.collapsed_active_calibrator_scale_clip_lo,
+                self.config.collapsed_active_calibrator_scale_clip_hi,
+            ),
+        )
+        current_active_mass = self._buildable_active_mass(prediction, features)
+        base_strength = self._regime_endpoint_interp(
+            self.config.collapsed_active_calibrator_strength_low_activity,
+            self.config.collapsed_active_calibrator_strength_default,
+            self.config.collapsed_active_calibrator_strength_high_activity,
+            round_regime,
+        )
+        support_factor = min(
+            buildable_observed / max(float(self.config.collapsed_active_calibrator_min_buildable_observed), 1.0),
+            1.0,
+        )
+        attenuation_factor = 1.0
+        if collapsed_active_ood is not None:
+            attenuation_factor = float(collapsed_active_ood.get("attenuation_factor", 1.0))
+        quiet_regime = self._quiet_dominance(round_regime)
+        clipped_scale = float(
+            np.clip(
+                raw_scale,
+                self.config.collapsed_active_calibrator_scale_clip_lo,
+                self.config.collapsed_active_calibrator_scale_clip_hi,
+            )
+        )
+        if quiet_regime > 0.0:
+            clipped_scale = min(clipped_scale, 1.0)
+        effective_strength = float(np.clip(base_strength * support_factor * attenuation_factor, 0.0, 1.0))
+        effective_scale = float(
+            np.clip(
+                1.0 + effective_strength * (clipped_scale - 1.0),
+                self.config.collapsed_active_calibrator_scale_clip_lo,
+                self.config.collapsed_active_calibrator_scale_clip_hi,
+            )
+        )
+        target_active_mass = current_active_mass * effective_scale
+        adjusted = self._redistribute_to_active_budget(
+            prediction,
+            features,
+            target_active_mass,
+            observed_counts=observed_counts,
+            reference_nonactive=prediction,
+        )
+
+        if details is not None:
+            observed_active_rate = self._observed_active_rate(observed_counts, observation_counts, features)
+            bucket_active = self._buildable_active_mass(bucket_target, features)
+            details["summary"].update(
+                {
+                    "collapsed_active_enabled": True,
+                    "collapsed_active_model_available": True,
+                    "collapsed_active_precedence_over_active_budget": bool(active_budget_enabled),
+                    "collapsed_active_pre_mass": current_active_mass,
+                    "collapsed_active_post_mass": self._buildable_active_mass(adjusted, features),
+                    "collapsed_active_effective_scale": effective_scale,
+                    "collapsed_active_vs_bucket_target_delta": float(target_active_mass - bucket_active),
+                    "collapsed_active_vs_observed_delta": float(target_active_mass - observed_active_rate),
+                    "collapsed_active_ood_attenuation_factor": float(attenuation_factor),
+                    "collapsed_active_base_strength": float(base_strength),
+                    "collapsed_active_support_factor": float(support_factor),
+                }
+            )
+            details["tensors"].update(
+                {
+                    "post_collapsed_active": adjusted,
+                    "collapsed_active_predicted_scale": np.full(prediction.shape[:2], raw_scale, dtype=np.float64),
+                    "collapsed_active_effective_scale": np.full(prediction.shape[:2], effective_scale, dtype=np.float64),
+                }
+            )
+        if return_details:
+            return adjusted, details
+        return adjusted
+
+    def _apply_active_budget_calibrator(
+        self,
+        prediction: np.ndarray,
+        features: SeedFeatures,
+        observed_counts: np.ndarray,
+        observation_counts: np.ndarray,
+        bucket_target: np.ndarray,
+        round_regime: dict[str, float],
+        ood_signal_values: dict[str, float],
+        active_budget_ood: dict[str, Any] | None = None,
+        *,
+        return_details: bool = False,
+    ) -> np.ndarray | tuple[np.ndarray, dict[str, object] | None]:
+        if (
+            not self.config.active_budget_enabled
+            or self.residual_calibrator is None
+            or getattr(self.residual_calibrator, "active_budget_model", None) is None
+        ):
+            if return_details:
+                return prediction, None
+            return prediction
+
+        buildable_observed = int(np.sum(features.buildable_mask & (observation_counts > 0)))
+        if buildable_observed <= 0:
+            if return_details:
+                return prediction, None
+            return prediction
+
+        raw_budget, budget_details = predict_active_budget(
+            self.residual_calibrator,
+            prediction,
+            features,
+            round_regime,
+            observed_counts=observed_counts,
+            observation_counts=observation_counts,
+            bucket_target=bucket_target,
+            ood_signal_values=ood_signal_values,
+        )
+        current_active_mass = self._buildable_active_mass(prediction, features)
+        base_strength = self._regime_endpoint_interp(
+            self.config.active_budget_strength_low_activity,
+            self.config.active_budget_strength_default,
+            self.config.active_budget_strength_high_activity,
+            round_regime,
+        )
+        support_factor = min(
+            buildable_observed / max(float(self.config.active_budget_min_buildable_observed), 1.0),
+            1.0,
+        )
+        attenuation_factor = 1.0
+        if active_budget_ood is not None:
+            attenuation_factor = float(active_budget_ood.get("attenuation_factor", 1.0))
+        effective_strength = float(np.clip(base_strength * support_factor * attenuation_factor, 0.0, 1.0))
+
+        target_active_budget = (1.0 - effective_strength) * current_active_mass + effective_strength * raw_budget
+        quiet_regime = self._quiet_dominance(round_regime)
+        if quiet_regime > 0.0:
+            target_active_budget = min(target_active_budget, current_active_mass)
+
+        adjusted = self._redistribute_to_active_budget(
+            prediction,
+            features,
+            target_active_budget,
+            observed_counts=observed_counts,
+            reference_nonactive=prediction,
+        )
+        if budget_details is not None:
+            observed_active_rate = self._observed_active_rate(observed_counts, observation_counts, features)
+            bucket_active = self._buildable_active_mass(bucket_target, features)
+            budget_details["summary"].update(
+                {
+                    "pre_budget_active_mass": current_active_mass,
+                    "post_budget_active_mass": self._buildable_active_mass(adjusted, features),
+                    "effective_target_active_budget": float(target_active_budget),
+                    "budget_scale_factor": float(
+                        target_active_budget / max(current_active_mass, 1e-12)
+                    ),
+                    "budget_base_strength": float(base_strength),
+                    "budget_support_factor": float(support_factor),
+                    "budget_effective_strength": float(effective_strength),
+                    "budget_vs_bucket_target_delta": float(target_active_budget - bucket_active),
+                    "budget_vs_observed_active_delta": float(target_active_budget - observed_active_rate),
+                    "budget_observed_buildable_support": float(buildable_observed),
+                    "budget_ood_attenuation_factor": float(attenuation_factor),
+                }
+            )
+            budget_details["tensors"].update(
+                {
+                    "post_active_budget": adjusted,
+                    "predicted_active_budget": np.full(prediction.shape[:2], raw_budget, dtype=np.float64),
+                    "effective_target_active_budget": np.full(prediction.shape[:2], target_active_budget, dtype=np.float64),
+                }
+            )
+        if return_details:
+            return adjusted, budget_details
+        return adjusted
 
     def _apply_prior_blend_gate(
         self,
@@ -926,9 +1876,172 @@ class Predictor:
             min_probability=self.config.min_probability,
             strength=effective_strength,
         )
+        quiet_regime = self._quiet_dominance(round_regime)
+        quiet_active_guard = np.zeros(prediction.shape[:2], dtype=np.float64)
+        if quiet_regime > 0.0:
+            prior_active = prior[..., CLASS_SETTLEMENT] + prior[..., CLASS_PORT] + prior[..., CLASS_RUIN]
+            prediction_active = (
+                prediction[..., CLASS_SETTLEMENT] + prediction[..., CLASS_PORT] + prediction[..., CLASS_RUIN]
+            )
+            quiet_active_guard = quiet_regime * (prior_active > prediction_active).astype(np.float64)
+            if np.any(quiet_active_guard > 0.0):
+                blended_active = blended[..., CLASS_SETTLEMENT] + blended[..., CLASS_PORT] + blended[..., CLASS_RUIN]
+                guarded_active_target = (
+                    (1.0 - quiet_active_guard) * blended_active
+                    + quiet_active_guard * np.minimum(blended_active, prediction_active)
+                )
+                blended = self._match_active_mass_target(
+                    blended,
+                    guarded_active_target,
+                    reference_nonactive=prediction,
+                )
         if return_details:
+            if details is not None:
+                details["summary"]["quiet_active_guard_mean"] = float(np.mean(quiet_active_guard))
+                details["summary"]["quiet_active_guard_max"] = float(np.max(quiet_active_guard))
+                details["tensors"]["quiet_active_guard"] = quiet_active_guard
             return blended, details
         return blended
+
+    def _match_active_mass_target(
+        self,
+        prediction: np.ndarray,
+        target_active_mass: np.ndarray,
+        *,
+        reference_nonactive: np.ndarray | None = None,
+    ) -> np.ndarray:
+        out = prediction.copy().astype(np.float64)
+        current_active = out[..., CLASS_SETTLEMENT] + out[..., CLASS_PORT] + out[..., CLASS_RUIN]
+        target = np.clip(target_active_mass, 0.0, 1.0)
+        over_mask = current_active > target + 1e-12
+        if not np.any(over_mask):
+            return out
+
+        scale = np.ones_like(current_active, dtype=np.float64)
+        scale[over_mask] = target[over_mask] / np.maximum(current_active[over_mask], 1e-12)
+        removed_mass = current_active * (1.0 - scale)
+        out[..., CLASS_SETTLEMENT] *= scale
+        out[..., CLASS_PORT] *= scale
+        out[..., CLASS_RUIN] *= scale
+
+        reference = out if reference_nonactive is None else reference_nonactive
+        redistribute_base = reference[..., CLASS_EMPTY] + reference[..., CLASS_FOREST]
+        empty_share = np.full_like(redistribute_base, 0.5, dtype=np.float64)
+        np.divide(
+            reference[..., CLASS_EMPTY],
+            np.maximum(redistribute_base, 1e-12),
+            out=empty_share,
+            where=redistribute_base > 1e-12,
+        )
+        out[..., CLASS_EMPTY] += removed_mass * empty_share
+        out[..., CLASS_FOREST] += removed_mass * (1.0 - empty_share)
+        return normalize_probabilities(out, self.config.min_probability)
+
+    def _redistribute_to_active_budget(
+        self,
+        prediction: np.ndarray,
+        features: SeedFeatures,
+        target_active_mass: float,
+        *,
+        observed_counts: np.ndarray | None = None,
+        reference_nonactive: np.ndarray | None = None,
+    ) -> np.ndarray:
+        out = prediction.copy().astype(np.float64)
+        buildable = features.buildable_mask
+        if not np.any(buildable):
+            return out
+
+        active_types = self._normalize_active_types(out)
+        current_active = out[..., CLASS_SETTLEMENT] + out[..., CLASS_PORT] + out[..., CLASS_RUIN]
+        support = np.maximum(current_active, self.config.min_probability)
+        support = np.where(buildable, support, 0.0)
+        if observed_counts is not None:
+            observed_active = (
+                observed_counts[..., CLASS_SETTLEMENT]
+                + observed_counts[..., CLASS_PORT]
+                + observed_counts[..., CLASS_RUIN]
+            ) > 0.0
+            support[observed_active & buildable] = np.maximum(
+                support[observed_active & buildable],
+                0.05,
+            )
+        support_sum = float(np.sum(support))
+        if support_sum <= 0.0:
+            support = buildable.astype(np.float64)
+            support_sum = float(np.sum(support))
+
+        target_total = float(np.clip(target_active_mass, 0.0, 1.0)) * float(np.sum(buildable))
+        desired_active = np.zeros_like(current_active, dtype=np.float64)
+        desired_active[buildable] = target_total * support[buildable] / max(support_sum, 1e-12)
+        desired_active = np.clip(desired_active, 0.0, 1.0)
+
+        reference = out if reference_nonactive is None else reference_nonactive
+        redistribute_base = reference[..., CLASS_EMPTY] + reference[..., CLASS_FOREST]
+        empty_share = np.full_like(redistribute_base, 0.5, dtype=np.float64)
+        np.divide(
+            reference[..., CLASS_EMPTY],
+            np.maximum(redistribute_base, 1e-12),
+            out=empty_share,
+            where=redistribute_base > 1e-12,
+        )
+
+        out[..., CLASS_SETTLEMENT][buildable] = desired_active[buildable] * active_types[..., 0][buildable]
+        out[..., CLASS_PORT][buildable] = desired_active[buildable] * active_types[..., 1][buildable]
+        out[..., CLASS_RUIN][buildable] = desired_active[buildable] * active_types[..., 2][buildable]
+        non_active_mass = np.clip(1.0 - out[..., CLASS_MOUNTAIN] - desired_active, 0.0, 1.0)
+        out[..., CLASS_EMPTY][buildable] = non_active_mass[buildable] * empty_share[buildable]
+        out[..., CLASS_FOREST][buildable] = non_active_mass[buildable] * (1.0 - empty_share[buildable])
+        return normalize_probabilities(out, self.config.min_probability)
+
+    def _enforce_active_budget_cap(
+        self,
+        prediction: np.ndarray,
+        features: SeedFeatures,
+        observed_counts: np.ndarray,
+        target_active_budget: float,
+        round_regime: dict[str, float],
+    ) -> np.ndarray:
+        quiet_regime = self._quiet_dominance(round_regime)
+        if quiet_regime <= 0.0:
+            return prediction
+        current_active_mass = self._buildable_active_mass(prediction, features)
+        if current_active_mass <= target_active_budget + 1e-12:
+            return prediction
+        return self._redistribute_to_active_budget(
+            prediction,
+            features,
+            target_active_budget,
+            observed_counts=observed_counts,
+            reference_nonactive=prediction,
+        )
+
+    @staticmethod
+    def _buildable_active_mass(prediction: np.ndarray, features: SeedFeatures) -> float:
+        buildable = features.buildable_mask
+        if not np.any(buildable):
+            return 0.0
+        active = prediction[..., CLASS_SETTLEMENT] + prediction[..., CLASS_PORT] + prediction[..., CLASS_RUIN]
+        return float(np.mean(active[buildable]))
+
+    @staticmethod
+    def _observed_active_rate(
+        observed_counts: np.ndarray,
+        observation_counts: np.ndarray,
+        features: SeedFeatures,
+    ) -> float:
+        observed_buildable = features.buildable_mask & (observation_counts > 0)
+        if not np.any(observed_buildable):
+            return 0.0
+        active_counts = (
+            observed_counts[..., CLASS_SETTLEMENT]
+            + observed_counts[..., CLASS_PORT]
+            + observed_counts[..., CLASS_RUIN]
+        )
+        total_counts = np.sum(observed_counts, axis=-1)
+        total_observed = float(np.sum(total_counts[observed_buildable]))
+        if total_observed <= 0.0:
+            return 0.0
+        return float(np.sum(active_counts[observed_buildable]) / total_observed)
 
     def _apply_high_activity_active_concentration(
         self,
