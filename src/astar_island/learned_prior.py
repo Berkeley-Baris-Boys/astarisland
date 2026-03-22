@@ -9,6 +9,7 @@ from scipy.optimize import minimize
 from scipy.special import expit, logsumexp
 
 from .history import _round_detail_from_json
+from .ood import OOD_REFERENCE_VERSION, build_ood_reference_from_archive
 from .types import CLASS_EMPTY, CLASS_FOREST, CLASS_MOUNTAIN, CLASS_PORT, CLASS_RUIN, CLASS_SETTLEMENT, NUM_CLASSES, SeedFeatures
 from .utils import load_json, normalize_probabilities, save_json
 
@@ -259,6 +260,11 @@ def build_learned_prior_artifact_from_archive(
         "l2_active": l2_active,
         "l2_forest": l2_forest,
         "l2_active_type": l2_active_type,
+        "ood_reference_version": OOD_REFERENCE_VERSION,
+        "ood_reference": build_ood_reference_from_archive(
+            history_dir,
+            holdout_round_number=holdout_round_number,
+        ),
     }
     return LearnedPriorArtifact(
         feature_names=feature_names,
