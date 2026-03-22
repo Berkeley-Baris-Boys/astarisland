@@ -8,15 +8,17 @@ import joblib
 import numpy as np
 from sklearn.ensemble import HistGradientBoostingRegressor
 
+from .config import AstarConfig
 from .history import _round_detail_from_json
 from .learned_prior import build_learned_prior_features, load_learned_prior_artifact
 from .priors import load_historical_prior_artifact
+from .regime import compute_round_regime, infer_latent_summary_from_prediction
 from .scoring import cell_entropy, cell_kl_divergence
 from .types import CLASS_EMPTY, CLASS_FOREST, CLASS_MOUNTAIN, CLASS_NAMES, CLASS_PORT, CLASS_RUIN, CLASS_SETTLEMENT, NUM_CLASSES, SeedFeatures
 from .utils import load_json, normalize_probabilities
 
 EPS = 1e-12
-PRIOR_BLEND_GATE_VERSION = 1
+PRIOR_BLEND_GATE_VERSION = 2
 
 
 @dataclass
@@ -35,10 +37,20 @@ def load_prior_blend_gate_artifact(path: Path) -> PriorBlendGateArtifact:
     return joblib.load(path)
 
 
-def build_prior_blend_features(prior: np.ndarray, prediction: np.ndarray, seed_features: SeedFeatures) -> tuple[np.ndarray, list[str]]:
+def build_prior_blend_features(
+    prior: np.ndarray,
+    prediction: np.ndarray,
+    seed_features: SeedFeatures,
+    round_regime: dict[str, float] | None = None,
+) -> tuple[np.ndarray, list[str]]:
     structural, structural_names = build_learned_prior_features(seed_features)
     prior_flat = prior.reshape(-1, NUM_CLASSES)
     pred_flat = prediction.reshape(-1, NUM_CLASSES)
+    if round_regime is None:
+        round_regime = compute_round_regime(
+            infer_latent_summary_from_prediction(prediction),
+            AstarConfig().predictor,
+        )
 
     prior_active = prior_flat[:, CLASS_SETTLEMENT] + prior_flat[:, CLASS_PORT] + prior_flat[:, CLASS_RUIN]
     pred_active = pred_flat[:, CLASS_SETTLEMENT] + pred_flat[:, CLASS_PORT] + pred_flat[:, CLASS_RUIN]
@@ -111,6 +123,10 @@ def build_prior_blend_features(prior: np.ndarray, prediction: np.ndarray, seed_f
         structural_map["forest_density"] * pred_flat[:, CLASS_FOREST],
         structural_map["coastal"] * (pred_flat[:, CLASS_PORT] - prior_flat[:, CLASS_PORT]),
         structural_map["frontier"] * (pred_active - prior_active),
+        np.full(pred_flat.shape[0], round_regime["settlement_signal"], dtype=np.float64),
+        np.full(pred_flat.shape[0], round_regime["forest_signal"], dtype=np.float64),
+        np.full(pred_flat.shape[0], round_regime["high_activity_factor"], dtype=np.float64),
+        np.full(pred_flat.shape[0], round_regime["low_activity_factor"], dtype=np.float64),
     ]
     extra_names = [
         "prior_empty",
@@ -161,6 +177,10 @@ def build_prior_blend_features(prior: np.ndarray, prediction: np.ndarray, seed_f
         "forest_density_x_pred_forest",
         "coastal_x_delta_port",
         "frontier_x_delta_active",
+        "round_regime_settlement_signal",
+        "round_regime_forest_signal",
+        "round_regime_high_activity_factor",
+        "round_regime_low_activity_factor",
     ]
     matrix = np.concatenate([structural, np.stack(extra_arrays, axis=1)], axis=1)
     return matrix, structural_names + extra_names
@@ -171,11 +191,12 @@ def apply_prior_blend_gate(
     prior: np.ndarray,
     prediction: np.ndarray,
     seed_features: SeedFeatures,
+    round_regime: dict[str, float] | None = None,
     *,
     min_probability: float,
     strength: float = 1.0,
 ) -> tuple[np.ndarray, dict[str, object]]:
-    features, feature_names = build_prior_blend_features(prior, prediction, seed_features)
+    features, feature_names = build_prior_blend_features(prior, prediction, seed_features, round_regime)
     if feature_names != artifact.feature_names:
         raise ValueError("Prior blend gate feature names do not match runtime construction.")
 
@@ -251,8 +272,9 @@ def build_prior_blend_gate_artifact_from_archive(
             prediction = np.asarray(payload["prediction"], dtype=np.float64)
             ground_truth = np.asarray(payload["ground_truth"], dtype=np.float64)
             latent = infer_latent_summary_from_prediction(prediction)
+            round_regime = compute_round_regime(latent, config.predictor)
             prior = predictor._build_prior(seed_index, seed_features, None, latent)
-            matrix, names = build_prior_blend_features(prior, prediction, seed_features)
+            matrix, names = build_prior_blend_features(prior, prediction, seed_features, round_regime)
             if feature_names is None:
                 feature_names = names
             elif feature_names != names:
@@ -298,27 +320,14 @@ def build_prior_blend_gate_artifact_from_archive(
         "l2_regularization": l2_regularization,
         "historical_prior_metadata": historical.metadata,
         "learned_prior_metadata": learned.metadata,
+        "predictor_regime_thresholds": {
+            "settlement_rate_low": config.predictor.regime_settlement_rate_low,
+            "settlement_rate_high": config.predictor.regime_settlement_rate_high,
+            "forest_share_low": config.predictor.regime_forest_share_low,
+            "forest_share_high": config.predictor.regime_forest_share_high,
+        },
     }
     return PriorBlendGateArtifact(feature_names=feature_names, model=model, metadata=metadata)
-
-
-def infer_latent_summary_from_prediction(prediction: np.ndarray) -> dict[str, float]:
-    prediction = np.asarray(prediction, dtype=np.float64)
-    totals = prediction.sum(axis=(0, 1))
-    settlement_mass = float(totals[CLASS_SETTLEMENT] + totals[CLASS_PORT])
-    dynamic_mass = float(totals[CLASS_SETTLEMENT] + totals[CLASS_PORT] + totals[CLASS_RUIN] + totals[CLASS_FOREST])
-    total_mass = float(np.sum(totals))
-    return {
-        "observed_cells": 0.0,
-        "settlement_rate": settlement_mass / max(total_mass, 1.0),
-        "port_share_given_active": float(totals[CLASS_PORT]) / max(settlement_mass, 1.0),
-        "ruin_share_given_active": float(totals[CLASS_RUIN]) / max(settlement_mass + totals[CLASS_RUIN], 1.0),
-        "forest_share_dynamic": float(totals[CLASS_FOREST]) / max(dynamic_mass, 1.0),
-        "mean_food": 0.0,
-        "mean_wealth": 0.0,
-        "mean_defense": 0.0,
-        "mean_population": 0.0,
-    }
 
 
 def optimal_prior_blend(prior: np.ndarray, prediction: np.ndarray, ground_truth: np.ndarray) -> np.ndarray:

@@ -39,9 +39,10 @@ from astar_island.learned_prior import load_learned_prior_artifact
 from astar_island.predictor import Predictor
 from astar_island.prior_blend_gate import load_prior_blend_gate_artifact
 from astar_island.priors import load_historical_prior_artifact
+from astar_island.regime import compute_round_regime, regime_bucket, repeat_fraction_from_observation_counts
 from astar_island.residual_calibrator import load_residual_calibrator_artifact
 from astar_island.scoring import score_collapsed_prediction, score_prediction
-from astar_island.types import CLASS_SETTLEMENT
+from astar_island.types import CLASS_FOREST, CLASS_SETTLEMENT, TERRAIN_FOREST, TERRAIN_PLAINS
 from astar_island.utils import load_json, save_json
 
 
@@ -223,6 +224,9 @@ def evaluate_candidate(
 ) -> dict[str, object]:
     overall_scores: list[float] = []
     settlement_scores: list[float] = []
+    forest_scores: list[float] = []
+    bucket_scores: dict[str, list[float]] = {"quiet": [], "mixed": [], "active": []}
+    terrain_scores: dict[str, list[float]] = {"plains": [], "forest": []}
     per_run: list[dict[str, object]] = []
 
     bundle_iter = bundles
@@ -252,9 +256,19 @@ def evaluate_candidate(
             prior_blend_gate=artifacts.prior_blend_gate,
         )
         predictions = predictor.predict_round(aggregator)
+        latent = aggregator.round_latent_summary()
+        round_regime = compute_round_regime(
+            latent,
+            predictor_config,
+            repeat_fraction=repeat_fraction_from_observation_counts(aggregator.observation_counts),
+        )
+        bucket = regime_bucket(round_regime["high_activity_factor"])
 
         run_overall: list[float] = []
         run_settlement: list[float] = []
+        run_forest: list[float] = []
+        run_plains_scores: list[float] = []
+        run_forest_terrain_scores: list[float] = []
         for seed_index in range(bundle.detail.seeds_count):
             gt_path = bundle.history_round_dir / f"seed_{seed_index}" / "ground_truth.npy"
             if not gt_path.exists():
@@ -265,17 +279,36 @@ def evaluate_candidate(
             run_settlement.append(
                 float(score_collapsed_prediction(ground_truth, prediction, CLASS_SETTLEMENT))
             )
+            run_forest.append(
+                float(score_collapsed_prediction(ground_truth, prediction, CLASS_FOREST))
+            )
+            initial_grid = bundle.detail.initial_states[seed_index].grid
+            plains_mask = initial_grid == TERRAIN_PLAINS
+            forest_mask = initial_grid == TERRAIN_FOREST
+            if np.any(plains_mask):
+                run_plains_scores.append(float(score_prediction(ground_truth[plains_mask], prediction[plains_mask])))
+            if np.any(forest_mask):
+                run_forest_terrain_scores.append(float(score_prediction(ground_truth[forest_mask], prediction[forest_mask])))
 
         if run_overall:
             overall_scores.extend(run_overall)
             settlement_scores.extend(run_settlement)
+            forest_scores.extend(run_forest)
+            bucket_scores[bucket].extend(run_overall)
+            terrain_scores["plains"].extend(run_plains_scores)
+            terrain_scores["forest"].extend(run_forest_terrain_scores)
             per_run.append(
                 {
                     "run_dir": str(bundle.run_dir),
                     "round_id": bundle.round_id,
                     "round_number": bundle.round_number,
+                    "round_bucket": bucket,
+                    "round_regime": round_regime,
                     "overall_mean": float(np.mean(run_overall)),
                     "settlement_mean": float(np.mean(run_settlement)),
+                    "forest_mean": float(np.mean(run_forest)),
+                    "plains_mean": float(np.mean(run_plains_scores)) if run_plains_scores else None,
+                    "forest_terrain_mean": float(np.mean(run_forest_terrain_scores)) if run_forest_terrain_scores else None,
                     "num_scored_seeds": len(run_overall),
                 }
             )
@@ -283,6 +316,15 @@ def evaluate_candidate(
     return {
         "overall_mean": float(np.mean(overall_scores)) if overall_scores else 0.0,
         "settlement_mean": float(np.mean(settlement_scores)) if settlement_scores else 0.0,
+        "forest_mean": float(np.mean(forest_scores)) if forest_scores else 0.0,
+        "quiet_mean": float(np.mean(bucket_scores["quiet"])) if bucket_scores["quiet"] else None,
+        "quiet_worst": float(np.min(bucket_scores["quiet"])) if bucket_scores["quiet"] else None,
+        "mixed_mean": float(np.mean(bucket_scores["mixed"])) if bucket_scores["mixed"] else None,
+        "active_mean": float(np.mean(bucket_scores["active"])) if bucket_scores["active"] else None,
+        "terrain_means": {
+            "plains": float(np.mean(terrain_scores["plains"])) if terrain_scores["plains"] else None,
+            "forest": float(np.mean(terrain_scores["forest"])) if terrain_scores["forest"] else None,
+        },
         "num_scored_seeds": len(overall_scores),
         "runs": per_run,
     }
@@ -295,12 +337,20 @@ def summarize_candidate(
 ) -> dict[str, object]:
     overall_mean = float(metrics["overall_mean"])
     settlement_mean = float(metrics["settlement_mean"])
+    forest_mean = float(metrics["forest_mean"])
     return {
         "overrides": overrides,
         "overall_mean": overall_mean,
         "settlement_mean": settlement_mean,
+        "forest_mean": forest_mean,
+        "quiet_mean": metrics["quiet_mean"],
+        "quiet_worst": metrics["quiet_worst"],
+        "mixed_mean": metrics["mixed_mean"],
+        "active_mean": metrics["active_mean"],
+        "terrain_means": metrics["terrain_means"],
         "overall_delta": overall_mean - float(baseline["overall_mean"]),
         "settlement_delta": settlement_mean - float(baseline["settlement_mean"]),
+        "forest_delta": forest_mean - float(baseline["forest_mean"]),
         "num_scored_seeds": int(metrics["num_scored_seeds"]),
         "runs": metrics["runs"],
     }
@@ -359,6 +409,12 @@ def main() -> None:
         "overrides": {},
         "overall_mean": float(baseline_metrics["overall_mean"]),
         "settlement_mean": float(baseline_metrics["settlement_mean"]),
+        "forest_mean": float(baseline_metrics["forest_mean"]),
+        "quiet_mean": baseline_metrics["quiet_mean"],
+        "quiet_worst": baseline_metrics["quiet_worst"],
+        "mixed_mean": baseline_metrics["mixed_mean"],
+        "active_mean": baseline_metrics["active_mean"],
+        "terrain_means": baseline_metrics["terrain_means"],
         "num_scored_seeds": int(baseline_metrics["num_scored_seeds"]),
     }
     print(json.dumps({"baseline": baseline}, sort_keys=True))
@@ -391,8 +447,14 @@ def main() -> None:
                     "overrides": overrides,
                     "overall_mean": summary["overall_mean"],
                     "settlement_mean": summary["settlement_mean"],
+                    "forest_mean": summary["forest_mean"],
+                    "quiet_mean": summary["quiet_mean"],
+                    "quiet_worst": summary["quiet_worst"],
+                    "active_mean": summary["active_mean"],
+                    "terrain_means": summary["terrain_means"],
                     "overall_delta": summary["overall_delta"],
                     "settlement_delta": summary["settlement_delta"],
+                    "forest_delta": summary["forest_delta"],
                 },
                 sort_keys=True,
             )

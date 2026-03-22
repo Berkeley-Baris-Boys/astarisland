@@ -89,6 +89,10 @@ class PredictorConfig:
     plains_settlement_gain_high_activity: float = 1.6
     plains_empty_base_high_activity: float = 0.88
     plains_empty_support_slope_high_activity: float = 0.42
+    quiet_plains_empty_boost: float = 1.18
+    quiet_plains_settlement_suppression: float = 0.65
+    quiet_plains_port_suppression: float = 0.45
+    quiet_plains_ruin_suppression: float = 0.72
     coastal_port_support_gain: float = 1.2
     coastal_port_support_gain_high_activity: float = 1.35
     initial_settlement_boost: float = 1.05
@@ -99,6 +103,11 @@ class PredictorConfig:
     initial_port_empty_suppression: float = 0.95
     initial_port_boost_high_activity: float = 1.2
     initial_port_empty_suppression_high_activity: float = 0.9
+    quiet_forest_retention_boost: float = 1.18
+    quiet_forest_empty_suppression: float = 0.72
+    quiet_forest_settlement_suppression: float = 0.70
+    quiet_forest_port_suppression: float = 0.62
+    quiet_forest_ruin_suppression: float = 0.72
     settlement_focus_blend_high_activity: float = 0.35
     settlement_focus_power_high_activity: float = 1.1
     settlement_support_intensity_weight: float = 0.45
@@ -136,17 +145,33 @@ class PredictorConfig:
     ruin_support_predicted_settlement_weight: float = 0.10
     ruin_support_predicted_ruin_weight: float = 0.05
     ruin_support_forest_weight: float = 0.05
+    ruin_dampening_scale: float = 0.90
+    boundary_softening_alpha: float = 0.0
+    villager_recalib_strength: float = 0.5
+    villager_recalib_min_obs_cells: int = 150
+    villager_recalib_scale_clip_lo: float = 0.9
+    villager_recalib_scale_clip_hi: float = 1.8
     learned_prior_blend: float = 0.25
     residual_calibrator_blend: float = 0.25
     residual_calibrator_single_observed_blend: float = 0.10
     residual_calibrator_repeated_observed_blend: float = 0.0
     residual_calibrator_active_observed_blend: float = 0.0
+    residual_calibrator_low_activity_blend: float = 0.20
+    residual_calibrator_low_activity_single_observed_blend: float = 0.10
+    residual_calibrator_low_activity_repeated_observed_blend: float = 0.02
+    residual_calibrator_low_activity_active_observed_blend: float = 0.05
     residual_calibrator_high_activity_blend: float = 1.0
     residual_calibrator_high_activity_single_observed_blend: float = 1.0
     residual_calibrator_high_activity_repeated_observed_blend: float = 1.0
     residual_calibrator_high_activity_active_observed_blend: float = 1.0
+    residual_trust_gate_active_observed_cap: float = field(
+        default_factory=lambda: float(os.getenv("ASTAR_ISLAND_RESIDUAL_TRUST_GATE_ACTIVE_OBSERVED_CAP", "0.6"))
+    )
     prior_blend_gate_strength: float = field(
         default_factory=lambda: float(os.getenv("ASTAR_ISLAND_PRIOR_BLEND_GATE_STRENGTH", "1.0"))
+    )
+    quiet_prior_blend_gate_multiplier: float = field(
+        default_factory=lambda: float(os.getenv("ASTAR_ISLAND_QUIET_PRIOR_BLEND_GATE_MULTIPLIER", "0.5"))
     )
     historical_prior_path: Path = field(
         default_factory=lambda: Path(os.getenv("ASTAR_ISLAND_HISTORICAL_PRIOR_PATH", "artifacts/historical_priors.json"))
